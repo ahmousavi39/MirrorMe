@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Use - {{APP_NAME}}</title>
+    <meta name="description" content="Terms of Use for {{APP_NAME}} - {{APP_SUBTITLE}}">
+    <link rel="icon" href="icon.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .hero {
+            max-width: 900px;
+            margin: 40px auto 30px;
+            text-align: center;
+        }
+
+        .hero .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .appstore-badge {
+            display: inline-block;
+            margin-top: 16px;
+        }
+
+        .appstore-badge img {
+            height: 48px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            font-size: 32px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 32px;
+            margin-bottom: 12px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .meta-info {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 16px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 28px;
+            border-radius: 4px;
+        }
+
+        .meta-info p {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: #444;
+        }
+
+        ul {
+            margin: 12px 0 12px 20px;
+            color: #444;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 16px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            padding: 24px;
+            border-left: 4px solid #28a745;
+            margin: 32px 0;
+            border-radius: 4px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 0.8;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            color: #2c3e50;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero">
+        <img src="icon.png" alt="{{APP_NAME}} App Logo" class="logo">
+        <h1>Terms of Use</h1>
+    </div>
+    <div class="container">
+        <div class="meta-info">
+            <p><strong>Effective Date:</strong> {{EFFECTIVE_DATE}}</p>
+        </div>
+
+        <h2>Introduction</h2>
+        <p>Welcome to {{APP_NAME}} ("we," "our," or "us"). These Terms of Use ("Terms") govern your use of our mobile
+            application {{APP_NAME}} (the "App"). By downloading, installing, or using the App, you agree to be bound by
+            these Terms. If you do not agree to these Terms, please do not use the App.</p>
+
+        <h2>License Grant</h2>
+        <p>Subject to these Terms, we grant you a limited, non-exclusive, non-transferable, revocable license to use the
+            App for your personal, non-commercial use on devices you own or control.</p>
+
+        <h2>Pricing and One-Time Purchase</h2>
+        <p>{{APP_NAME}} is provided under a <strong>one-time purchase model priced at {{PRICE_NUMBER}}</strong>. Upon
+            successful purchase through the relevant app store (Apple App Store), you receive:</p>
+        <ul>
+            <li><strong>Lifetime access</strong> to the App's core {{APP_CORE_FEATURES}} features</li>
+            {{GUARANTEE_LIST_ITEM}}
+            <li>Access to non-paid updates, performance improvements, and bug fixes</li>
+        </ul>
+        <p>All payment processing and sensitive billing information (e.g., card numbers) are handled securely by the app
+            store provider; we do not store raw payment details.</p>
+
+        {{GUARANTEE_SECTION}}
+
+        {{LIFETIME_ACCESS_SECTION}}
+
+        <h2>User Account and Responsibilities</h2>
+        <p>You are responsible for:</p>
+        <ul>
+            <li>Maintaining the confidentiality of your account credentials</li>
+            <li>All activities that occur under your account</li>
+            <li>Ensuring your use complies with applicable laws and these Terms</li>
+            <li>Providing accurate and up-to-date information</li>
+        </ul>
+
+        <h2>Acceptable Use</h2>
+        <p>You agree to use the App only for lawful purposes. You may not:</p>
+        <ul>
+            <li>Violate any laws or regulations</li>
+            <li>Share account credentials with others</li>
+            <li>Attempt to reverse engineer, hack, or compromise the App</li>
+            <li>Use the App for commercial purposes without permission</li>
+            <li>Upload malicious content, spam, or inappropriate material</li>
+            <li>Interfere with or disrupt the App's functionality</li>
+            <li>Collect or harvest user information</li>
+        </ul>
+
+        <h2>Content and Intellectual Property</h2>
+
+        <h3>Our Content</h3>
+        <p>The App and its content, including but not limited to text, graphics, images, logos, and software, are
+            protected by copyright, trademark, and other intellectual property laws. All rights not expressly granted
+            are reserved.</p>
+
+        <h3>User-Generated Content</h3>
+        <p>You retain ownership of content you create or upload to the App. By using the App, you grant us a
+            non-exclusive, royalty-free license to use, modify, and display your content solely for the purpose of
+            providing our services.</p>
+
+        {{AI_CONTENT_SECTION}}
+
+        <h2>Privacy and Data Protection</h2>
+        <p>Your privacy is important to us. Please review our <a href="{{PRIVACY_POLICY_LINK}}">Privacy Policy</a> to
+            understand how we collect, use, and protect your information.</p>
+        <p>For purchase validation we may store limited transaction metadata (purchase token, product ID, transaction
+            ID, country) strictly to confirm entitlement and prevent fraud. We do not store raw payment card data.</p>
+
+        <h2>App Store Terms</h2>
+        <p>For users who download the App through the Apple App Store, these Terms incorporate and are subject to:</p>
+        <ul>
+            <li>Apple Media Services Terms and Conditions</li>
+            <li>Apple's standard End User License Agreement (EULA)</li>
+            <li>Apple's In-App Purchase terms</li>
+        </ul>
+
+        <h2>Disclaimers and Limitations</h2>
+
+        <h3>Service Availability</h3>
+        <p>The App is provided "AS IS" and "AS AVAILABLE" without warranties of any kind. We do not guarantee:</p>
+        <ul>
+            <li>Continuous, uninterrupted, or secure access to the App</li>
+            <li>Accuracy, reliability, or completeness of content</li>
+            <li>Freedom from errors, bugs, or other issues</li>
+            <li>Compatibility with all devices or operating systems</li>
+        </ul>
+
+        {{EDUCATIONAL_CONTENT_SECTION}}
+
+        <h3>Limitation of Liability</h3>
+        <p>To the maximum extent permitted by law, we shall not be liable for any:</p>
+        <ul>
+            <li>Indirect, incidental, special, or consequential damages</li>
+            <li>Loss of profits, data, or business opportunities</li>
+            <li>Damages resulting from your use or inability to use the App</li>
+            <li>Third-party content or actions</li>
+        </ul>
+        {{GUARANTEE_LIABILITY_SECTION}}
+
+        <h2>Termination</h2>
+        <p>We may terminate or suspend your access to the App at any time for:</p>
+        <ul>
+            <li>Violations of these Terms</li>
+            <li>Fraudulent or illegal activities</li>
+            <li>Extended periods of inactivity</li>
+            <li>Technical or business reasons</li>
+        </ul>
+        <p>Upon termination, your right to use the App ceases immediately, but these Terms will continue to apply to any
+            prior use.</p>
+        {{TERMINATION_GUARANTEE_SECTION}}
+
+        <h2>Updates and Modifications</h2>
+
+        <h3>App Updates</h3>
+        <p>We may update the App to add features, fix bugs, or improve performance. Some updates may be required for
+            continued use.</p>
+
+        <h3>Terms Changes</h3>
+        <p>We may modify these Terms from time to time. We will notify you of material changes through:</p>
+        <ul>
+            <li>In-app notifications</li>
+            <li>Email notifications</li>
+            <li>Updated posting on our website</li>
+        </ul>
+        <p>Continued use after changes constitutes acceptance of the new Terms.</p>
+        {{TERMS_CHANGE_GUARANTEE_SECTION}}
+
+        <h2>Governing Law and Disputes</h2>
+        <p>These Terms are governed by the laws of {{JURISDICTION}}. Any disputes will be resolved through:</p>
+        <ul>
+            <li>Good faith negotiations</li>
+            <li>Mediation if necessary</li>
+            <li>Jurisdiction of {{JURISDICTION_COURTS}}</li>
+        </ul>
+
+        <h2>Severability</h2>
+        <p>If any provision of these Terms is found to be invalid or unenforceable, the remaining provisions will
+            continue in full force and effect.</p>
+
+        <div class="contact-info">
+            <h2>Contact Information</h2>
+            <p>For questions about these Terms or our services, please contact us:</p>
+            <p><strong>Email:</strong> mail@ahmousavi.com</p>
+            <p><strong>Address:</strong> Hauptstr. 4, 61276 Weilrod</p>
+            <p><strong>Phone:</strong> +49 15753674255</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Thank you for using {{APP_NAME}}. {{CLOSING_MESSAGE}}</strong></p>
+        </div>
+    </div>
+</body>
+
+</html>

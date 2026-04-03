@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{APP_NAME}} – {{APP_SUBTITLE}}</title>
+    <meta name="description" content="{{APP_DESCRIPTION}} One-time purchase for {{PRICE}}.">
+    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .hero {
+            max-width: 800px;
+            margin: 60px auto 30px;
+            text-align: center;
+        }
+        .hero .logo {
+            width: 140px;
+            height: 140px;
+            border-radius: 32px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: 48px;
+            color: #ffffff;
+            margin-bottom: 12px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .hero .tagline {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 32px;
+            font-weight: 500;
+        }
+        .hero .appstore-badge {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+        .hero .appstore-badge:hover {
+            transform: translateY(-2px);
+        }
+        .hero .appstore-badge img {
+            height: 56px;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .container h2 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .container p {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin: 32px 0;
+            text-align: left;
+        }
+        .feature {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .feature h3 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .feature p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+        .price-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .links a {
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.2s ease;
+        }
+        .links a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+            .hero .tagline {
+                font-size: 18px;
+            }
+            .container {
+                padding: 28px;
+            }
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <img src="icon.png" alt="{{APP_NAME}} App Logo" class="logo">
+        <h1>{{APP_NAME}}</h1>
+        <p class="tagline">{{APP_TAGLINE}}</p>
+        <a class="appstore-badge" href="{{APP_STORE_LINK}}" target="_blank" rel="noopener">
+            <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/{{LOCALE}}?size=250x83" alt="Download on the App Store">
+        </a>
+    </header>
+    <main class="container">
+        <h2>{{MAIN_HEADING}}</h2>
+        <p>{{MAIN_DESCRIPTION}}</p>
+        
+        <div class="price-badge">One-time purchase: {{PRICE}}</div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>{{FEATURE_1_ICON}} {{FEATURE_1_TITLE}}</h3>
+                <p>{{FEATURE_1_DESCRIPTION}}</p>
+            </div>
+            <div class="feature">
+                <h3>{{FEATURE_2_ICON}} {{FEATURE_2_TITLE}}</h3>
+                <p>{{FEATURE_2_DESCRIPTION}}</p>
+            </div>
+            <div class="feature">
+                <h3>{{FEATURE_3_ICON}} {{FEATURE_3_TITLE}}</h3>
+                <p>{{FEATURE_3_DESCRIPTION}}</p>
+            </div>
+            <div class="feature">
+                <h3>{{FEATURE_4_ICON}} {{FEATURE_4_TITLE}}</h3>
+                <p>{{FEATURE_4_DESCRIPTION}}</p>
+            </div>
+            <div class="feature">
+                <h3>{{FEATURE_5_ICON}} {{FEATURE_5_TITLE}}</h3>
+                <p>{{FEATURE_5_DESCRIPTION}}</p>
+            </div>
+            <div class="feature">
+                <h3>{{FEATURE_6_ICON}} {{FEATURE_6_TITLE}}</h3>
+                <p>{{FEATURE_6_DESCRIPTION}}</p>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="terms.html">Terms of Use</a>
+            <a href="policy.html">Privacy Policy</a>
+        </div>
+    </main>
+    <footer class="footer">
+        <p>&copy; {{YEAR}} {{APP_NAME}}. All rights reserved.</p>
+    </footer>
+</body>
+</html>

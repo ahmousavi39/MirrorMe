@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - {{APP_NAME}}</title>
+    <meta name="description" content="Privacy Policy for {{APP_NAME}} - {{APP_SUBTITLE}}">
+    <link rel="icon" href="icon.png" type="image/png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .hero {
+            max-width: 900px;
+            margin: 40px auto 30px;
+            text-align: center;
+        }
+
+        .hero .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero .appstore-badge {
+            display: inline-block;
+            margin-top: 16px;
+        }
+
+        .hero .appstore-badge img {
+            height: 48px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            font-size: 32px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 32px;
+            margin-bottom: 12px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .effective-date {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 16px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 28px;
+            border-radius: 4px;
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: #444;
+        }
+
+        ul {
+            margin: 12px 0 12px 20px;
+            color: #444;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: #2c3e50;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero">
+        <img src="icon.png" alt="{{APP_NAME}} App Logo" class="logo">
+        <h1>Privacy Policy</h1>
+    </div>
+    <div class="container">
+        <div class="effective-date">
+            <strong>Effective Date:</strong> {{EFFECTIVE_DATE}}
+        </div>
+
+        <p>Welcome to {{APP_NAME}}. Your privacy is important to us. This Privacy Policy explains how we collect, use, and
+            protect your information when you use our mobile application.</p>
+
+        <h2>1. Information We Collect</h2>
+        <p>{{APP_NAME}} ("we," "our," or "us") collects the following information:</p>
+        <ul>
+            <li><strong>Device Information:</strong> Device type, operating system, and app usage analytics</li>
+            <li><strong>Purchase Information:</strong> Limited transaction metadata related to the one-time in‑app
+                purchase (e.g., store purchase token, transaction ID, product ID, country). We do <em>not</em> collect
+                or store raw payment card numbers or billing details; these are handled securely by the app store (Apple
+                App Store).</li>
+        </ul>
+
+        <h2>2. How We Use Your Information</h2>
+        <p>We use your information to:</p>
+        <ul>
+            <li>Provide and improve our {{APP_SERVICE_TYPE}} services</li>
+            <li>Personalize your {{APP_EXPERIENCE}} experience</li>
+            <li>Validate your one-time purchase and maintain your lifetime license</li>
+            <li>Send important updates about your account or our services</li>
+            <li>Analyze app usage to improve functionality</li>
+        </ul>
+
+        <h2>2.1 One-Time Purchase{{PURCHASE_GUARANTEE_SECTION}}</h2>
+        <p>{{APP_NAME}} is offered under a <strong>one-time purchase model of {{PRICE_NUMBER}}</strong>. Upon successful purchase
+            you receive:</p>
+        <ul>
+            <li><strong>Lifetime access</strong> to the App and its core {{APP_CORE_FEATURES}} features</li>
+            {{GUARANTEE_LIST_ITEM}}
+            <li>Eligibility for non-paid feature updates and stability improvements</li>
+        </ul>
+        <p>The purchase is processed by the respective app store. We only store the minimal purchase token necessary to
+            verify entitlement and prevent fraud.</p>
+
+        <h2>3. Information Sharing</h2>
+        <p>We do not sell, trade, or rent your personal information to third parties. We may share information only in
+            the following circumstances:</p>
+        <ul>
+            <li>With your explicit consent</li>
+            <li>To comply with legal obligations</li>
+            <li>With service providers who help us operate our app (under strict confidentiality agreements)</li>
+            <li>With app store/platform providers for purchase validation and fraud prevention</li>
+        </ul>
+
+        <h2>4. Data Security</h2>
+        <p>We implement appropriate security measures to protect your personal information against unauthorized access,
+            alteration, disclosure, or destruction. Your data is encrypted in transit and at rest.</p>
+
+        <h2>5. Data Retention</h2>
+        <p>We retain your information for as long as your account is active or as needed to provide you services.
+            Purchase verification tokens may be retained to uphold your lifetime license and audit entitlement. You may
+            request deletion of your account and associated data at any time (subject to minimal retention required for
+            fraud prevention and accounting).</p>
+
+        <h2>6. Your Rights</h2>
+        <p>You have the right to:</p>
+        <ul>
+            <li>Access your personal information</li>
+            <li>Correct inaccurate data</li>
+            <li>Request deletion of your data</li>
+            <li>Opt-out of non-essential communications</li>
+            {{USER_RIGHTS_ADDITIONAL}}
+        </ul>
+
+        <h2>7. Children's Privacy</h2>
+        <p>Our service is not intended for children under 13. We do not knowingly collect personal information from
+            children under 13.</p>
+
+        <h2>8. Changes to This Policy</h2>
+        <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new
+            policy on this page.</p>
+        <p>If pricing, purchase verification methods{{POLICY_CHANGE_ADDITIONAL}}, we will
+            highlight those modifications clearly and, where required, seek consent.</p>
+
+        <h2>9. Contact Us</h2>
+        <p>If you have any questions about this Privacy Policy, please contact us at:</p>
+        <p><strong>Email:</strong> mail@ahmousavi.com</p>
+        <p><strong>Address:</strong> Hauptstr. 4, 61276 Weilrod</p>
+        <p><strong>Phone:</strong> +49 15753674255</p>
+
+        <hr style="margin-top: 40px;">
+        <p style="text-align: center; color: #666; font-size: 14px;">
+            © {{YEAR}} {{APP_NAME}}. All rights reserved.
+        </p>
+    </div>
+</body>
+
+</html>

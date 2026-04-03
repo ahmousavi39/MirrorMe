@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ai-stylist-backend
+    env: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # The rest of the env vars must be added manually in the Render dashboard:
+      # FIREBASE_SERVICE_ACCOUNT  (paste full JSON of serviceAccountKey.json)
+      # XIMILAR_API_TOKEN
+      # GEMINI_API_KEY
+      # STRIPE_SECRET_KEY
+      # STRIPE_WEBHOOK_SECRET
+      # STRIPE_PRICE_ID
+      # APP_DEEP_LINK

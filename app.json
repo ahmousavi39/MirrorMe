@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "MirrorMe",
+    "slug": "MirrorMe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "mirrorme",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ahmousavi.MirrorMe",
+      "googleServicesFile": "./credits/GoogleService-Info.plist",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MirrorMe needs camera access to capture your outfit for style analysis.",
+        "NSPhotoLibraryUsageDescription": "MirrorMe needs photo library access to select your outfit for style analysis."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#b93ec7"
+      },
+      "package": "com.ahmousavi.MirrorMe",
+      "googleServicesFile": "./credits/google-services.json",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MirrorMe needs photo access to analyze your outfit.",
+          "cameraPermission": "MirrorMe needs camera access to capture your outfit."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
