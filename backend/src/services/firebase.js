@@ -15,8 +15,8 @@ if (!admin.apps.length) {
     credential = admin.credential.cert(serviceAccount);
   } else {
     // Local dev: resolve path relative to this file
-    // __dirname = backend/src/services  →  ../../../credits = AI Stylist/credits
-    const keyPath = path.resolve(__dirname, '../../../credits/serviceAccountKey.json');
+    // __dirname = backend/src/services  →  ../../credits = backend/credits
+    const keyPath = path.resolve(__dirname, '../../credits/serviceAccountKey.json');
     const serviceAccount = require(keyPath);
     credential = admin.credential.cert(serviceAccount);
   }

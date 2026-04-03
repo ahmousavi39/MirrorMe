@@ -4,7 +4,7 @@
 // For production, update to your Render URL once deployed.
 export const BACKEND_URL = __DEV__
   ? 'http://localhost:3000'
-  : 'https://ai-stylist-backend.onrender.com';
+  : 'https://mirrorme-0d8o.onrender.com';
 
 // ── RevenueCat ────────────────────────────────────────────────────────────────────
 // Get from: https://app.revenuecat.com → Project → API Keys → Apple App Store key

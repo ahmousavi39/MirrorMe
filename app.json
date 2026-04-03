@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ahmousavi.MirrorMe",
-      "googleServicesFile": "./credits/GoogleService-Info.plist",
+      "googleServicesFile": "./backend/credits/GoogleService-Info.plist",
       "infoPlist": {
         "NSCameraUsageDescription": "MirrorMe needs camera access to capture your outfit for style analysis.",
         "NSPhotoLibraryUsageDescription": "MirrorMe needs photo library access to select your outfit for style analysis."
@@ -28,7 +28,7 @@
         "backgroundColor": "#b93ec7"
       },
       "package": "com.ahmousavi.MirrorMe",
-      "googleServicesFile": "./credits/google-services.json",
+      "googleServicesFile": "./backend/credits/google-services.json",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES"
