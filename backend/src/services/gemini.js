@@ -13,7 +13,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg') {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     generationConfig: {
       temperature: 0.7,
       maxOutputTokens: 1024,

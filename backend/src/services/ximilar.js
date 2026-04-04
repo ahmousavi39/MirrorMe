@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const XIMILAR_FASHION_URL = 'https://api.ximilar.com/tagging/commercial/v2/fashion';
+const XIMILAR_FASHION_URL = 'https://api.ximilar.com/tagging/fashion/v2/tags';
 
 /**
  * Sends a base64-encoded image to the Ximilar Fashion Tagging API.
@@ -31,32 +31,53 @@ async function analyzeClothing(base64Image) {
     throw new Error(`Ximilar API error: ${record._status?.text || 'Unknown error'}`);
   }
 
-  // Normalize detected objects into a clean structure
-  const clothingItems = (record._objects || []).map((obj) => {
-    const allTags = obj._tags || [];
+  // The fashion/v2/tags endpoint returns _tags directly on each record object.
+  // Each tag has: name, prob, type (category, color, material, etc.)
+  const allTags = record._tags || [];
 
-    const color = allTags.find((t) => t.type === 'color')?.name || null;
-    const material = allTags.find((t) => t.type === 'material')?.name || null;
-    const pattern = allTags.find((t) => t.type === 'pattern')?.name || null;
-    const fit = allTags.find((t) => t.type === 'fit')?.name || null;
-    const style = allTags.find((t) => t.type === 'style')?.name || null;
+  // Group tags by type to build a single clothing-item-style summary
+  const getTag = (type) => {
+    const tag = allTags
+      .filter((t) => t.type === type)
+      .sort((a, b) => b.prob - a.prob)[0];
+    return tag ? tag.name : null;
+  };
 
-    // Top confidence tags (score > 0.3), excluding the typed ones already captured
-    const topTags = allTags
-      .filter((t) => !['color', 'material', 'pattern', 'fit', 'style'].includes(t.type))
-      .filter((t) => t.prob > 0.3)
-      .map((t) => t.name);
+  // If the endpoint detected specific garment objects, use those; otherwise aggregate
+  const objects = record._objects;
+  if (objects && objects.length > 0) {
+    const clothingItems = objects.map((obj) => {
+      const tags = obj._tags || [];
+      return {
+        category: obj.name || 'Unknown item',
+        color: tags.find((t) => t.type === 'color')?.name || null,
+        material: tags.find((t) => t.type === 'material')?.name || null,
+        pattern: tags.find((t) => t.type === 'pattern')?.name || null,
+        fit: tags.find((t) => t.type === 'fit')?.name || null,
+        style: tags.find((t) => t.type === 'style')?.name || null,
+        tags: tags
+          .filter((t) => !['color', 'material', 'pattern', 'fit', 'style'].includes(t.type) && t.prob > 0.3)
+          .map((t) => t.name),
+      };
+    });
+    return clothingItems;
+  }
 
-    return {
-      category: obj.name || 'Unknown item',
-      color,
-      material,
-      pattern,
-      fit,
-      style,
-      tags: topTags,
-    };
-  });
+  // Fallback: build one item from top-level tags
+  const categories = allTags
+    .filter((t) => t.type === 'category' && t.prob > 0.3)
+    .sort((a, b) => b.prob - a.prob)
+    .map((t) => t.name);
+
+  const clothingItems = [{
+    category: categories[0] || 'Outfit',
+    color: getTag('color'),
+    material: getTag('material'),
+    pattern: getTag('pattern'),
+    fit: getTag('fit'),
+    style: getTag('style'),
+    tags: categories.slice(1),
+  }];
 
   return clothingItems;
 }
