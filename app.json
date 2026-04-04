@@ -15,11 +15,12 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ahmousavi.MirrorMe",
-      "googleServicesFile": "./backend/credits/GoogleService-Info.plist",
+      "bundleIdentifier": "com.ahmousavi.mirrorme",
+      "googleServicesFile": "./credits/GoogleService-Info.plist",
       "infoPlist": {
         "NSCameraUsageDescription": "MirrorMe needs camera access to capture your outfit for style analysis.",
-        "NSPhotoLibraryUsageDescription": "MirrorMe needs photo library access to select your outfit for style analysis."
+        "NSPhotoLibraryUsageDescription": "MirrorMe needs photo library access to select your outfit for style analysis.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -28,10 +29,11 @@
         "backgroundColor": "#b93ec7"
       },
       "package": "com.ahmousavi.MirrorMe",
-      "googleServicesFile": "./backend/credits/google-services.json",
+      "googleServicesFile": "./credits/google-services.json",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -47,10 +49,17 @@
           "photosPermission": "MirrorMe needs photo access to analyze your outfit.",
           "cameraPermission": "MirrorMe needs camera access to capture your outfit."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "30856d60-3f87-40c9-babb-e226d5bfedde"
+      }
     }
   }
 }

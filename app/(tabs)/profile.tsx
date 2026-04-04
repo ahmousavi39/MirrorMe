@@ -9,10 +9,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getSubscriptionStatus } from '@/services/api';
 import { SubscriptionStatus } from '@/types/app';
 import SettingsModal from '@/components/SettingsModal';
+import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
 
-// RevenueCat — native module, not available in Expo Go
+// RevenueCat — native modules, not available in Expo Go
 let Purchases: any = null;
-try { Purchases = require('react-native-purchases').default; } catch { /* Expo Go */ }
+let RevenueCatUI: any = null;
+let PAYWALL_RESULT: any = {};
+try {
+  Purchases = require('react-native-purchases').default;
+  const rcUI = require('react-native-purchases-ui');
+  RevenueCatUI = rcUI.default;
+  PAYWALL_RESULT = rcUI.PAYWALL_RESULT;
+} catch { /* Expo Go */ }
 
 function getInitials(email: string): string {
   return email.slice(0, 2).toUpperCase();
@@ -41,26 +49,27 @@ export default function ProfileScreen() {
   useEffect(() => { loadStatus(); }, []);
 
   const handleUpgrade = async () => {
-    if (!Purchases) {
+    if (!RevenueCatUI) {
       Alert.alert(
         'Dev Build Required',
-        'Subscriptions require a native build (expo run:ios). RevenueCat is not available in Expo Go.',
+        'Subscriptions require a native build. RevenueCat is not available in Expo Go.',
       );
       return;
     }
     setPurchaseLoading(true);
     try {
       const offerings = await Purchases.getOfferings();
-      const pkg = offerings.current?.availablePackages?.[0];
-      if (!pkg) {
-        Alert.alert('No plans available', 'Please try again later.');
-        return;
-      }
-      const { customerInfo } = await Purchases.purchasePackage(pkg);
-      const isPremium = !!customerInfo.entitlements.active['premium'];
-      if (isPremium) {
+      const offering = offerings.all[RC_OFFERING_ID] ?? offerings.current;
+      const result = await RevenueCatUI.presentPaywallIfNeeded({
+        requiredEntitlementIdentifier: RC_PREMIUM_ENTITLEMENT,
+        offering,
+      });
+      if (
+        result === PAYWALL_RESULT.PURCHASED ||
+        result === PAYWALL_RESULT.RESTORED
+      ) {
         Alert.alert('🎉 You\'re Premium!', 'Enjoy unlimited outfit analyses.');
-        loadStatus(); // Refresh status — backend is updated via webhook
+        loadStatus();
       }
     } catch (e: any) {
       if (!e.userCancelled) {

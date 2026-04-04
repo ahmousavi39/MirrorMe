@@ -1,16 +1,12 @@
 // ── Backend URL ───────────────────────────────────────────────────────────────────
-// For local dev on a physical iPhone, replace 'localhost' with your machine's local IP
-// e.g. 'http://192.168.1.42:3000'
-// For production, update to your Render URL once deployed.
-export const BACKEND_URL = __DEV__
-  ? 'http://localhost:3000'
-  : 'https://mirrorme-0d8o.onrender.com';
+export const BACKEND_URL = 'https://mirrorme-0d8o.onrender.com';
 
 // ── RevenueCat ────────────────────────────────────────────────────────────────────
 // Get from: https://app.revenuecat.com → Project → API Keys → Apple App Store key
-// ⚠️  Update this before running on a real device
 export const RC_IOS_API_KEY = 'appl_YQPLsaELaIRRGITSgrNZqNFJGvB';
 
-// ── Entitlement identifier ────────────────────────────────────────────────────────
-// Must match what you set in the RevenueCat dashboard under Entitlements
-export const RC_PREMIUM_ENTITLEMENT = 'ahmousavi';
+// Must match the Offering identifier in RevenueCat dashboard (set to 'default' or your custom one)
+export const RC_OFFERING_ID = 'MirrorMe_Premium';
+
+// Must match the Entitlement identifier in RevenueCat dashboard
+export const RC_PREMIUM_ENTITLEMENT = 'Ahmousavi Pro';

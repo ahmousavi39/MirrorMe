@@ -46,6 +46,30 @@ router.get('/profile', verifyToken, async (req, res) => {
   }
 });
 
+// ── POST /api/user/profile ────────────────────────────────────────────────────────
+// Saves onboarding profile fields (name, sex, height, weight, styleCategories)
+router.post('/profile', verifyToken, async (req, res) => {
+  try {
+    const { name, sex, heightCm, weightKg, styleCategories } = req.body;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'name is required' });
+    }
+    const update = {
+      name: name.trim(),
+      sex: sex || null,
+      heightCm: heightCm != null ? Number(heightCm) : null,
+      weightKg: weightKg != null ? Number(weightKg) : null,
+      styleCategories: Array.isArray(styleCategories) ? styleCategories : [],
+      profileComplete: true,
+    };
+    await db.collection('users').doc(req.uid).update(update);
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Save profile error:', error);
+    return res.status(500).json({ error: 'Failed to save profile' });
+  }
+});
+
 // ── GET /api/user/history ─────────────────────────────────────────────────────────
 // Returns the 20 most recent style analyses for the authenticated user
 router.get('/history', verifyToken, async (req, res) => {

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Image, ActivityIndicator, Alert, Platform,
@@ -13,6 +14,18 @@ import { analyzePhoto, getSubscriptionStatus } from '@/services/api';
 import UsageBanner from '@/components/UsageBanner';
 import SettingsModal from '@/components/SettingsModal';
 import { SubscriptionStatus } from '@/types/app';
+import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
+
+// RevenueCat paywall UI — native module, not available in Expo Go
+let Purchases: any = null;
+let RevenueCatUI: any = null;
+let PAYWALL_RESULT: any = {};
+try {
+  Purchases = require('react-native-purchases').default;
+  const rcUI = require('react-native-purchases-ui');
+  RevenueCatUI = rcUI.default;
+  PAYWALL_RESULT = rcUI.PAYWALL_RESULT;
+} catch { /* Expo Go */ }
 
 export default function AnalyzeScreen() {
   const { theme } = useTheme();
@@ -41,8 +54,8 @@ export default function AnalyzeScreen() {
     }
   }, []);
 
-  // Load on first render
-  useState(() => { loadStatus(); });
+  // Reload status every time this tab is focused (catches post-purchase state)
+  useFocusEffect(useCallback(() => { loadStatus(); }, [loadStatus]));
 
   const pickFromGallery = async () => {
     const { status: permStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -90,14 +103,37 @@ export default function AnalyzeScreen() {
       router.push('/results');
     } catch (e: any) {
       if (e.code === 'LIMIT_REACHED') {
-        Alert.alert(
-          '📊 Weekly Limit Reached',
-          'You\'ve used all 2 free uploads for this week.\nUpgrade to Premium for unlimited access.',
-          [
-            { text: 'Not Now', style: 'cancel' },
-            { text: 'Upgrade ✨', onPress: () => router.push('/(tabs)/profile') },
-          ]
-        );
+        if (RevenueCatUI) {
+          try {
+            const offerings = await Purchases.getOfferings();
+            const offering = offerings.all[RC_OFFERING_ID] ?? offerings.current;
+            const result = await RevenueCatUI.presentPaywallIfNeeded({
+              requiredEntitlementIdentifier: RC_PREMIUM_ENTITLEMENT,
+              offering,
+            });
+            if (
+              result === PAYWALL_RESULT.PURCHASED ||
+              result === PAYWALL_RESULT.RESTORED
+            ) {
+              Alert.alert('🎉 You\'re Premium!', 'Enjoy unlimited outfit analyses.');
+              loadStatus();
+            }
+          } catch (paywallErr: any) {
+            if (!paywallErr.userCancelled) {
+              Alert.alert('Purchase failed', paywallErr.message || 'Please try again.');
+            }
+          }
+        } else {
+          // Expo Go fallback
+          Alert.alert(
+            '📊 Weekly Limit Reached',
+            'You\'ve used all 2 free uploads for this week.\nUpgrade to Premium for unlimited access.',
+            [
+              { text: 'Not Now', style: 'cancel' },
+              { text: 'Upgrade ✨', onPress: () => router.push('/(tabs)/profile') },
+            ]
+          );
+        }
       } else {
         Alert.alert('Error', e.message || 'Something went wrong. Please try again.');
       }
@@ -271,58 +307,4 @@ const makeStyles = (theme: any) => StyleSheet.create({
   overlayCard: { borderRadius: 20, padding: 32, alignItems: 'center', gap: 12, width: 240 },
   overlayTitle: { fontSize: 17, fontWeight: '700' },
   overlaySub: { fontSize: 13, textAlign: 'center' },
-});
-
-
-  return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Tab One</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>
-            Tab Navigation
-          </Text>
-          <Text style={[styles.cardText, { color: theme.textSecondary }]}>
-            This is a tab screen. Add more tabs in app/(tabs)/ folder.
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  cardText: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
 });

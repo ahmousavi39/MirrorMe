@@ -72,3 +72,22 @@ export async function initUser(): Promise<void> {
   const headers = await authHeaders();
   await fetch(`${BACKEND_URL}/api/user/init`, { method: 'POST', headers });
 }
+
+// ── POST /api/user/profile ────────────────────────────────────────────────────────
+export interface UserProfile {
+  name: string;
+  sex: 'male' | 'female' | 'other' | null;
+  heightCm: number | null;
+  weightKg: number | null;
+  styleCategories: string[];
+}
+
+export async function saveProfile(profile: UserProfile): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/user/profile`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile),
+  });
+  if (!res.ok) throw new Error('Failed to save profile');
+}

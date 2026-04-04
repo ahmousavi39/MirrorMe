@@ -22,6 +22,7 @@ function RootNavigator() {
     } else if (user && inAuthGroup) {
       router.replace('/(tabs)');
     }
+    // Allow logged-in users through onboarding freely
   }, [user, loading, segments]);
 
   if (loading) {
@@ -36,6 +37,7 @@ function RootNavigator() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade', gestureEnabled: false }} />
       <Stack.Screen name="results" options={{ headerShown: false, presentation: 'modal' }} />
     </Stack>
   );

@@ -4,13 +4,13 @@ import { auth } from '@/services/firebase';
 import { initUser } from '@/services/api';
 import { RC_IOS_API_KEY } from '@/constants/config';
 
-// ── RevenueCat (native module — not available in Expo Go) ─────────────────────────
-// Build with: npx expo run:ios  (dev client)
+// ── RevenueCat ───────────────────────────────────────────────────────────────────
 let Purchases: any = null;
+let rcConfigured = false;
 try {
   Purchases = require('react-native-purchases').default;
 } catch {
-  console.warn('RevenueCat not available (Expo Go). Use a dev build for subscription features.');
+  // not available
 }
 
 interface AuthContextType {
@@ -26,47 +26,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety net: if Firebase doesn't respond in 5s, stop loading anyway
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      console.warn('Firebase auth timed out — proceeding without auth state');
+    }, 5000);
+
     // Configure RevenueCat once on app start
     if (Purchases) {
       try {
         Purchases.configure({ apiKey: RC_IOS_API_KEY });
+        rcConfigured = true;
       } catch (e) {
         console.warn('RevenueCat configure error:', e);
       }
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      clearTimeout(timeout);
       setUser(firebaseUser);
       setLoading(false);
 
       if (firebaseUser) {
-        // Tie the RevenueCat identity to the Firebase UID so subscriptions
-        // are always linked to the correct user account
-        if (Purchases) {
+        if (Purchases && rcConfigured) {
           try {
             await Purchases.logIn(firebaseUser.uid);
           } catch (e) {
             console.warn('RevenueCat logIn error:', e);
           }
         }
-        // Ensure Firestore user document exists
         try {
           await initUser();
         } catch (e) {
           console.warn('User init error:', e);
         }
       } else {
-        if (Purchases) {
+        if (Purchases && rcConfigured) {
           try {
             await Purchases.logOut();
           } catch {
-            // Ignore — user may not have been logged in
+            // ignore
           }
         }
       }
     });
 
-    return unsubscribe;
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
