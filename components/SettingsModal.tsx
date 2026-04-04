@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Animated, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CustomAlert, { AlertButton } from './CustomAlert';
+import ProfileEditModal from './ProfileEditModal';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -18,6 +19,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
     buttons?: AlertButton[];
     icon?: 'info' | 'error' | 'success' | 'warning';
   }>({ title: '', message: '' });
+  const [profileEditVisible, setProfileEditVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(visible);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -101,6 +103,21 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Profile</Text>
+
+              <TouchableOpacity
+                style={[styles.settingItem, { backgroundColor: theme.card }]}
+                onPress={() => setProfileEditVisible(true)}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="person-circle-outline" size={24} color={theme.primary} />
+                  <Text style={[styles.settingText, { color: theme.text }]}>Edit Profile</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
               
               <TouchableOpacity
@@ -178,6 +195,11 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
         buttons={alertConfig.buttons}
         icon={alertConfig.icon}
         onClose={() => setAlertVisible(false)}
+      />
+
+      <ProfileEditModal
+        visible={profileEditVisible}
+        onClose={() => setProfileEditVisible(false)}
       />
     </Modal>
   );

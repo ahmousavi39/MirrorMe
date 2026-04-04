@@ -3,15 +3,15 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
+import { setPendingOnboarding } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,10 +35,12 @@ export default function RegisterScreen() {
     setError('');
     setLoading(true);
     try {
+      // Set the sync flag BEFORE Firebase creates the user so onAuthStateChanged
+      // can read it immediately when it fires — no React batching race condition.
+      setPendingOnboarding(true);
       await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
-      // Redirect to onboarding to collect profile info
-      router.replace('/onboarding');
     } catch (e: any) {
+      setPendingOnboarding(false); // reset flag if registration failed
       const msg =
         e.code === 'auth/email-already-in-use' ? 'An account with this email already exists'
         : e.code === 'auth/invalid-email' ? 'Please enter a valid email address'

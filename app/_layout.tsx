@@ -9,7 +9,7 @@ import 'react-native-reanimated';
 
 // ── Auth guard — redirects based on login state ───────────────────────────────────
 function RootNavigator() {
-  const { user, loading } = useAuth();
+  const { user, loading, isNewUser } = useAuth();
   const { theme } = useTheme();
   const segments = useSegments();
   const router = useRouter();
@@ -17,13 +17,16 @@ function RootNavigator() {
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === 'auth';
+    const inOnboarding = segments[0] === 'onboarding';
     if (!user && !inAuthGroup) {
       router.replace('/auth/login');
     } else if (user && inAuthGroup) {
-      router.replace('/(tabs)');
+      router.replace(isNewUser ? '/onboarding' : '/(tabs)');
+    } else if (user && !inOnboarding && isNewUser) {
+      // Came back to app mid-onboarding (e.g. app killed)
+      router.replace('/onboarding');
     }
-    // Allow logged-in users through onboarding freely
-  }, [user, loading, segments]);
+  }, [user, loading, isNewUser, segments]);
 
   if (loading) {
     return (

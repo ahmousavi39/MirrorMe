@@ -32,13 +32,14 @@ router.post('/init', verifyToken, async (req, res) => {
 router.get('/profile', verifyToken, async (req, res) => {
   try {
     const userSnap = await db.collection('users').doc(req.uid).get();
-    const userData = userSnap.data() || {};
-
+    const d = userSnap.data() || {};
     return res.json({
-      uid: req.uid,
-      email: userData.email || req.email || null,
-      isSubscribed: userData.isSubscribed || false,
-      createdAt: userData.createdAt || null,
+      name: d.name || null,
+      sex: d.sex || null,
+      age: d.age || null,
+      heightCm: d.heightCm || null,
+      weightKg: d.weightKg || null,
+      styleCategories: d.styleCategories || [],
     });
   } catch (error) {
     console.error('Profile error:', error);
@@ -47,16 +48,17 @@ router.get('/profile', verifyToken, async (req, res) => {
 });
 
 // ── POST /api/user/profile ────────────────────────────────────────────────────────
-// Saves onboarding profile fields (name, sex, height, weight, styleCategories)
+// Saves onboarding / settings profile fields
 router.post('/profile', verifyToken, async (req, res) => {
   try {
-    const { name, sex, heightCm, weightKg, styleCategories } = req.body;
+    const { name, sex, age, heightCm, weightKg, styleCategories } = req.body;
     if (!name || typeof name !== 'string') {
       return res.status(400).json({ error: 'name is required' });
     }
     const update = {
       name: name.trim(),
       sex: sex || null,
+      age: age != null ? Number(age) : null,
       heightCm: heightCm != null ? Number(heightCm) : null,
       weightKg: weightKg != null ? Number(weightKg) : null,
       styleCategories: Array.isArray(styleCategories) ? styleCategories : [],

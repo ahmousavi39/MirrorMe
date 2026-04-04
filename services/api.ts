@@ -68,18 +68,36 @@ export async function getHistory(): Promise<HistoryItem[]> {
 
 // ── POST /api/user/init ───────────────────────────────────────────────────────────
 // Called on first login to create the Firestore user document.
-export async function initUser(): Promise<void> {
+export async function initUser(): Promise<{ isNewUser: boolean }> {
   const headers = await authHeaders();
-  await fetch(`${BACKEND_URL}/api/user/init`, { method: 'POST', headers });
+  const res = await fetch(`${BACKEND_URL}/api/user/init`, { method: 'POST', headers });
+  if (!res.ok) return { isNewUser: false };
+  return res.json();
 }
 
 // ── POST /api/user/profile ────────────────────────────────────────────────────────
 export interface UserProfile {
   name: string;
   sex: 'male' | 'female' | 'other' | null;
+  age: number | null;
   heightCm: number | null;
   weightKg: number | null;
   styleCategories: string[];
+}
+
+export async function getProfile(): Promise<Partial<UserProfile>> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/user/profile`, { headers });
+  if (!res.ok) return {};
+  const data = await res.json();
+  return {
+    name: data.name ?? '',
+    sex: data.sex ?? null,
+    age: data.age ?? null,
+    heightCm: data.heightCm ?? null,
+    weightKg: data.weightKg ?? null,
+    styleCategories: data.styleCategories ?? [],
+  };
 }
 
 export async function saveProfile(profile: UserProfile): Promise<void> {

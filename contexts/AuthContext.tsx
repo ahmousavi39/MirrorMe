@@ -13,9 +13,16 @@ try {
   // not available
 }
 
+// Module-level flag — set synchronously before Firebase creates the user,
+// so it's guaranteed to be readable the moment onAuthStateChanged fires.
+let _pendingOnboarding = false;
+export function setPendingOnboarding(val: boolean) { _pendingOnboarding = val; }
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isNewUser: boolean;
+  completeOnboarding: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -24,6 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
     // Safety net: if Firebase doesn't respond in 5s, stop loading anyway
@@ -44,29 +52,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       clearTimeout(timeout);
+
+      // Unblock UI immediately — don't wait for initUser
+      if (_pendingOnboarding) {
+        setIsNewUser(true);
+        _pendingOnboarding = false;
+      } else {
+        setIsNewUser(false);
+      }
       setUser(firebaseUser);
       setLoading(false);
 
       if (firebaseUser) {
         if (Purchases && rcConfigured) {
-          try {
-            await Purchases.logIn(firebaseUser.uid);
-          } catch (e) {
+          try { await Purchases.logIn(firebaseUser.uid); } catch (e) {
             console.warn('RevenueCat logIn error:', e);
           }
         }
-        try {
-          await initUser();
-        } catch (e) {
+        // initUser runs in background — isNewUser is set by register.tsx directly
+        try { await initUser(); } catch (e) {
           console.warn('User init error:', e);
         }
       } else {
+        setIsNewUser(false);
         if (Purchases && rcConfigured) {
-          try {
-            await Purchases.logOut();
-          } catch {
-            // ignore
-          }
+          try { await Purchases.logOut(); } catch { /* ignore */ }
         }
       }
     });
@@ -81,8 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(auth);
   };
 
+  const completeOnboarding = () => setIsNewUser(false);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isNewUser, completeOnboarding, signOut }}>
       {children}
     </AuthContext.Provider>
   );

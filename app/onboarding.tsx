@@ -7,6 +7,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { saveProfile, UserProfile } from '@/services/api';
 
 const STYLE_CATEGORIES = [
@@ -27,6 +28,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function OnboardingScreen() {
   const { theme } = useTheme();
+  const { completeOnboarding } = useAuth();
   const router = useRouter();
 
   const [step, setStep] = useState(0);
@@ -37,6 +39,7 @@ export default function OnboardingScreen() {
 
   // Step 2 — Body stats
   const [sex, setSex] = useState<'male' | 'female' | 'other' | null>(null);
+  const [age, setAge] = useState('');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
 
@@ -96,11 +99,13 @@ export default function OnboardingScreen() {
       const profile: UserProfile = {
         name: name.trim(),
         sex,
+        age: age ? parseInt(age, 10) : null,
         heightCm: height ? parseFloat(height) : null,
         weightKg: weight ? parseFloat(weight) : null,
         styleCategories: selectedStyles,
       };
       await saveProfile(profile);
+      completeOnboarding(); // clear isNewUser before navigating so guard doesn't redirect back
       router.replace('/(tabs)');
     } catch {
       Alert.alert('Error', 'Could not save your profile. Please try again.');
@@ -175,6 +180,21 @@ export default function OnboardingScreen() {
                     </Text>
                   </TouchableOpacity>
                 ))}
+              </View>
+
+              {/* Age */}
+              <Text style={s.fieldLabel}>Age</Text>
+              <View style={s.inputWrapper}>
+                <Ionicons name="calendar-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
+                <TextInput
+                  style={s.input}
+                  placeholder="e.g. 25"
+                  placeholderTextColor={theme.placeholder}
+                  value={age}
+                  onChangeText={setAge}
+                  keyboardType="numeric"
+                  returnKeyType="next"
+                />
               </View>
 
               {/* Height */}
