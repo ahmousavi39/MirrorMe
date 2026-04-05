@@ -93,4 +93,65 @@ Rules:
   };
 }
 
-module.exports = { rateOutfit };
+/**
+ * Fallback: when Ximilar is unavailable, use Gemini vision to extract
+ * clothing items in the same structure that analyzeClothing() returns.
+ *
+ * @param {string} base64Image — raw base64 string
+ * @param {string} mimeType — e.g. 'image/jpeg'
+ * @returns {Promise<Array>} clothingItems
+ */
+async function extractClothingFromImage(base64Image, mimeType = 'image/jpeg') {
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3-flash-preview',
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 1024,
+    },
+  });
+
+  const prompt = `You are a fashion AI visual detector. Analyze the outfit in this photo and list every distinct clothing item you can see.
+
+Respond ONLY with valid JSON — no markdown, no explanation:
+{
+  "items": [
+    {
+      "category": "T-Shirt",
+      "color": "white",
+      "material": "cotton",
+      "pattern": "solid",
+      "fit": "regular",
+      "style": "casual",
+      "tags": ["crew neck", "short sleeve"]
+    }
+  ]
+}
+
+Rules:
+- category: the garment name (e.g. "Jeans", "Sneakers", "Hoodie", "Dress")
+- color: dominant color, or null if unclear
+- material: fabric/material, or null if unclear
+- pattern: e.g. "solid", "striped", "floral", or null
+- fit: e.g. "slim", "regular", "oversized", or null
+- style: e.g. "casual", "formal", "streetwear", or null
+- tags: array of other notable attributes (can be empty)
+- If you cannot see any clothing clearly, return { "items": [] }`;
+
+  const imagePart = {
+    inlineData: {
+      data: base64Image,
+      mimeType,
+    },
+  };
+
+  const result = await model.generateContent([prompt, imagePart]);
+  const rawText = result.response.text().trim();
+
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Gemini clothing extraction did not return JSON');
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return Array.isArray(parsed.items) ? parsed.items : [];
+}
+
+module.exports = { rateOutfit, extractClothingFromImage };

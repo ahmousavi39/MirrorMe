@@ -5,7 +5,7 @@ const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const { db } = require('../services/firebase');
 const { analyzeClothing } = require('../services/ximilar');
-const { rateOutfit } = require('../services/gemini');
+const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
 const FREE_UPLOADS_PER_WEEK = 2;
 
@@ -73,8 +73,15 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     try {
       clothingItems = await analyzeClothing(base64Image);
     } catch (ximilarErr) {
-      // Non-fatal: Gemini can still rate the outfit from the image alone
-      console.warn('Ximilar failed (continuing without clothing tags):', ximilarErr.message);
+      // Ximilar unavailable — fall back to Gemini vision for clothing extraction
+      console.warn('Ximilar failed, trying Gemini fallback for clothing tags:', ximilarErr.message);
+      try {
+        clothingItems = await extractClothingFromImage(base64Image, mimeType);
+        console.log(`Gemini extracted ${clothingItems.length} clothing item(s) as fallback`);
+      } catch (fallbackErr) {
+        // Still non-fatal — Gemini can rate the outfit from the image alone
+        console.warn('Gemini clothing fallback also failed:', fallbackErr.message);
+      }
     }
 
     // ── 4. Gemini — rate the outfit ───────────────────────────────────────────
