@@ -9,6 +9,17 @@ export interface ClothingItem {
   tags: string[];
 }
 
+// ── Occasion the user is styling for ────────────────────────────────────────────
+export type Occasion =
+  | 'casual'
+  | 'work'
+  | 'date'
+  | 'night_out'
+  | 'interview'
+  | 'formal'
+  | 'sport'
+  | 'travel';
+
 // ── Full analysis result returned by /api/analyze ────────────────────────────────
 export interface AnalysisResult {
   uploadId: string;
@@ -16,6 +27,7 @@ export interface AnalysisResult {
   feedback: string;
   suggestions: string[];
   clothingItems: ClothingItem[];
+  occasion: Occasion | null;
   uploadsUsedThisWeek: number;
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;
@@ -29,6 +41,7 @@ export interface HistoryItem {
   feedback: string;
   suggestions: string[];
   clothingItems: ClothingItem[];
+  occasion: Occasion | null;
   weekKey: string;
   createdAt: string;
 }

@@ -13,8 +13,19 @@ import { useAnalysis } from '@/contexts/AnalysisContext';
 import { analyzePhoto, getSubscriptionStatus } from '@/services/api';
 import UsageBanner from '@/components/UsageBanner';
 import SettingsModal from '@/components/SettingsModal';
-import { SubscriptionStatus } from '@/types/app';
+import { Occasion, SubscriptionStatus } from '@/types/app';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
+
+const OCCASIONS: { key: Occasion; label: string; emoji: string }[] = [
+  { key: 'casual',    label: 'Casual',    emoji: '🛍️' },
+  { key: 'work',      label: 'Work',      emoji: '💼' },
+  { key: 'date',      label: 'Date',      emoji: '💛' },
+  { key: 'night_out', label: 'Night Out', emoji: '🌙' },
+  { key: 'interview', label: 'Interview', emoji: '📋' },
+  { key: 'formal',    label: 'Formal',    emoji: '🧐' },
+  { key: 'sport',     label: 'Sport',     emoji: '🏋️' },
+  { key: 'travel',    label: 'Travel',    emoji: '✈️' },
+];
 
 // RevenueCat paywall UI — native module, not available in Expo Go
 let Purchases: any = null;
@@ -30,11 +41,12 @@ try {
 export default function AnalyzeScreen() {
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { setResult } = useAnalysis();
+  const { setResult, setImageUri } = useAnalysis();
   const router = useRouter();
 
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageUri, setImageUriState] = useState<string | null>(null);
   const [imageMime, setImageMime] = useState('image/jpeg');
+  const [occasion, setOccasion] = useState<Occasion | null>(null);
   const [loading, setLoading] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
@@ -70,7 +82,7 @@ export default function AnalyzeScreen() {
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
+      setImageUriState(result.assets[0].uri);
       setImageMime(result.assets[0].mimeType || 'image/jpeg');
     }
   };
@@ -87,7 +99,7 @@ export default function AnalyzeScreen() {
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
+      setImageUriState(result.assets[0].uri);
       setImageMime(result.assets[0].mimeType || 'image/jpeg');
     }
   };
@@ -96,7 +108,8 @@ export default function AnalyzeScreen() {
     if (!imageUri) return;
     setLoading(true);
     try {
-      const result = await analyzePhoto(imageUri, imageMime);
+      const result = await analyzePhoto(imageUri, imageMime, occasion);
+      setImageUri(imageUri);
       setResult(result);
       // Refresh usage counter after a successful analysis
       loadStatus();
@@ -198,6 +211,33 @@ export default function AnalyzeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Occasion picker */}
+        <View style={s.occasionSection}>
+          <Text style={[s.occasionTitle, { color: theme.text }]}>Styling for</Text>
+          <View style={s.occasionGrid}>
+            {OCCASIONS.map((o) => {
+              const selected = occasion === o.key;
+              return (
+                <TouchableOpacity
+                  key={o.key}
+                  style={[
+                    s.occasionChip,
+                    { borderColor: selected ? theme.primary : theme.border,
+                      backgroundColor: selected ? `${theme.primary}18` : theme.card },
+                  ]}
+                  onPress={() => setOccasion(selected ? null : o.key)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={s.occasionEmoji}>{o.emoji}</Text>
+                  <Text style={[s.occasionLabel, { color: selected ? theme.primary : theme.text }]}>
+                    {o.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Analyze button */}
         <TouchableOpacity
           style={[s.analyzeBtn, !imageUri && s.analyzeBtnDisabled]}
@@ -210,7 +250,9 @@ export default function AnalyzeScreen() {
           ) : (
             <>
               <Ionicons name="sparkles" size={20} color="#fff" />
-              <Text style={s.analyzeBtnText}>Analyze My Style</Text>
+              <Text style={s.analyzeBtnText}>
+                {occasion ? `Analyze for ${OCCASIONS.find(o => o.key === occasion)?.label}` : 'Analyze My Style'}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -299,6 +341,17 @@ const makeStyles = (theme: any) => StyleSheet.create({
   tipsTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   tipText: { fontSize: 14, flex: 1 },
+  // Occasion picker
+  occasionSection: { gap: 10 },
+  occasionTitle: { fontSize: 15, fontWeight: '700' },
+  occasionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  occasionChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 9,
+    borderRadius: 20, borderWidth: 1.5,
+  },
+  occasionEmoji: { fontSize: 16 },
+  occasionLabel: { fontSize: 14, fontWeight: '600' },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.55)',

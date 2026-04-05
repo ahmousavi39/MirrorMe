@@ -41,7 +41,7 @@ function RootNavigator() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false, animation: 'fade' }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade', gestureEnabled: false }} />
-      <Stack.Screen name="results" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="results" options={{ headerShown: false, animation: 'slide_from_right' }} />
     </Stack>
   );
 }

@@ -11,7 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  * @param {string} mimeType — e.g. 'image/jpeg'
  * @returns {Promise<{ score: number, feedback: string, suggestions: string[] }>}
  */
-async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg') {
+async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', occasion = null, userProfile = {}) {
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
     generationConfig: {
@@ -20,7 +20,7 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg') {
     },
   });
 
-  // Build a human-readable description from Ximilar data
+  // Build clothing description
   const clothingDescription =
     clothingItems.length > 0
       ? clothingItems
@@ -33,18 +33,50 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg') {
           .join('\n')
       : '• No specific clothing items detected — please analyze the full outfit from the image.';
 
-  const prompt = `You are a professional fashion stylist with 10+ years of experience dressing clients for real-world scenarios.
+  // Build user profile context
+  const profileLines = [];
+  if (userProfile.name)   profileLines.push(`Name: ${userProfile.name}`);
+  if (userProfile.sex)    profileLines.push(`Sex: ${userProfile.sex}`);
+  if (userProfile.age)    profileLines.push(`Age: ${userProfile.age}`);
+  if (userProfile.heightCm) profileLines.push(`Height: ${userProfile.heightCm} cm`);
+  if (userProfile.weightKg) profileLines.push(`Weight: ${userProfile.weightKg} kg`);
+  if (userProfile.styleCategories && userProfile.styleCategories.length > 0) {
+    profileLines.push(`Style preferences: ${userProfile.styleCategories.join(', ')}`);
+  }
+  const profileSection = profileLines.length > 0
+    ? `User profile:\n${profileLines.map(l => `• ${l}`).join('\n')}`
+    : 'No user profile provided.';
 
-A user wants honest, constructive feedback on their outfit. Here are the clothing items detected by AI vision:
+  // Occasion context
+  const occasionMap = {
+    casual:    'a casual day out (errands, hanging with friends, shopping)',
+    work:      'a work / office day (professional environment)',
+    date:      'a romantic date (first date or anniversary dinner)',
+    night_out: 'a night out (bar, club, or party)',
+    interview: 'a job interview (formal, high-stakes first impression)',
+    formal:    'a formal event (wedding, gala, or black-tie)',
+    sport:     'sport or gym (active, performance-focused)',
+    travel:    'travel (airport, long trip, comfort-focused)',
+  };
+  const occasionLine = occasion && occasionMap[occasion]
+    ? `Occasion: ${occasionMap[occasion]}.`
+    : 'No specific occasion provided — rate the outfit generally.';
 
+  const prompt = `You are a professional fashion stylist with 10+ years of experience.
+
+${profileSection}
+
+${occasionLine}
+
+Clothing items detected:
 ${clothingDescription}
 
-Look at the photo carefully and provide your professional assessment.
+Use the user's body measurements, age, sex and style preferences to give highly personalised feedback. Factor in what flatters their body type, suits their age, matches their stated style preferences, and fits the occasion.
 
 Respond ONLY with valid JSON in this EXACT format — no markdown, no explanation, no extra text:
 {
   "score": 7.5,
-  "feedback": "2-3 sentences of honest, specific assessment of the overall look.",
+  "feedback": "2-3 sentences of personalised, honest assessment referencing the user's profile and occasion.",
   "suggestions": [
     "Specific actionable tip 1",
     "Specific actionable tip 2",
@@ -54,10 +86,10 @@ Respond ONLY with valid JSON in this EXACT format — no markdown, no explanatio
 }
 
 Rules:
-- score: a number between 1.0 and 10.0 with one decimal
-- feedback: be honest but encouraging, reference specific items
-- suggestions: exactly 4 tips, each starting with an action verb (e.g. "Swap", "Add", "Tuck", "Try")
-- Keep language simple and practical`;
+- score: 1.0–10.0, one decimal. Weight occasion fit and body-type appropriateness heavily.
+- feedback: reference specific items, the occasion, and at least one profile detail (e.g. body type, age, style preference).
+- suggestions: exactly 4 tips tailored to the user's profile + occasion, each starting with an action verb.
+- Keep language simple, warm and practical.`;
 
   const imagePart = {
     inlineData: {

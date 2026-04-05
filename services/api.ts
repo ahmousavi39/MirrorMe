@@ -18,7 +18,8 @@ async function authHeaders() {
 // Sends a photo to the backend for Ximilar + Gemini analysis.
 export async function analyzePhoto(
   imageUri: string,
-  mimeType: string = 'image/jpeg'
+  mimeType: string = 'image/jpeg',
+  occasion: string | null = null
 ): Promise<AnalysisResult> {
   const headers = await authHeaders();
 
@@ -28,6 +29,7 @@ export async function analyzePhoto(
     type: mimeType,
     name: 'photo.jpg',
   } as unknown as Blob);
+  if (occasion) formData.append('occasion', occasion);
 
   const response = await fetch(`${BACKEND_URL}/api/analyze`, {
     method: 'POST',

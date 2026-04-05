@@ -53,6 +53,16 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const isSubscribed = userData.isSubscribed === true;
     const weeklyCount = weeklySnap.exists ? (weeklySnap.data().count || 0) : 0;
 
+    // Pull profile fields already stored on the user doc (set during onboarding)
+    const userProfile = {
+      name:             userData.name             || null,
+      sex:              userData.sex              || null,
+      age:              userData.age              || null,
+      heightCm:         userData.heightCm         || null,
+      weightKg:         userData.weightKg         || null,
+      styleCategories:  userData.styleCategories  || [],
+    };
+
     if (!isSubscribed && weeklyCount >= FREE_UPLOADS_PER_WEEK) {
       return res.status(403).json({
         error: 'Weekly free limit reached',
@@ -67,6 +77,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // ── 2. Convert image buffer to base64 ─────────────────────────────────────
     const base64Image = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
+    const occasion = req.body?.occasion || null;
 
     // ── 3. Ximilar — identify clothing items ──────────────────────────────────
     let clothingItems = [];
@@ -87,7 +98,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // ── 4. Gemini — rate the outfit ───────────────────────────────────────────
     let geminiResult;
     try {
-      geminiResult = await rateOutfit(base64Image, clothingItems, mimeType);
+      geminiResult = await rateOutfit(base64Image, clothingItems, mimeType, occasion, userProfile);
     } catch (geminiErr) {
       console.error('Gemini error:', geminiErr.message);
       return res.status(502).json({ error: 'AI rating service unavailable. Please try again.' });
@@ -100,6 +111,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       feedback: geminiResult.feedback,
       suggestions: geminiResult.suggestions,
       clothingItems,
+      occasion: occasion || null,
       weekKey,
       createdAt: new Date().toISOString(),
     };
@@ -130,6 +142,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       feedback: geminiResult.feedback,
       suggestions: geminiResult.suggestions,
       clothingItems,
+      occasion: occasion || null,
       uploadsUsedThisWeek: weeklyCount + 1,
       uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
       remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_PER_WEEK - (weeklyCount + 1)),
