@@ -119,9 +119,6 @@ export default function ResultsScreen() {
               <Ionicons name="shirt-outline" size={64} color={theme.primary} />
             </View>
           )}
-          {/* Gradient-like fade at the bottom of the photo */}
-          <View style={[s.heroFade, { backgroundColor: theme.background }]} />
-
           {/* Detected clothing items — overlaid at the bottom of the photo */}
           {result.clothingItems.length > 0 && (
             <View style={s.photoTagsContainer}>
@@ -314,10 +311,6 @@ const makeStyles = (theme: any) => StyleSheet.create({
   heroContainer: { width: SCREEN_WIDTH, height: PHOTO_HEIGHT, position: 'relative' },
   heroImage: { width: '100%', height: '100%' },
   heroPlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  heroFade: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: 80, opacity: 0.9,
-  },
   photoTagsContainer: {
     position: 'absolute', bottom: 42, left: 0, right: 0,
   },
