@@ -3,14 +3,20 @@ import { onAuthStateChanged, signOut as firebaseSignOut, User } from 'firebase/a
 import { auth } from '@/services/firebase';
 import { initUser } from '@/services/api';
 import { RC_IOS_API_KEY } from '@/constants/config';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 // ── RevenueCat ───────────────────────────────────────────────────────────────────
+// Skip native RevenueCat in Expo Go — it requires a development/production build.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 let Purchases: any = null;
 let rcConfigured = false;
-try {
-  Purchases = require('react-native-purchases').default;
-} catch {
-  // not available
+if (!isExpoGo) {
+  try {
+    Purchases = require('react-native-purchases').default;
+  } catch {
+    // not available
+  }
 }
 
 // Module-level flag — set synchronously before Firebase creates the user,
