@@ -19,6 +19,7 @@ import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
 const OCCASIONS: { key: Occasion; label: string; emoji: string }[] = [
   { key: 'casual',    label: 'Casual',    emoji: '🛍️' },
   { key: 'work',      label: 'Work',      emoji: '💼' },
+  { key: 'school',    label: 'School',    emoji: '🎓' },
   { key: 'date',      label: 'Date',      emoji: '💛' },
   { key: 'night_out', label: 'Night Out', emoji: '🌙' },
   { key: 'interview', label: 'Interview', emoji: '📋' },

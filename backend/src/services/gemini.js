@@ -51,6 +51,7 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
   const occasionMap = {
     casual:    'a casual day out (errands, hanging with friends, shopping)',
     work:      'a work / office day (professional environment)',
+    school:    'school or university (student environment)',
     date:      'a romantic date (first date or anniversary dinner)',
     night_out: 'a night out (bar, club, or party)',
     interview: 'a job interview (formal, high-stakes first impression)',
@@ -59,8 +60,12 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
     travel:    'travel (airport, long trip, comfort-focused)',
   };
   const occasionLine = occasion && occasionMap[occasion]
-    ? `Occasion: ${occasionMap[occasion]}.`
-    : 'No specific occasion provided — rate the outfit generally.';
+    ? `Primary occasion the user chose: ${occasionMap[occasion]}.`
+    : 'No specific occasion chosen — give a general rating.';
+
+  const allOccasionsList = Object.entries(occasionMap)
+    .map(([key, desc]) => `  "${key}": /* score for ${desc} */`)
+    .join('\n');
 
   const prompt = `You are a professional fashion stylist with 10+ years of experience.
 
@@ -73,22 +78,28 @@ ${clothingDescription}
 
 Use the user's body measurements, age, sex and style preferences to give highly personalised feedback. Factor in what flatters their body type, suits their age, matches their stated style preferences, and fits the occasion.
 
+Also score how well this outfit works for EVERY occasion listed in "occasionScores".
+
 Respond ONLY with valid JSON in this EXACT format — no markdown, no explanation, no extra text:
 {
   "score": 7.5,
-  "feedback": "2-3 sentences of personalised, honest assessment referencing the user's profile and occasion.",
+  "feedback": "2-3 sentences of personalised, honest assessment referencing the user's profile and the primary occasion.",
   "suggestions": [
     "Specific actionable tip 1",
     "Specific actionable tip 2",
     "Specific actionable tip 3",
     "Specific actionable tip 4"
-  ]
+  ],
+  "occasionScores": {
+${allOccasionsList}
+  }
 }
 
 Rules:
-- score: 1.0–10.0, one decimal. Weight occasion fit and body-type appropriateness heavily.
-- feedback: reference specific items, the occasion, and at least one profile detail (e.g. body type, age, style preference).
-- suggestions: exactly 4 tips tailored to the user's profile + occasion, each starting with an action verb.
+- score: overall rating for the primary occasion (or general if none chosen), 1.0–10.0, one decimal.
+- feedback: reference specific items, the primary occasion, and at least one profile detail.
+- suggestions: exactly 4 tips tailored to the primary occasion + user profile, each starting with an action verb.
+- occasionScores: a score 1.0–10.0 (one decimal) for EVERY occasion key — how well this exact outfit works for that context.
 - Keep language simple, warm and practical.`;
 
   const imagePart = {
@@ -118,10 +129,20 @@ Rules:
     throw new Error('Gemini JSON missing required fields');
   }
 
+  // Normalise occasionScores — clamp each to 1–10, fill missing keys with the overall score
+  const ALL_OCCASIONS = ['casual', 'work', 'school', 'date', 'night_out', 'interview', 'formal', 'sport', 'travel'];
+  const rawScores = parsed.occasionScores || {};
+  const occasionScores = {};
+  for (const key of ALL_OCCASIONS) {
+    const v = rawScores[key];
+    occasionScores[key] = typeof v === 'number' ? Math.min(10, Math.max(1, v)) : parsed.score;
+  }
+
   return {
     score: Math.min(10, Math.max(1, parsed.score)),
     feedback: parsed.feedback,
     suggestions: parsed.suggestions.slice(0, 4),
+    occasionScores,
   };
 }
 

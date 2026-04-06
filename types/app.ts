@@ -18,7 +18,8 @@ export type Occasion =
   | 'interview'
   | 'formal'
   | 'sport'
-  | 'travel';
+  | 'travel'
+  | 'school';
 
 // ── Full analysis result returned by /api/analyze ────────────────────────────────
 export interface AnalysisResult {
@@ -28,6 +29,7 @@ export interface AnalysisResult {
   suggestions: string[];
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
+  occasionScores: Record<Occasion, number>;
   uploadsUsedThisWeek: number;
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;
@@ -42,6 +44,7 @@ export interface HistoryItem {
   suggestions: string[];
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
+  occasionScores?: Record<Occasion, number>;
   weekKey: string;
   createdAt: string;
 }
