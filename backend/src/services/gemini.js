@@ -16,7 +16,7 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
     model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 2048,
     },
   });
 
