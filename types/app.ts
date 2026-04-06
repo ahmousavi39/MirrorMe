@@ -26,7 +26,8 @@ export interface AnalysisResult {
   uploadId: string;
   score: number;
   feedback: string;
-  suggestions: string[];
+  styleTips: string[];
+  occasionTips: string[];
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
   occasionScores: Record<Occasion, number>;
@@ -42,7 +43,8 @@ export interface HistoryItem {
   id: string;
   score: number;
   feedback: string;
-  suggestions: string[];
+  styleTips?: string[];
+  occasionTips?: string[];
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
   occasionScores?: Record<Occasion, number>;

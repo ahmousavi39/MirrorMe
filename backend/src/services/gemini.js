@@ -84,11 +84,14 @@ Respond ONLY with valid JSON in this EXACT format — no markdown, no explanatio
 {
   "score": 7.5,
   "feedback": "2-3 sentences focused on fit, color combination and overall styling — then relate it to the occasion and one profile detail.",
-  "suggestions": [
+  "styleTips": [
     "Specific tip about fit or proportions",
     "Specific tip about color or pattern",
-    "Specific tip about a piece or combination",
-    "Specific tip about occasion or accessory"
+    "Specific tip about a piece or combination"
+  ],
+  "occasionTips": [
+    "Specific tip about how to adapt this outfit for the chosen occasion",
+    "Specific tip about an accessory or swap that suits the event better"
   ],
   "colorPalette": ["#1a1a2e", "#e8c4a0", "#4a4a4a"],
   "occasionScores": {
@@ -99,7 +102,8 @@ ${allOccasionsList}
 Rules:
 - score: 1.0–10.0, one decimal. Weight fit quality, color harmony and style coherence, then occasion fit.
 - feedback: ALWAYS open with a style observation (fit / color combo / proportions) before mentioning occasion.
-- suggestions: each starts with an action verb. Tips 1-2 must address fit or color/pattern. Tips 3-4 can address occasion or accessories.
+- styleTips: 2–4 tips purely about improving the style itself — fit, proportions, color harmony, pattern mixing, layering. Each starts with an action verb.
+- occasionTips: 1–3 tips about adapting the outfit specifically for the chosen event/occasion context. If no occasion was chosen, give general versatility tips. Each starts with an action verb.
 - colorPalette: array of 1–5 hex color strings (e.g. "#ffffff") representing the main colors in the outfit. Exact hex, no names.
 - occasionScores: score 1.0–10.0 for EVERY key — how well this outfit works for that context.
 - Keep language simple, warm and practical.`;
@@ -126,7 +130,8 @@ Rules:
   if (
     typeof parsed.score !== 'number' ||
     typeof parsed.feedback !== 'string' ||
-    !Array.isArray(parsed.suggestions)
+    !Array.isArray(parsed.styleTips) ||
+    !Array.isArray(parsed.occasionTips)
   ) {
     throw new Error('Gemini JSON missing required fields');
   }
@@ -149,7 +154,8 @@ Rules:
   return {
     score: Math.min(10, Math.max(1, parsed.score)),
     feedback: parsed.feedback,
-    suggestions: parsed.suggestions.slice(0, 4),
+    styleTips: parsed.styleTips.slice(0, 4),
+    occasionTips: parsed.occasionTips.slice(0, 3),
     occasionScores,
     colorPalette,
   };

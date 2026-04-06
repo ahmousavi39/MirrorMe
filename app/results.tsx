@@ -242,19 +242,41 @@ export default function ResultsScreen() {
             </View>
           )}
 
-          {/* Style tips */}
-          {result.suggestions.length > 0 && (
+          {/* Style improvement tips */}
+          {result.styleTips.length > 0 && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="bulb" size={16} color={theme.primary} />
+                  <Ionicons name="color-palette" size={16} color={theme.primary} />
                 </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>Style Tips</Text>
+                <Text style={[s.cardTitle, { color: theme.text }]}>Improve Your Style</Text>
               </View>
               <View style={s.tipsList}>
-                {result.suggestions.map((tip, i) => (
-                  <View key={i} style={[s.tipRow, i < result.suggestions.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                {result.styleTips.map((tip, i) => (
+                  <View key={i} style={[s.tipRow, i < result.styleTips.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
                     <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                    <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Occasion tips */}
+          {result.occasionTips.length > 0 && (
+            <View style={[s.card, { backgroundColor: theme.card }]}>
+              <View style={s.cardHeader}>
+                <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
+                  <Ionicons name="calendar" size={16} color={theme.secondary} />
+                </View>
+                <Text style={[s.cardTitle, { color: theme.text }]}>
+                  {result.occasion ? `Styling for ${OCCASION_META[result.occasion].emoji} ${OCCASION_META[result.occasion].label}` : 'Event Styling'}
+                </Text>
+              </View>
+              <View style={s.tipsList}>
+                {result.occasionTips.map((tip, i) => (
+                  <View key={i} style={[s.tipRow, i < result.occasionTips.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                    <Text style={[s.tipIndex, { color: theme.secondary }]}>{String(i + 1).padStart(2, '0')}</Text>
                     <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
                   </View>
                 ))}
