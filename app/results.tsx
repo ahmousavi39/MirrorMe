@@ -26,7 +26,7 @@ const OCCASION_ORDER: Occasion[] = [
 ];
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const PHOTO_HEIGHT = 300;
+const PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.35);
 
 function getScoreColor(score: number) {
   if (score >= 8) return '#30D158';
