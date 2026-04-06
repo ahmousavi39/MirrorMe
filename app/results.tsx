@@ -253,7 +253,7 @@ export default function ResultsScreen() {
           )}
 
           {/* Occasion tips */}
-          {result.occasionTips.length > 0 && (
+          {result.occasion && result.occasionTips.length > 0 && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
