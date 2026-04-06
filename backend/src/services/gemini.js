@@ -157,33 +157,33 @@ Rules:
 async function extractClothingFromImage(base64Image, mimeType = 'image/jpeg') {
   const imagePart = { inlineData: { data: base64Image, mimeType } };
 
-  // Two prompts: detailed first, minimal fallback on retry
   const attempts = [
     {
       temperature: 0.1,
-      prompt: `You are a fashion item detector. Look at the outfit in this photo.
+      prompt: `You are a fashion item detector. Identify every clothing item visible in this photo.
 
-Return ONLY a raw JSON object — no markdown, no code fences, no extra text.
-The object must have exactly one key "items" whose value is an array.
-Each element of the array must be a JSON object with exactly these keys and value types:
-  "category": string (garment name, e.g. "Jeans", "T-Shirt", "Sneakers")
-  "color":    string or null
-  "material": string or null
-  "pattern":  string or null (e.g. "solid", "striped", "floral")
-  "fit":      string or null (e.g. "slim", "regular", "oversized")
-  "style":    string or null (e.g. "casual", "formal", "streetwear")
-  "tags":     array of short strings, NO special characters, NO quotes inside strings
+Output ONLY a raw JSON object. No markdown. No code fences. No comments. No extra text.
 
-All string values must use only plain ASCII characters. No apostrophes inside values.
-If no clothing is visible return: {"items":[]}
-Output nothing except the JSON object.`,
+Schema — each item has exactly these 6 keys:
+  "category": string  (e.g. "Jeans", "T-Shirt", "Sneakers", "Hoodie")
+  "color":    string or null  (e.g. "black", "white", "navy blue")
+  "material": string or null  (e.g. "cotton", "denim", "leather", "polyester")
+  "pattern":  string or null  (e.g. "solid", "striped", "floral", "plaid", "checkered")
+  "fit":      string or null  (e.g. "slim", "regular", "oversized", "baggy", "fitted")
+  "style":    string or null  (e.g. "casual", "formal", "streetwear", "sporty", "preppy")
+
+All values must be plain ASCII strings or null. No arrays. No nested objects. No special characters.
+
+Example output:
+{"items":[{"category":"White T-Shirt","color":"white","material":"cotton","pattern":"solid","fit":"regular","style":"casual"},{"category":"Blue Jeans","color":"blue","material":"denim","pattern":"solid","fit":"slim","style":"casual"}]}
+
+If no clothing is visible: {"items":[]}`,
     },
     {
       temperature: 0.0,
-      prompt: `Look at the outfit. Return ONLY this JSON and nothing else:
-{"items":[{"category":"...","color":null,"material":null,"pattern":null,"fit":null,"style":null,"tags":[]}]}
-Replace the "..." with the garment name. Add more objects for each visible garment.
-Use only plain letters and spaces in all string values. No special characters.
+      prompt: `List clothing items in this photo as JSON. Output only the JSON, nothing else.
+Format: {"items":[{"category":"name","color":"color or null","material":"material or null","pattern":"pattern or null","fit":"fit or null","style":"style or null"}]}
+One object per garment. All values are strings or the word null. No arrays inside objects.
 If no clothing: {"items":[]}`,
     },
   ];
@@ -195,7 +195,7 @@ If no clothing: {"items":[]}`,
         model: 'gemini-3-flash-preview',
         generationConfig: {
           temperature,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
           responseMimeType: 'application/json',
         },
       });
@@ -203,13 +203,11 @@ If no clothing: {"items":[]}`,
       const result = await model.generateContent([prompt, imagePart]);
       const rawText = result.response.text().trim();
 
-      // Strip markdown fences just in case
       const stripped = rawText
         .replace(/^```(?:json)?\s*/i, '')
         .replace(/\s*```$/, '')
         .trim();
 
-      // Find outermost JSON object
       const jsonMatch = stripped.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         console.warn('Gemini clothing: no JSON object found, raw:', rawText.slice(0, 200));
@@ -219,7 +217,6 @@ If no clothing: {"items":[]}`,
       const parsed = JSON.parse(jsonMatch[0]);
       if (!Array.isArray(parsed.items)) throw new Error('items is not an array');
 
-      // Sanitise each item — drop any field that isn't a plain string/null/array
       const clean = parsed.items.map((item) => ({
         category: typeof item.category === 'string' ? item.category : 'Clothing item',
         color:    typeof item.color    === 'string' ? item.color    : null,
@@ -227,9 +224,7 @@ If no clothing: {"items":[]}`,
         pattern:  typeof item.pattern  === 'string' ? item.pattern  : null,
         fit:      typeof item.fit      === 'string' ? item.fit      : null,
         style:    typeof item.style    === 'string' ? item.style    : null,
-        tags:     Array.isArray(item.tags)
-          ? item.tags.filter((t) => typeof t === 'string').slice(0, 5)
-          : [],
+        tags:     [],
       }));
 
       return clean;
