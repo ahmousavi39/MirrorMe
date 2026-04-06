@@ -79,7 +79,7 @@ export default function AnalyzeScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images',
       allowsEditing: true,
-      aspect: [3, 4],
+      aspect: [9, 16],
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
@@ -96,7 +96,7 @@ export default function AnalyzeScreen() {
     }
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      aspect: [3, 4],
+      aspect: [9, 16],
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
