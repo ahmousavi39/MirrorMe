@@ -126,7 +126,7 @@ export default function ResultsScreen() {
                 {result.clothingItems.map((item, i) => (
                   <View key={i} style={s.photoTag}>
                     <Text style={s.photoTagText}>
-                      {item.category}{item.color ? ` · ${item.color}` : ''}
+                      {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
                     </Text>
                   </View>
                 ))}
