@@ -213,7 +213,7 @@ export default function AnalyzeScreen() {
         {/* Occasion picker */}
         <View style={s.occasionSection}>
           <Text style={[s.occasionTitle, { color: theme.text }]}>Styling for</Text>
-          <View style={s.occasionGrid}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.occasionRow}>
             {OCCASIONS.map((o) => {
               const selected = occasion === o.key;
               return (
@@ -234,7 +234,7 @@ export default function AnalyzeScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
 
         {/* Analyze button */}
@@ -343,7 +343,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
   // Occasion picker
   occasionSection: { gap: 10 },
   occasionTitle: { fontSize: 15, fontWeight: '700' },
-  occasionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  occasionRow: { flexDirection: 'row', gap: 8, paddingVertical: 2 },
   occasionChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 9,
