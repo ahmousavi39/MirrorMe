@@ -11,7 +11,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { analyzePhoto, getSubscriptionStatus } from '@/services/api';
-import UsageBanner from '@/components/UsageBanner';
 import SettingsModal from '@/components/SettingsModal';
 import { Occasion, SubscriptionStatus } from '@/types/app';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
@@ -170,15 +169,6 @@ export default function AnalyzeScreen() {
       </View>
 
       <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Usage banner */}
-        {status && (
-          <UsageBanner
-            used={status.uploadsUsedThisWeek}
-            limit={status.uploadsLimitPerWeek}
-            isSubscribed={status.isSubscribed}
-          />
-        )}
-
         {/* Photo area */}
         <TouchableOpacity
           style={s.photoArea}
