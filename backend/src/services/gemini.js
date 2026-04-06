@@ -155,54 +155,91 @@ Rules:
  * @returns {Promise<Array>} clothingItems
  */
 async function extractClothingFromImage(base64Image, mimeType = 'image/jpeg') {
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-3-flash-preview',
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 1024,
-      responseMimeType: 'application/json',
+  const imagePart = { inlineData: { data: base64Image, mimeType } };
+
+  // Two prompts: detailed first, minimal fallback on retry
+  const attempts = [
+    {
+      temperature: 0.1,
+      prompt: `You are a fashion item detector. Look at the outfit in this photo.
+
+Return ONLY a raw JSON object — no markdown, no code fences, no extra text.
+The object must have exactly one key "items" whose value is an array.
+Each element of the array must be a JSON object with exactly these keys and value types:
+  "category": string (garment name, e.g. "Jeans", "T-Shirt", "Sneakers")
+  "color":    string or null
+  "material": string or null
+  "pattern":  string or null (e.g. "solid", "striped", "floral")
+  "fit":      string or null (e.g. "slim", "regular", "oversized")
+  "style":    string or null (e.g. "casual", "formal", "streetwear")
+  "tags":     array of short strings, NO special characters, NO quotes inside strings
+
+All string values must use only plain ASCII characters. No apostrophes inside values.
+If no clothing is visible return: {"items":[]}
+Output nothing except the JSON object.`,
     },
-  });
-
-  const prompt = `You are a fashion AI visual detector. Analyze the outfit in this photo and list every distinct clothing item you can see.
-
-Return a JSON object with an "items" array. Each item must have these fields:
-- category (string): garment name, e.g. "Jeans", "Sneakers", "Hoodie", "Dress"
-- color (string or null): dominant color
-- material (string or null): fabric, e.g. "cotton", "denim", "leather"
-- pattern (string or null): e.g. "solid", "striped", "floral", "plaid"
-- fit (string or null): e.g. "slim", "regular", "oversized", "baggy"
-- style (string or null): e.g. "casual", "formal", "streetwear", "sporty"
-- tags (array of strings): other notable attributes like "crew neck", "logo print"
-
-If no clothing is clearly visible, return {"items":[]}.`;
-
-  const imagePart = {
-    inlineData: {
-      data: base64Image,
-      mimeType,
+    {
+      temperature: 0.0,
+      prompt: `Look at the outfit. Return ONLY this JSON and nothing else:
+{"items":[{"category":"...","color":null,"material":null,"pattern":null,"fit":null,"style":null,"tags":[]}]}
+Replace the "..." with the garment name. Add more objects for each visible garment.
+Use only plain letters and spaces in all string values. No special characters.
+If no clothing: {"items":[]}`,
     },
-  };
+  ];
 
-  const result = await model.generateContent([prompt, imagePart]);
-  const rawText = result.response.text().trim();
+  let lastError;
+  for (const { temperature, prompt } of attempts) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-3-flash-preview',
+        generationConfig: {
+          temperature,
+          maxOutputTokens: 1024,
+          responseMimeType: 'application/json',
+        },
+      });
 
-  // Strip markdown fences if present, then find the JSON object
-  const stripped = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-  const jsonMatch = stripped.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    console.warn('Gemini clothing extraction raw response:', rawText.slice(0, 300));
-    throw new Error('Gemini clothing extraction did not return parseable JSON');
+      const result = await model.generateContent([prompt, imagePart]);
+      const rawText = result.response.text().trim();
+
+      // Strip markdown fences just in case
+      const stripped = rawText
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+
+      // Find outermost JSON object
+      const jsonMatch = stripped.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.warn('Gemini clothing: no JSON object found, raw:', rawText.slice(0, 200));
+        throw new Error('No JSON object in response');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(parsed.items)) throw new Error('items is not an array');
+
+      // Sanitise each item — drop any field that isn't a plain string/null/array
+      const clean = parsed.items.map((item) => ({
+        category: typeof item.category === 'string' ? item.category : 'Clothing item',
+        color:    typeof item.color    === 'string' ? item.color    : null,
+        material: typeof item.material === 'string' ? item.material : null,
+        pattern:  typeof item.pattern  === 'string' ? item.pattern  : null,
+        fit:      typeof item.fit      === 'string' ? item.fit      : null,
+        style:    typeof item.style    === 'string' ? item.style    : null,
+        tags:     Array.isArray(item.tags)
+          ? item.tags.filter((t) => typeof t === 'string').slice(0, 5)
+          : [],
+      }));
+
+      return clean;
+    } catch (e) {
+      console.warn(`Gemini clothing extraction attempt failed: ${e.message}`);
+      lastError = e;
+    }
   }
 
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonMatch[0]);
-  } catch (e) {
-    throw new Error(`Gemini clothing extraction JSON.parse failed: ${e.message}`);
-  }
-
-  return Array.isArray(parsed.items) ? parsed.items : [];
+  throw new Error(`Gemini clothing extraction failed after retries: ${lastError?.message}`);
 }
 
 module.exports = { rateOutfit, extractClothingFromImage };
