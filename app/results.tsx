@@ -168,6 +168,26 @@ export default function ResultsScreen() {
             <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
           </View>
 
+          {/* Color palette */}
+          {result.colorPalette && result.colorPalette.length > 0 && (
+            <View style={[s.card, { backgroundColor: theme.card }]}>
+              <View style={s.cardHeader}>
+                <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
+                  <Ionicons name="color-palette" size={16} color={theme.primary} />
+                </View>
+                <Text style={[s.cardTitle, { color: theme.text }]}>Color Palette</Text>
+              </View>
+              <View style={s.paletteRow}>
+                {result.colorPalette.map((hex, i) => (
+                  <View key={i} style={s.paletteItem}>
+                    <View style={[s.paletteSwatch, { backgroundColor: hex }]} />
+                    <Text style={[s.paletteHex, { color: theme.textSecondary }]}>{hex.toUpperCase()}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Occasion scores breakdown */}
           {result.occasionScores && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
@@ -360,6 +380,16 @@ const makeStyles = (theme: any) => StyleSheet.create({
   countText: { fontSize: 12, fontWeight: '700' },
   feedbackText: { fontSize: 15, lineHeight: 24 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+
+  // Color palette
+  paletteRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  paletteItem: { alignItems: 'center', gap: 6 },
+  paletteSwatch: {
+    width: 48, height: 48, borderRadius: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15, shadowRadius: 4, elevation: 3,
+  },
+  paletteHex: { fontSize: 10, fontWeight: '600', letterSpacing: 0.5 },
 
   // Tips
   tipsList: { gap: 0 },

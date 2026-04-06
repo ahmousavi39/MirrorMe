@@ -30,6 +30,7 @@ export interface AnalysisResult {
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
   occasionScores: Record<Occasion, number>;
+  colorPalette: string[];
   uploadsUsedThisWeek: number;
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;

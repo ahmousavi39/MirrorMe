@@ -76,30 +76,32 @@ ${occasionLine}
 Clothing items detected:
 ${clothingDescription}
 
-Use the user's body measurements, age, sex and style preferences to give highly personalised feedback. Factor in what flatters their body type, suits their age, matches their stated style preferences, and fits the occasion.
+Analyse the photo focusing on the STYLE ITSELF — fit, proportions, color harmony, pattern mixing, layering and overall combination. Then factor in how well it matches the occasion and the user's profile.
 
-Also score how well this outfit works for EVERY occasion listed in "occasionScores".
+Also extract up to 5 dominant outfit colors as hex codes for a color palette.
 
 Respond ONLY with valid JSON in this EXACT format — no markdown, no explanation, no extra text:
 {
   "score": 7.5,
-  "feedback": "2-3 sentences of personalised, honest assessment referencing the user's profile and the primary occasion.",
+  "feedback": "2-3 sentences focused on fit, color combination and overall styling — then relate it to the occasion and one profile detail.",
   "suggestions": [
-    "Specific actionable tip 1",
-    "Specific actionable tip 2",
-    "Specific actionable tip 3",
-    "Specific actionable tip 4"
+    "Specific tip about fit or proportions",
+    "Specific tip about color or pattern",
+    "Specific tip about a piece or combination",
+    "Specific tip about occasion or accessory"
   ],
+  "colorPalette": ["#1a1a2e", "#e8c4a0", "#4a4a4a"],
   "occasionScores": {
 ${allOccasionsList}
   }
 }
 
 Rules:
-- score: overall rating for the primary occasion (or general if none chosen), 1.0–10.0, one decimal.
-- feedback: reference specific items, the primary occasion, and at least one profile detail.
-- suggestions: exactly 4 tips tailored to the primary occasion + user profile, each starting with an action verb.
-- occasionScores: a score 1.0–10.0 (one decimal) for EVERY occasion key — how well this exact outfit works for that context.
+- score: 1.0–10.0, one decimal. Weight fit quality, color harmony and style coherence, then occasion fit.
+- feedback: ALWAYS open with a style observation (fit / color combo / proportions) before mentioning occasion.
+- suggestions: each starts with an action verb. Tips 1-2 must address fit or color/pattern. Tips 3-4 can address occasion or accessories.
+- colorPalette: array of 1–5 hex color strings (e.g. "#ffffff") representing the main colors in the outfit. Exact hex, no names.
+- occasionScores: score 1.0–10.0 for EVERY key — how well this outfit works for that context.
 - Keep language simple, warm and practical.`;
 
   const imagePart = {
@@ -129,7 +131,7 @@ Rules:
     throw new Error('Gemini JSON missing required fields');
   }
 
-  // Normalise occasionScores — clamp each to 1–10, fill missing keys with the overall score
+  // Normalise occasionScores
   const ALL_OCCASIONS = ['casual', 'work', 'school', 'date', 'night_out', 'interview', 'formal', 'sport', 'travel'];
   const rawScores = parsed.occasionScores || {};
   const occasionScores = {};
@@ -138,11 +140,18 @@ Rules:
     occasionScores[key] = typeof v === 'number' ? Math.min(10, Math.max(1, v)) : parsed.score;
   }
 
+  // Sanitise colorPalette — keep only valid hex strings
+  const rawPalette = Array.isArray(parsed.colorPalette) ? parsed.colorPalette : [];
+  const colorPalette = rawPalette
+    .filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c))
+    .slice(0, 5);
+
   return {
     score: Math.min(10, Math.max(1, parsed.score)),
     feedback: parsed.feedback,
     suggestions: parsed.suggestions.slice(0, 4),
     occasionScores,
+    colorPalette,
   };
 }
 
