@@ -122,6 +122,21 @@ export default function ResultsScreen() {
           {/* Gradient-like fade at the bottom of the photo */}
           <View style={[s.heroFade, { backgroundColor: theme.background }]} />
 
+          {/* Detected clothing items — overlaid at the bottom of the photo */}
+          {result.clothingItems.length > 0 && (
+            <View style={s.photoTagsContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
+                {result.clothingItems.map((item, i) => (
+                  <View key={i} style={s.photoTag}>
+                    <Text style={s.photoTagText}>
+                      {item.category}{item.color ? ` · ${item.color}` : ''}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           {/* Floating header buttons */}
           <View style={s.floatingHeader}>
             <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleBack}>
@@ -157,17 +172,6 @@ export default function ResultsScreen() {
         {/* ── Sections ───────────────────────────────────────────────── */}
         <Animated.View style={[s.sections, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
-          {/* Feedback */}
-          <View style={[s.card, { backgroundColor: theme.card }]}>
-            <View style={s.cardHeader}>
-              <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
-              </View>
-              <Text style={[s.cardTitle, { color: theme.text }]}>AI Feedback</Text>
-            </View>
-            <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
-          </View>
-
           {/* Color palette */}
           {result.colorPalette && result.colorPalette.length > 0 && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
@@ -187,6 +191,17 @@ export default function ResultsScreen() {
               </View>
             </View>
           )}
+
+          {/* Feedback */}
+          <View style={[s.card, { backgroundColor: theme.card }]}>
+            <View style={s.cardHeader}>
+              <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
+                <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
+              </View>
+              <Text style={[s.cardTitle, { color: theme.text }]}>AI Feedback</Text>
+            </View>
+            <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
+          </View>
 
           {/* Occasion scores breakdown */}
           {result.occasionScores && (
@@ -216,28 +231,6 @@ export default function ResultsScreen() {
                     </View>
                   );
                 })}
-              </View>
-            </View>
-          )}
-
-          {/* Clothing items */}
-          {result.clothingItems.length > 0 && (
-            <View style={[s.card, { backgroundColor: theme.card }]}>
-              <View style={s.cardHeader}>
-                <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="shirt" size={16} color={theme.primary} />
-                </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>
-                  Detected Items
-                </Text>
-                <View style={[s.countBadge, { backgroundColor: `${theme.primary}18` }]}>
-                  <Text style={[s.countText, { color: theme.primary }]}>{result.clothingItems.length}</Text>
-                </View>
-              </View>
-              <View style={s.chipGrid}>
-                {result.clothingItems.map((item, i) => (
-                  <ClothingChip key={i} item={item} />
-                ))}
               </View>
             </View>
           )}
@@ -324,6 +317,21 @@ const makeStyles = (theme: any) => StyleSheet.create({
   heroFade: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     height: 80, opacity: 0.9,
+  },
+  photoTagsContainer: {
+    position: 'absolute', bottom: 42, left: 0, right: 0,
+  },
+  photoTagsScroll: {
+    paddingHorizontal: 14, gap: 6,
+  },
+  photoTag: {
+    backgroundColor: 'rgba(0,0,0,0.58)',
+    paddingHorizontal: 11, paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+  },
+  photoTagText: {
+    color: '#fff', fontSize: 12, fontWeight: '600',
   },
   floatingHeader: {
     position: 'absolute',
