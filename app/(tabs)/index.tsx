@@ -145,6 +145,10 @@ export default function AnalyzeScreen() {
             ]
           );
         }
+      } else if (e.code === 'NO_PERSON') {
+        Alert.alert('No person detected', 'We couldn\'t find a person in this photo. Please upload a photo of yourself wearing an outfit.');
+      } else if (e.code === 'NO_OUTFIT') {
+        Alert.alert('No outfit detected', 'Please upload a full-body or upper-body photo showing your outfit clearly.');
       } else {
         Alert.alert('Error', e.message || 'Something went wrong. Please try again.');
       }

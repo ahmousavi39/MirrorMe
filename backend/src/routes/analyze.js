@@ -136,6 +136,12 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       geminiResult = await rateOutfit(base64Image, clothingItems, mimeType, occasion, userProfile, wardrobeItems);
     } catch (geminiErr) {
       console.error('Gemini error:', geminiErr.message);
+      if (geminiErr.code === 'NO_PERSON') {
+        return res.status(422).json({ error: geminiErr.message, code: 'NO_PERSON' });
+      }
+      if (geminiErr.code === 'NO_OUTFIT') {
+        return res.status(422).json({ error: geminiErr.message, code: 'NO_OUTFIT' });
+      }
       return res.status(502).json({ error: 'AI rating service unavailable. Please try again.' });
     }
 

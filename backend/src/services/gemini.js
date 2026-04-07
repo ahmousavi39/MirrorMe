@@ -91,6 +91,14 @@ Analyse the photo focusing on the STYLE ITSELF — fit, proportions, color harmo
 Also extract up to 5 dominant outfit colors as hex codes for a color palette.
 
 Respond ONLY with valid JSON in this EXACT format — no markdown, no explanation, no extra text:
+
+IF the photo does not contain a visible person wearing clothing (e.g. it's a selfie of a face only, a landscape, an object, or blank), respond with ONLY this:
+{"errorCode": "NO_PERSON", "errorMessage": "No person or outfit detected in the photo."}
+
+IF a person is visible but clothing cannot be assessed (e.g. swimwear/underwear only, only a face visible below chin), respond with ONLY this:
+{"errorCode": "NO_OUTFIT", "errorMessage": "Could not assess an outfit in this photo. Please upload a full-body or upper-body outfit photo."}
+
+OTHERWISE respond with:
 {
   "score": 7.5,
   "feedback": "2-3 sentences focused on fit, color combination and overall styling — then relate it to the occasion and one profile detail.",
@@ -135,6 +143,13 @@ Rules:
   }
 
   const parsed = JSON.parse(jsonMatch[0]);
+
+  // Handle specific error codes returned by Gemini
+  if (parsed.errorCode) {
+    const err = new Error(parsed.errorMessage || 'Photo could not be analysed.');
+    err.code = parsed.errorCode;
+    throw err;
+  }
 
   // Validate structure
   if (
