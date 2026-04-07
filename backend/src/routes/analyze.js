@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
+const sharp = require('sharp');
 const router = express.Router();
 
 const verifyToken = require('../middleware/verifyToken');
@@ -87,15 +88,18 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const occasion = req.body?.occasion || null;
 
     // ── 2b. Upload image to Firebase Storage ──────────────────────────────────
-    const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
-    const fileName = `uploads/${uid}/${Date.now()}.${ext}`;
+    const fileName = `uploads/${uid}/${Date.now()}.jpg`;
     const token = crypto.randomUUID();
     let imageUrl = null;
     try {
+      const compressedBuffer = await sharp(req.file.buffer)
+        .resize({ width: 800, withoutEnlargement: true })
+        .jpeg({ quality: 70 })
+        .toBuffer();
       const file = bucket.file(fileName);
-      await file.save(req.file.buffer, {
+      await file.save(compressedBuffer, {
         metadata: {
-          contentType: mimeType,
+          contentType: 'image/jpeg',
           metadata: { firebaseStorageDownloadTokens: token },
         },
       });
