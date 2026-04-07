@@ -247,6 +247,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       colorPalette: geminiResult.colorPalette,
       clothingItems,
       occasion: occasion || null,
+      imageUrl: imageUrl || null,
       uploadsUsedThisWeek: weeklyCount + 1,
       uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
       remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_PER_WEEK - (weeklyCount + 1)),

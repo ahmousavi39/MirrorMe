@@ -59,7 +59,7 @@ function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void
 
 export default function HistoryScreen() {
   const { theme } = useTheme();
-  const { setResult } = useAnalysis();
+  const { setResult, setImageUri } = useAnalysis();
   const router = useRouter();
 
   const [uploads, setUploads] = useState<HistoryItem[]>([]);
@@ -89,18 +89,23 @@ export default function HistoryScreen() {
   };
 
   const handlePress = (item: HistoryItem) => {
-    // Map HistoryItem to AnalysisResult shape so results screen can render it
     setResult({
       uploadId: item.id,
       score: item.score,
       feedback: item.feedback,
-      suggestions: item.suggestions,
-      clothingItems: item.clothingItems,
+      styleTips: item.styleTips ?? [],
+      occasionTips: item.occasionTips ?? [],
+      clothingItems: item.clothingItems ?? [],
+      occasion: item.occasion ?? null,
+      occasionScores: item.occasionScores ?? {} as any,
+      colorPalette: item.colorPalette ?? [],
+      imageUrl: item.imageUrl ?? null,
       uploadsUsedThisWeek: 0,
       uploadsLimitPerWeek: 2,
       remainingFreeUploads: null,
       isSubscribed: false,
     });
+    if (item.imageUrl) setImageUri(item.imageUrl);
     router.push('/results');
   };
 

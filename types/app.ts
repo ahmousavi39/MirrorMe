@@ -32,6 +32,7 @@ export interface AnalysisResult {
   occasion: Occasion | null;
   occasionScores: Record<Occasion, number>;
   colorPalette: string[];
+  imageUrl?: string | null;
   uploadsUsedThisWeek: number;
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;
@@ -48,6 +49,8 @@ export interface HistoryItem {
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
   occasionScores?: Record<Occasion, number>;
+  colorPalette?: string[];
+  imageUrl?: string | null;
   weekKey: string;
   createdAt: string;
 }

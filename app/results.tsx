@@ -112,8 +112,8 @@ export default function ResultsScreen() {
 
         {/* ── Hero photo ─────────────────────────────────────────────── */}
         <View style={s.heroContainer}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={s.heroImage} resizeMode="cover" />
+          {(imageUri || result.imageUrl) ? (
+            <Image source={{ uri: (imageUri || result.imageUrl)! }} style={s.heroImage} resizeMode="cover" />
           ) : (
             <View style={[s.heroPlaceholder, { backgroundColor: theme.card }]}>
               <Ionicons name="shirt-outline" size={64} color={theme.primary} />
