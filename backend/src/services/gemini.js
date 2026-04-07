@@ -100,7 +100,7 @@ ${allOccasionsList}
 }
 
 Rules:
-- score: 1.0–10.0, one decimal. Weight fit quality, color harmony and style coherence, then occasion fit.
+- score: 1.0–10.0, one decimal. IMPORTANT: if the user chose an occasion, "score" MUST be identical to occasionScores["${occasion || ''}"] — they represent the same rating. If no occasion was chosen, score the overall style.
 - feedback: ALWAYS open with a style observation (fit / color combo / proportions) before mentioning occasion.
 - styleTips: 2–4 tips purely about improving the style itself — fit, proportions, color harmony, pattern mixing, layering. Each starts with an action verb.
 - occasionTips: 1–3 tips about adapting the outfit specifically for the chosen event/occasion context. If no occasion was chosen, give general versatility tips. Each starts with an action verb.
@@ -145,6 +145,13 @@ Rules:
     occasionScores[key] = typeof v === 'number' ? Math.min(10, Math.max(1, v)) : parsed.score;
   }
 
+  // If the user chose an occasion, force the top-level score to match that occasion's score
+  // to prevent the inconsistency where overall score ≠ selected occasion score.
+  let finalScore = Math.min(10, Math.max(1, parsed.score));
+  if (occasion && occasionScores[occasion] !== undefined) {
+    finalScore = occasionScores[occasion];
+  }
+
   // Sanitise colorPalette — keep only valid hex strings
   const rawPalette = Array.isArray(parsed.colorPalette) ? parsed.colorPalette : [];
   const colorPalette = rawPalette
@@ -152,7 +159,7 @@ Rules:
     .slice(0, 5);
 
   return {
-    score: Math.min(10, Math.max(1, parsed.score)),
+    score: finalScore,
     feedback: parsed.feedback,
     styleTips: parsed.styleTips.slice(0, 4),
     occasionTips: parsed.occasionTips.slice(0, 3),
