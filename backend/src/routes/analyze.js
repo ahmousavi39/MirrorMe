@@ -102,7 +102,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       const bucketName = bucket.name;
       imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${token}`;
     } catch (storageErr) {
-      console.warn('Firebase Storage upload failed (wardrobe images will be missing):', storageErr.message);
+      console.error('Firebase Storage upload failed:', storageErr.message);
     }
 
     // ── 2c. Fetch user's existing wardrobe to inform Gemini suggestions ───────

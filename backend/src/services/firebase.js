@@ -21,7 +21,7 @@ if (!admin.apps.length) {
     credential = admin.credential.cert(serviceAccount);
   }
 
-  admin.initializeApp({ credential, storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'ai-stylist-88cbb.appspot.com' });
+  admin.initializeApp({ credential, storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'ai-stylist-88cbb.firebasestorage.app' });
 }
 
 const db = admin.firestore();
