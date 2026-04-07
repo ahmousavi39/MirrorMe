@@ -94,6 +94,7 @@ export default function HistoryScreen() {
       score: item.score,
       feedback: item.feedback,
       styleTips: item.styleTips ?? [],
+      styleTipImages: item.styleTipImages ?? [],
       occasionTips: item.occasionTips ?? [],
       clothingItems: item.clothingItems ?? [],
       occasion: item.occasion ?? null,

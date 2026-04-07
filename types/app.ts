@@ -27,6 +27,7 @@ export interface AnalysisResult {
   score: number;
   feedback: string;
   styleTips: string[];
+  styleTipImages?: (string | null)[];
   occasionTips: string[];
   clothingItems: ClothingItem[];
   occasion: Occasion | null;
@@ -45,6 +46,7 @@ export interface HistoryItem {
   score: number;
   feedback: string;
   styleTips?: string[];
+  styleTipImages?: (string | null)[];
   occasionTips?: string[];
   clothingItems: ClothingItem[];
   occasion: Occasion | null;

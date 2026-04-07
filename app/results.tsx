@@ -242,12 +242,22 @@ export default function ResultsScreen() {
                 <Text style={[s.cardTitle, { color: theme.text }]}>Improve Your Style</Text>
               </View>
               <View style={s.tipsList}>
-                {(result.styleTips ?? []).map((tip, i) => (
-                  <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-                    <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
-                    <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-                  </View>
-                ))}
+                {(result.styleTips ?? []).map((tip, i) => {
+                  const thumbUrl = result.styleTipImages?.[i];
+                  return (
+                    <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                      <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                        {thumbUrl ? (
+                          <View style={[s.tipThumbWrapper, { borderColor: `${theme.primary}40` }]}>
+                            <Image source={{ uri: thumbUrl }} style={s.tipThumb} resizeMode="cover" />
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -419,6 +429,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   tipRow: { flexDirection: 'row', gap: 14, paddingVertical: 12, alignItems: 'flex-start' },
   tipIndex: { fontSize: 13, fontWeight: '800', width: 24 },
   tipText: { flex: 1, fontSize: 14, lineHeight: 22 },
+  tipThumbWrapper: { marginTop: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, alignSelf: 'flex-start' },
+  tipThumb: { width: 56, height: 72, borderRadius: 10 },
 
   // Usage
   usageNote: {
