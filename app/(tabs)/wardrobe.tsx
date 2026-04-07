@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator, RefreshControl,
+  Modal, StatusBar, Platform,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ export default function WardrobeScreen() {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -58,13 +60,23 @@ export default function WardrobeScreen() {
     const detail = [item.color, item.fit, item.material].filter(Boolean).join(' · ');
     return (
       <View style={[s.card, { backgroundColor: theme.card }]}>
-        {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={s.thumb} resizeMode="cover" />
-        ) : (
-          <View style={[s.thumbPlaceholder, { backgroundColor: `${theme.primary}14` }]}>
-            <Ionicons name="shirt-outline" size={28} color={theme.primary} />
-          </View>
-        )}
+        <TouchableOpacity
+          onPress={() => item.imageUrl && setPhotoUrl(item.imageUrl)}
+          activeOpacity={item.imageUrl ? 0.8 : 1}
+        >
+          {item.imageUrl ? (
+            <View>
+              <Image source={{ uri: item.imageUrl }} style={s.thumb} resizeMode="cover" />
+              <View style={s.thumbOverlay}>
+                <Ionicons name="expand-outline" size={14} color="#fff" />
+              </View>
+            </View>
+          ) : (
+            <View style={[s.thumbPlaceholder, { backgroundColor: `${theme.primary}14` }]}>
+              <Ionicons name="shirt-outline" size={28} color={theme.primary} />
+            </View>
+          )}
+        </TouchableOpacity>
         <View style={s.info}>
           <Text style={[s.category, { color: theme.text }]}>{item.category}</Text>
           {detail ? <Text style={[s.detail, { color: theme.textSecondary }]}>{detail}</Text> : null}
@@ -85,6 +97,25 @@ export default function WardrobeScreen() {
 
   return (
     <View style={[s.container, { backgroundColor: theme.background }]}>
+      {/* Fullscreen photo viewer */}
+      <Modal
+        visible={!!photoUrl}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setPhotoUrl(null)}
+      >
+        <View style={s.modalBg}>
+          <Image
+            source={{ uri: photoUrl! }}
+            style={s.modalImage}
+            resizeMode="contain"
+          />
+          <TouchableOpacity style={s.modalClose} onPress={() => setPhotoUrl(null)}>
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
       {/* Header */}
       <View style={[s.header, { borderBottomColor: theme.border }]}>
         <Text style={[s.title, { color: theme.text }]}>My Wardrobe</Text>
@@ -147,6 +178,24 @@ const makeStyles = (theme: any) => StyleSheet.create({
   thumbPlaceholder: {
     width: 70, height: 90, borderRadius: 10,
     justifyContent: 'center', alignItems: 'center',
+  },
+  thumbOverlay: {
+    position: 'absolute', bottom: 4, right: 4,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 5, padding: 3,
+  },
+  // Fullscreen modal
+  modalBg: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalImage: { width: '100%', height: '85%' },
+  modalClose: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 56 : 36,
+    right: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20, padding: 8,
   },
   info: { flex: 1, gap: 3 },
   category: { fontSize: 15, fontWeight: '700' },
