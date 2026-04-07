@@ -20,7 +20,15 @@
       "infoPlist": {
         "NSCameraUsageDescription": "MirrorMe needs camera access to capture your outfit for style analysis.",
         "NSPhotoLibraryUsageDescription": "MirrorMe needs photo library access to select your outfit for style analysis.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["com.googleusercontent.apps.511134609232-l6ufeq2gnunaqp2j32kt7p8duop9ffd2"]
+          }
+        ]
+      },
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
       }
     },
     "android": {
@@ -50,7 +58,8 @@
           "cameraPermission": "MirrorMe needs camera access to capture your outfit."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

@@ -9,6 +9,7 @@ import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { setPendingOnboarding } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import SocialSignInButtons from '@/components/SocialSignInButtons';
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
@@ -135,6 +136,9 @@ export default function RegisterScreen() {
             }
           </TouchableOpacity>
         </View>
+
+        {/* Social sign-in */}
+        <SocialSignInButtons onError={setError} onLoadingChange={setLoading} />
 
         {/* Footer */}
         <View style={s.footer}>

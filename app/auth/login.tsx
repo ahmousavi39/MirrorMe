@@ -8,6 +8,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import SocialSignInButtons from '@/components/SocialSignInButtons';
 
 function firebaseErrorMessage(code: string): string {
   switch (code) {
@@ -122,6 +123,9 @@ export default function LoginScreen() {
             }
           </TouchableOpacity>
         </View>
+
+        {/* Social sign-in */}
+        <SocialSignInButtons onError={setError} onLoadingChange={setLoading} />
 
         {/* Footer */}
         <View style={s.footer}>
