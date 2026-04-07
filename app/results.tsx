@@ -120,7 +120,7 @@ export default function ResultsScreen() {
             </View>
           )}
           {/* Detected clothing items — overlaid at the bottom of the photo */}
-          {result.clothingItems.length > 0 && (
+          {(result.clothingItems?.length ?? 0) > 0 && (
             <View style={s.photoTagsContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
                 {result.clothingItems.map((item, i) => (
@@ -233,7 +233,7 @@ export default function ResultsScreen() {
           )}
 
           {/* Style improvement tips */}
-          {result.styleTips.length > 0 && (
+          {(result.styleTips?.length ?? 0) > 0 && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
@@ -242,8 +242,8 @@ export default function ResultsScreen() {
                 <Text style={[s.cardTitle, { color: theme.text }]}>Improve Your Style</Text>
               </View>
               <View style={s.tipsList}>
-                {result.styleTips.map((tip, i) => (
-                  <View key={i} style={[s.tipRow, i < result.styleTips.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                {(result.styleTips ?? []).map((tip, i) => (
+                  <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
                     <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
                     <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
                   </View>
@@ -253,7 +253,7 @@ export default function ResultsScreen() {
           )}
 
           {/* Occasion tips */}
-          {result.occasion && result.occasionTips.length > 0 && (
+          {result.occasion && (result.occasionTips?.length ?? 0) > 0 && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
@@ -264,8 +264,8 @@ export default function ResultsScreen() {
                 </Text>
               </View>
               <View style={s.tipsList}>
-                {result.occasionTips.map((tip, i) => (
-                  <View key={i} style={[s.tipRow, i < result.occasionTips.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                {(result.occasionTips ?? []).map((tip, i) => (
+                  <View key={i} style={[s.tipRow, i < (result.occasionTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
                     <Text style={[s.tipIndex, { color: theme.secondary }]}>{String(i + 1).padStart(2, '0')}</Text>
                     <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
                   </View>

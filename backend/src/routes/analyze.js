@@ -88,18 +88,29 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const occasion = req.body?.occasion || null;
 
     // ── 2b. Upload image to Firebase Storage ──────────────────────────────────
-    const fileName = `uploads/${uid}/${Date.now()}.jpg`;
     const token = crypto.randomUUID();
     let imageUrl = null;
     try {
-      const compressedBuffer = await sharp(req.file.buffer)
-        .resize({ width: 800, withoutEnlargement: true })
-        .jpeg({ quality: 70 })
-        .toBuffer();
+      // Try to compress to JPEG. Falls back to original buffer if sharp can't
+      // handle the format (e.g. HEIC on a server without libheif support).
+      let uploadBuffer = req.file.buffer;
+      let uploadMime = mimeType;
+      let uploadExt = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+      try {
+        uploadBuffer = await sharp(req.file.buffer, { failOn: 'none' })
+          .resize({ width: 800, withoutEnlargement: true })
+          .jpeg({ quality: 70 })
+          .toBuffer();
+        uploadMime = 'image/jpeg';
+        uploadExt = 'jpg';
+      } catch (compressErr) {
+        console.warn('Image compression skipped, uploading original:', compressErr.message);
+      }
+      const fileName = `uploads/${uid}/${Date.now()}.${uploadExt}`;
       const file = bucket.file(fileName);
-      await file.save(compressedBuffer, {
+      await file.save(uploadBuffer, {
         metadata: {
-          contentType: 'image/jpeg',
+          contentType: uploadMime,
           metadata: { firebaseStorageDownloadTokens: token },
         },
       });
