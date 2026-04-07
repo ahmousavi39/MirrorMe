@@ -130,3 +130,22 @@ export async function deleteWardrobeItem(id: string): Promise<void> {
   });
   if (!res.ok) throw new Error('Failed to delete wardrobe item');
 }
+
+// ── POST /api/wardrobe/add ────────────────────────────────────────────────────────
+export async function addWardrobeItem(imageUri: string): Promise<WardrobeItem> {
+  const headers = await authHeaders();
+  const formData = new FormData();
+  formData.append('photo', { uri: imageUri, type: 'image/jpeg', name: 'photo.jpg' } as unknown as Blob);
+  const res = await fetch(`${BACKEND_URL}/api/wardrobe/add`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const err = new Error(data.error || 'Failed to add wardrobe item') as any;
+    err.code = data.code;
+    throw err;
+  }
+  return data.item as WardrobeItem;
+}

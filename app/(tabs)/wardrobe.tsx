@@ -5,9 +5,11 @@ import {
   Modal, StatusBar, Platform,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { getWardrobe, deleteWardrobeItem } from '@/services/api';
+import { getWardrobe, deleteWardrobeItem, addWardrobeItem, getSubscriptionStatus } from '@/services/api';
 import { WardrobeItem } from '@/types/app';
 
 export default function WardrobeScreen() {
@@ -18,12 +20,15 @@ export default function WardrobeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const data = await getWardrobe();
+      const [data, status] = await Promise.all([getWardrobe(), getSubscriptionStatus()]);
       setItems(data);
+      setIsSubscribed(status.isSubscribed);
     } catch {
       // Non-fatal
     } finally {
@@ -33,6 +38,49 @@ export default function WardrobeScreen() {
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const handleAddItem = async () => {
+    if (!isSubscribed) {
+      Alert.alert(
+        'Premium Feature',
+        'Manually adding wardrobe items is available for premium subscribers. Upgrade to unlock this feature!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow photo library access.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: false,
+      quality: 0.9,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    setAdding(true);
+    try {
+      const compressed = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      const newItem = await addWardrobeItem(compressed.uri);
+      setItems((prev) => [newItem, ...prev.filter((i) => i.id !== newItem.id)]);
+    } catch (e: any) {
+      if (e.code === 'NO_ITEM') {
+        Alert.alert('No item detected', 'Could not detect a clothing item in this photo. Try a clearer photo of a single piece.');
+      } else if (e.code === 'PREMIUM_REQUIRED') {
+        Alert.alert('Premium Required', e.message);
+      } else {
+        Alert.alert('Error', e.message || 'Failed to add item. Please try again.');
+      }
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const handleDelete = (item: WardrobeItem) => {
     Alert.alert(
@@ -118,10 +166,22 @@ export default function WardrobeScreen() {
       </Modal>
       {/* Header */}
       <View style={[s.header, { borderBottomColor: theme.border }]}>
-        <Text style={[s.title, { color: theme.text }]}>My Wardrobe</Text>
-        <Text style={[s.subtitle, { color: theme.textSecondary }]}>
-          {items.length} piece{items.length !== 1 ? 's' : ''} detected
-        </Text>
+        <View>
+          <Text style={[s.title, { color: theme.text }]}>My Wardrobe</Text>
+          <Text style={[s.subtitle, { color: theme.textSecondary }]}>
+            {items.length} piece{items.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[s.addBtn, { backgroundColor: theme.primary }]}
+          onPress={handleAddItem}
+          activeOpacity={0.8}
+          disabled={adding}
+        >
+          {adding
+            ? <ActivityIndicator size="small" color="#fff" />
+            : <Ionicons name="add" size={22} color="#fff" />}
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -159,11 +219,13 @@ export default function WardrobeScreen() {
 const makeStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1 },
   header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16,
     borderBottomWidth: 1,
   },
   title: { fontSize: 28, fontWeight: '800' },
   subtitle: { fontSize: 13, marginTop: 2 },
+  addBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 21 },
