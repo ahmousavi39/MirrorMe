@@ -105,7 +105,7 @@ Rules:
 - styleTips: 2–4 tips purely about improving the style itself — fit, proportions, color harmony, pattern mixing, layering. Each starts with an action verb.
 - occasionTips: 1–3 tips about adapting the outfit specifically for the chosen event/occasion context. If no occasion was chosen, give general versatility tips. Each starts with an action verb.
 - colorPalette: array of 1–5 hex color strings (e.g. "#ffffff") representing the main colors in the outfit. Exact hex, no names.
-- occasionScores: score 1.0–10.0 for EVERY key — how well this outfit works for that context.
+- occasionScores: CRITICAL — these scores must be GROUNDED in the actual outfit quality. First establish an honest base style score (fit, color, proportions). Then for each occasion, ask: does this specific outfit work for that context? Adjust ±2 points max from the base. A mediocre outfit (5–6) cannot score 8+ for any occasion. A poor fit cannot be saved by a good occasion match. Scores should feel realistic and consistent — the selected occasion score MUST equal "score".
 - Keep language simple, warm and practical.`;
 
   const imagePart = {
