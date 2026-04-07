@@ -5,6 +5,7 @@ import {
   Image, ActivityIndicator, Alert, Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -69,6 +70,21 @@ export default function AnalyzeScreen() {
   // Reload status every time this tab is focused (catches post-purchase state)
   useFocusEffect(useCallback(() => { loadStatus(); }, [loadStatus]));
 
+  // Compress any image (including HEIC) to JPEG on-device before upload
+  const compressImage = async (uri: string): Promise<{ uri: string; mime: string }> => {
+    try {
+      const compressed = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1200 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+      return { uri: compressed.uri, mime: 'image/jpeg' };
+    } catch {
+      // If manipulation fails, send original
+      return { uri, mime: 'image/jpeg' };
+    }
+  };
+
   const pickFromGallery = async () => {
     const { status: permStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permStatus !== 'granted') {
@@ -81,8 +97,9 @@ export default function AnalyzeScreen() {
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
-      setImageUriState(result.assets[0].uri);
-      setImageMime(result.assets[0].mimeType || 'image/jpeg');
+      const { uri, mime } = await compressImage(result.assets[0].uri);
+      setImageUriState(uri);
+      setImageMime(mime);
     }
   };
 
@@ -97,8 +114,9 @@ export default function AnalyzeScreen() {
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
-      setImageUriState(result.assets[0].uri);
-      setImageMime(result.assets[0].mimeType || 'image/jpeg');
+      const { uri, mime } = await compressImage(result.assets[0].uri);
+      setImageUriState(uri);
+      setImageMime(mime);
     }
   };
 
