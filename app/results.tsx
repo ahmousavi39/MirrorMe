@@ -243,15 +243,16 @@ export default function ResultsScreen() {
               </View>
               <View style={s.tipsList}>
                 {(result.styleTips ?? []).map((tip, i) => {
-                  const thumbUrl = result.styleTipImages?.[i];
+                  const itemLabel = result.styleTipItems?.[i];
                   return (
                     <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
                       <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-                        {thumbUrl ? (
-                          <View style={[s.tipThumbWrapper, { borderColor: `${theme.primary}40` }]}>
-                            <Image source={{ uri: thumbUrl }} style={s.tipThumb} resizeMode="cover" />
+                        {itemLabel ? (
+                          <View style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}>
+                            <Ionicons name="shirt-outline" size={11} color={theme.primary} />
+                            <Text style={[s.tipItemChipText, { color: theme.primary }]}>{itemLabel}</Text>
                           </View>
                         ) : null}
                       </View>
@@ -431,6 +432,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   tipText: { flex: 1, fontSize: 14, lineHeight: 22 },
   tipThumbWrapper: { marginTop: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, alignSelf: 'flex-start' },
   tipThumb: { width: 56, height: 72, borderRadius: 10 },
+  tipItemChip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  tipItemChipText: { fontSize: 11, fontWeight: '600' },
 
   // Usage
   usageNote: {
