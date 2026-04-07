@@ -96,6 +96,7 @@ export default function HistoryScreen() {
       styleTips: item.styleTips ?? [],
       styleTipItems: item.styleTipItems ?? [],
       occasionTips: item.occasionTips ?? [],
+      occasionTipItems: item.occasionTipItems ?? [],
       clothingItems: item.clothingItems ?? [],
       occasion: item.occasion ?? null,
       occasionScores: item.occasionScores ?? {} as any,

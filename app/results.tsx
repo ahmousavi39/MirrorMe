@@ -275,12 +275,23 @@ export default function ResultsScreen() {
                 </Text>
               </View>
               <View style={s.tipsList}>
-                {(result.occasionTips ?? []).map((tip, i) => (
-                  <View key={i} style={[s.tipRow, i < (result.occasionTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-                    <Text style={[s.tipIndex, { color: theme.secondary }]}>{String(i + 1).padStart(2, '0')}</Text>
-                    <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-                  </View>
-                ))}
+                {(result.occasionTips ?? []).map((tip, i) => {
+                  const itemLabel = result.occasionTipItems?.[i];
+                  return (
+                    <View key={i} style={[s.tipRow, i < (result.occasionTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                      <Text style={[s.tipIndex, { color: theme.secondary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                        {itemLabel ? (
+                          <View style={[s.tipItemChip, { backgroundColor: `${theme.secondary}14`, borderColor: `${theme.secondary}35` }]}>
+                            <Ionicons name="shirt-outline" size={11} color={theme.secondary} />
+                            <Text style={[s.tipItemChipText, { color: theme.secondary }]}>{itemLabel}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           )}

@@ -175,6 +175,13 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       const details = [item.color, item.fit, item.material].filter(Boolean).join(' · ');
       return details ? `${item.category} · ${details}` : item.category;
     });
+    const occasionTipItems = (geminiResult.occasionTipRefs || []).map((ref) => {
+      if (!ref) return null;
+      const item = wardrobeByKey[ref];
+      if (!item) return null;
+      const details = [item.color, item.fit, item.material].filter(Boolean).join(' · ');
+      return details ? `${item.category} · ${details}` : item.category;
+    });
 
     const uploadRef = userRef.collection('uploads').doc();
     const uploadData = {
@@ -183,6 +190,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       styleTips: geminiResult.styleTips,
       styleTipItems,
       occasionTips: geminiResult.occasionTips,
+      occasionTipItems,
       occasionScores: geminiResult.occasionScores,
       colorPalette: geminiResult.colorPalette,
       clothingItems,
@@ -260,6 +268,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       styleTips: geminiResult.styleTips,
       styleTipItems,
       occasionTips: geminiResult.occasionTips,
+      occasionTipItems,
       occasionScores: geminiResult.occasionScores,
       colorPalette: geminiResult.colorPalette,
       clothingItems,

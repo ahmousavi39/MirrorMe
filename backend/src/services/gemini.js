@@ -114,6 +114,7 @@ OTHERWISE respond with:
     "Specific tip about how to adapt this outfit for the chosen occasion",
     "Specific tip about an accessory or swap that suits the event better"
   ],
+  "occasionTipRefs": [null, "sneakers_white"],
   "colorPalette": ["#1a1a2e", "#e8c4a0", "#4a4a4a"],  /* outfit + skin colors only, no background */
   "occasionScores": {
 ${allOccasionsList}
@@ -126,6 +127,7 @@ Rules:
 - styleTips: 2–4 tips purely about improving the style itself — fit, proportions, color harmony, pattern mixing, layering. Each starts with an action verb. Focus on what will genuinely improve the look. When a specific wardrobe piece the user already owns would naturally make a good swap or complement (and it actually fits the tip), mention it by name — but only if it's a real improvement. Do not force wardrobe references into every tip; most tips should simply be good style advice.
 - styleTipRefs: parallel array to styleTips, same length. For each tip, if you referenced a wardrobe item using its [key:...] label, put that key string here. Otherwise put null. Example: if styleTips has 3 entries and tip index 1 references [key:jeans_blue], then styleTipRefs = [null, "jeans_blue", null].
 - occasionTips: 1–3 tips about adapting the outfit specifically for the chosen event/occasion context. If no occasion was chosen, give general versatility tips. Each starts with an action verb.
+- occasionTipRefs: parallel array to occasionTips, same length. For each tip, if you referenced a wardrobe item using its [key:...] label, put that key string here. Otherwise put null.
 - colorPalette: array of 1–5 hex color strings representing ONLY the dominant colors of the clothing items and visible skin tone. IGNORE background, walls, furniture, floors, and any non-clothing objects. Focus strictly on what the person is wearing and their skin.
 - occasionScores: CRITICAL — these scores must be GROUNDED in the actual outfit quality. First establish an honest base style score (fit, color, proportions). Then for each occasion, ask: does this specific outfit work for that context? Adjust ±2 points max from the base. A mediocre outfit (5–6) cannot score 8+ for any occasion. A poor fit cannot be saved by a good occasion match. Scores should feel realistic and consistent — the selected occasion score MUST equal "score".
 - Keep language simple, warm and practical.`;
@@ -172,6 +174,13 @@ Rules:
     return typeof ref === 'string' ? ref : null;
   });
 
+  // Build occasionTipRefs
+  const rawOccasionTipRefs = Array.isArray(parsed.occasionTipRefs) ? parsed.occasionTipRefs : [];
+  const occasionTipRefs = parsed.occasionTips.slice(0, 3).map((_, i) => {
+    const ref = rawOccasionTipRefs[i];
+    return typeof ref === 'string' ? ref : null;
+  });
+
   // Normalise occasionScores
   const ALL_OCCASIONS = ['casual', 'work', 'school', 'date', 'night_out', 'interview', 'formal', 'sport', 'travel'];
   const rawScores = parsed.occasionScores || {};
@@ -200,6 +209,7 @@ Rules:
     styleTips: parsed.styleTips.slice(0, 4),
     styleTipRefs,
     occasionTips: parsed.occasionTips.slice(0, 3),
+    occasionTipRefs,
     occasionScores,
     colorPalette,
   };
