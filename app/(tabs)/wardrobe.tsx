@@ -48,22 +48,45 @@ export default function WardrobeScreen() {
       );
       return;
     }
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please allow photo library access.');
-      return;
+
+    // Let user choose source
+    Alert.alert('Add Wardrobe Item', 'Choose a photo source', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Camera', onPress: () => pickImage('camera') },
+      { text: 'Photo Library', onPress: () => pickImage('library') },
+    ]);
+  };
+
+  const pickImage = async (source: 'camera' | 'library') => {
+    let pickerResult;
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow camera access.');
+        return;
+      }
+      pickerResult = await ImagePicker.launchCameraAsync({
+        allowsEditing: false,
+        quality: 0.9,
+      });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow photo library access.');
+        return;
+      }
+      pickerResult = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.9,
+      });
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      allowsEditing: false,
-      quality: 0.9,
-    });
-    if (result.canceled || !result.assets[0]) return;
+    if (pickerResult.canceled || !pickerResult.assets[0]) return;
 
     setAdding(true);
     try {
       const compressed = await ImageManipulator.manipulateAsync(
-        result.assets[0].uri,
+        pickerResult.assets[0].uri,
         [{ resize: { width: 1200 } }],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
