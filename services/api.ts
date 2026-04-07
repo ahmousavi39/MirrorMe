@@ -1,6 +1,6 @@
 import { auth } from './firebase';
 import { BACKEND_URL } from '@/constants/config';
-import { AnalysisResult, HistoryItem, SubscriptionStatus } from '@/types/app';
+import { AnalysisResult, HistoryItem, SubscriptionStatus, WardrobeItem } from '@/types/app';
 
 // ── Auth helper ───────────────────────────────────────────────────────────────────
 async function getToken(): Promise<string> {
@@ -110,4 +110,23 @@ export async function saveProfile(profile: UserProfile): Promise<void> {
     body: JSON.stringify(profile),
   });
   if (!res.ok) throw new Error('Failed to save profile');
+}
+
+// ── GET /api/wardrobe ─────────────────────────────────────────────────────────────
+export async function getWardrobe(): Promise<WardrobeItem[]> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/wardrobe`, { headers });
+  if (!res.ok) throw new Error('Failed to fetch wardrobe');
+  const data = await res.json();
+  return (data.items || []) as WardrobeItem[];
+}
+
+// ── DELETE /api/wardrobe/:id ──────────────────────────────────────────────────────
+export async function deleteWardrobeItem(id: string): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/wardrobe/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!res.ok) throw new Error('Failed to delete wardrobe item');
 }

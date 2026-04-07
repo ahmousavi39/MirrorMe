@@ -11,7 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  * @param {string} mimeType — e.g. 'image/jpeg'
  * @returns {Promise<{ score: number, feedback: string, suggestions: string[] }>}
  */
-async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', occasion = null, userProfile = {}) {
+async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', occasion = null, userProfile = {}, wardrobeItems = []) {
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
     generationConfig: {
@@ -63,6 +63,16 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
     ? `Primary occasion the user chose: ${occasionMap[occasion]}.`
     : 'No specific occasion chosen — give a general rating.';
 
+  // Build wardrobe context
+  const wardrobeSection = wardrobeItems.length > 0
+    ? `The user's wardrobe (pieces they have been seen wearing):\n${wardrobeItems
+        .map((w) => {
+          const details = [w.color, w.material, w.fit, w.style].filter(Boolean).join(', ');
+          return `• ${w.category}${details ? ` (${details})` : ''}`;
+        })
+        .join('\n')}`
+    : null;
+
   const allOccasionsList = Object.entries(occasionMap)
     .map(([key, desc]) => `  "${key}": /* score for ${desc} */`)
     .join('\n');
@@ -72,7 +82,7 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
 ${profileSection}
 
 ${occasionLine}
-
+${wardrobeSection ? `\n${wardrobeSection}\n` : ''}
 Clothing items detected:
 ${clothingDescription}
 
@@ -102,7 +112,7 @@ ${allOccasionsList}
 Rules:
 - score: 1.0–10.0, one decimal. IMPORTANT: if the user chose an occasion, "score" MUST be identical to occasionScores["${occasion || ''}"] — they represent the same rating. If no occasion was chosen, score the overall style.
 - feedback: ALWAYS open with a style observation (fit / color combo / proportions) before mentioning occasion.
-- styleTips: 2–4 tips purely about improving the style itself — fit, proportions, color harmony, pattern mixing, layering. Each starts with an action verb.
+- styleTips: 2–4 tips purely about improving the style itself — fit, proportions, color harmony, pattern mixing, layering. Each starts with an action verb. If the user has wardrobe items that would improve the outfit, PRIORITIZE referencing those specific owned pieces by name (e.g. "Swap the black tee for your white baggy T-shirt"). Only suggest owned pieces — never invent items they don’t own. Generic tips are fine when no owned piece applies.
 - occasionTips: 1–3 tips about adapting the outfit specifically for the chosen event/occasion context. If no occasion was chosen, give general versatility tips. Each starts with an action verb.
 - colorPalette: array of 1–5 hex color strings representing ONLY the dominant colors of the clothing items and visible skin tone. IGNORE background, walls, furniture, floors, and any non-clothing objects. Focus strictly on what the person is wearing and their skin.
 - occasionScores: CRITICAL — these scores must be GROUNDED in the actual outfit quality. First establish an honest base style score (fit, color, proportions). Then for each occasion, ask: does this specific outfit work for that context? Adjust ±2 points max from the base. A mediocre outfit (5–6) cannot score 8+ for any occasion. A poor fit cannot be saved by a good occasion match. Scores should feel realistic and consistent — the selected occasion score MUST equal "score".

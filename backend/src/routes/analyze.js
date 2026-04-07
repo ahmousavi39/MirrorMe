@@ -1,9 +1,10 @@
 const express = require('express');
 const multer = require('multer');
+const crypto = require('crypto');
 const router = express.Router();
 
 const verifyToken = require('../middleware/verifyToken');
-const { db } = require('../services/firebase');
+const { db, bucket } = require('../services/firebase');
 const { analyzeClothing } = require('../services/ximilar');
 const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
@@ -31,6 +32,12 @@ function getWeekKey() {
   const dayOfYear = Math.floor((now - startOfYear) / 86_400_000);
   const week = Math.ceil((dayOfYear + startOfYear.getUTCDay() + 1) / 7);
   return `${year}-W${String(week).padStart(2, '0')}`;
+}
+
+/** Stable wardrobe key from category + color */
+function wardrobeKey(category, color) {
+  const clean = (s) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+  return `${clean(category)}_${clean(color)}`;
 }
 
 // ── POST /api/analyze ─────────────────────────────────────────────────────────────
@@ -79,6 +86,34 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const mimeType = req.file.mimetype;
     const occasion = req.body?.occasion || null;
 
+    // ── 2b. Upload image to Firebase Storage ──────────────────────────────────
+    const ext = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
+    const fileName = `uploads/${uid}/${Date.now()}.${ext}`;
+    const token = crypto.randomUUID();
+    let imageUrl = null;
+    try {
+      const file = bucket.file(fileName);
+      await file.save(req.file.buffer, {
+        metadata: {
+          contentType: mimeType,
+          metadata: { firebaseStorageDownloadTokens: token },
+        },
+      });
+      const bucketName = bucket.name;
+      imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${token}`;
+    } catch (storageErr) {
+      console.warn('Firebase Storage upload failed (wardrobe images will be missing):', storageErr.message);
+    }
+
+    // ── 2c. Fetch user's existing wardrobe to inform Gemini suggestions ───────
+    let wardrobeItems = [];
+    try {
+      const wardrobeSnap = await userRef.collection('wardrobe').get();
+      wardrobeItems = wardrobeSnap.docs.map((d) => d.data());
+    } catch (e) {
+      console.warn('Could not fetch wardrobe:', e.message);
+    }
+
     // ── 3. Ximilar — identify clothing items ──────────────────────────────────
     let clothingItems = [];
     try {
@@ -98,7 +133,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // ── 4. Gemini — rate the outfit ───────────────────────────────────────────
     let geminiResult;
     try {
-      geminiResult = await rateOutfit(base64Image, clothingItems, mimeType, occasion, userProfile);
+      geminiResult = await rateOutfit(base64Image, clothingItems, mimeType, occasion, userProfile, wardrobeItems);
     } catch (geminiErr) {
       console.error('Gemini error:', geminiErr.message);
       return res.status(502).json({ error: 'AI rating service unavailable. Please try again.' });
@@ -115,6 +150,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       colorPalette: geminiResult.colorPalette,
       clothingItems,
       occasion: occasion || null,
+      imageUrl: imageUrl || null,
       weekKey,
       createdAt: new Date().toISOString(),
     };
@@ -138,7 +174,48 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
 
     await batch.commit();
 
-    // ── 6. Respond ────────────────────────────────────────────────────────────
+    // ── 5b. Upsert detected items into user's wardrobe ────────────────────────
+    if (clothingItems.length > 0) {
+      try {
+        const now = new Date().toISOString();
+        const wardrobeRef = userRef.collection('wardrobe');
+        await Promise.all(clothingItems.map(async (item) => {
+          const key = wardrobeKey(item.category, item.color);
+          const itemRef = wardrobeRef.doc(key);
+          const existing = await itemRef.get();
+          if (existing.exists) {
+            await itemRef.update({
+              lastSeenAt: now,
+              uploadId: uploadRef.id,
+              imageUrl: imageUrl || existing.data().imageUrl || null,
+              timesWorn: (existing.data().timesWorn || 1) + 1,
+              // Update fields if we now have better data
+              ...(item.material && { material: item.material }),
+              ...(item.pattern && { pattern: item.pattern }),
+              ...(item.fit     && { fit: item.fit }),
+              ...(item.style   && { style: item.style }),
+            });
+          } else {
+            await itemRef.set({
+              category:    item.category   || null,
+              color:       item.color      || null,
+              material:    item.material   || null,
+              pattern:     item.pattern    || null,
+              fit:         item.fit        || null,
+              style:       item.style      || null,
+              uploadId:    uploadRef.id,
+              imageUrl:    imageUrl || null,
+              firstSeenAt: now,
+              lastSeenAt:  now,
+              timesWorn:   1,
+            });
+          }
+        }));
+      } catch (e) {
+        console.warn('Wardrobe upsert failed (non-fatal):', e.message);
+      }
+    }
+
     return res.json({
       uploadId: uploadRef.id,
       score: geminiResult.score,

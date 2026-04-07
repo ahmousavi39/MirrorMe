@@ -59,3 +59,19 @@ export interface SubscriptionStatus {
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;
 }
+
+// ── Wardrobe item stored in Firestore ────────────────────────────────────────────
+export interface WardrobeItem {
+  id: string;
+  category: string;
+  color: string | null;
+  material: string | null;
+  pattern: string | null;
+  fit: string | null;
+  style: string | null;
+  uploadId: string;
+  imageUrl: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  timesWorn: number;
+}

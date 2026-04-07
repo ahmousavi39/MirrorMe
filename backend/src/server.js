@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const analyzeRouter = require('./routes/analyze');
 const subscriptionRouter = require('./routes/subscription');
 const userRouter = require('./routes/user');
+const wardrobeRouter = require('./routes/wardrobe');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use('/api/analyze', analyzeRouter);
 app.use('/api/subscription', subscriptionRouter);
 app.use('/api/user', userRouter);
+app.use('/api/wardrobe', wardrobeRouter);
 
 // ── Health check (Render uses this to verify the service is running) ──────────────
 app.get('/health', (_req, res) => {
