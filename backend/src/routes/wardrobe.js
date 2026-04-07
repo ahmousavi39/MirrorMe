@@ -42,23 +42,6 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// ── DELETE /api/wardrobe/:id ──────────────────────────────────────────────────────
-// Removes a single piece from the user's wardrobe.
-router.delete('/:id', verifyToken, async (req, res) => {
-  try {
-    await db
-      .collection('users')
-      .doc(req.uid)
-      .collection('wardrobe')
-      .doc(req.params.id)
-      .delete();
-    return res.json({ success: true });
-  } catch (error) {
-    console.error('Wardrobe delete error:', error);
-    return res.status(500).json({ error: 'Failed to delete wardrobe item' });
-  }
-});
-
 // ── POST /api/wardrobe/add ────────────────────────────────────────────────────────
 // Premium-only: upload a clothing photo, detect the item, save to wardrobe.
 router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
@@ -157,6 +140,23 @@ router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
   } catch (error) {
     console.error('Wardrobe add error:', error);
     return res.status(500).json({ error: 'Failed to add wardrobe item.' });
+  }
+});
+
+// ── DELETE /api/wardrobe/:id ──────────────────────────────────────────────────────
+// Removes a single piece from the user's wardrobe.
+router.delete('/:id', verifyToken, async (req, res) => {
+  try {
+    await db
+      .collection('users')
+      .doc(req.uid)
+      .collection('wardrobe')
+      .doc(req.params.id)
+      .delete();
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Wardrobe delete error:', error);
+    return res.status(500).json({ error: 'Failed to delete wardrobe item' });
   }
 });
 
