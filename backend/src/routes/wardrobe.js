@@ -212,20 +212,24 @@ router.patch('/:id', verifyToken, async (req, res) => {
     const newId = wardrobeKey(newCategory, newColor, updatedData.fit, updatedData.material, updatedData.pattern, updatedData.style);
 
     if (newId !== oldId) {
-      // Key changed — the original item stays untouched; create a fresh entry.
-      // Build a clean "new item" rather than inheriting timesWorn from the old one.
+      // Key changed — delete the old doc (it had the wrong/old identity) and
+      // upsert the new key.  If the new key already exists in the wardrobe this
+      // means the user corrected a bad AI detection to match a real wardrobe item:
+      // increment its timesWorn rather than resetting to 1.
       const now = new Date().toISOString();
       const existing = await wardrobeRef.doc(newId).get();
       if (existing.exists) {
-        // Target already exists — just update its non-key fields, don't reset counts.
+        // Merge into the existing item: update editable fields and bump timesWorn.
         await wardrobeRef.doc(newId).update({
-          fit:      updatedData.fit,
-          material: updatedData.material,
-          pattern:  updatedData.pattern,
-          style:    updatedData.style,
+          fit:        updatedData.fit,
+          material:   updatedData.material,
+          pattern:    updatedData.pattern,
+          style:      updatedData.style,
           lastSeenAt: now,
+          timesWorn:  (existing.data().timesWorn || 1) + 1,
         });
       } else {
+        // New identity — carry over counts and metadata from old doc.
         await wardrobeRef.doc(newId).set({
           category:    newCategory,
           color:       newColor,
@@ -235,11 +239,13 @@ router.patch('/:id', verifyToken, async (req, res) => {
           style:       updatedData.style,
           uploadId:    oldData.uploadId || null,
           imageUrl:    oldData.imageUrl || null,
-          firstSeenAt: now,
+          firstSeenAt: oldData.firstSeenAt || now,
           lastSeenAt:  now,
-          timesWorn:   1,
+          timesWorn:   oldData.timesWorn || 1,
         });
       }
+      // Always delete the old doc — it had the wrong identity.
+      await wardrobeRef.doc(oldId).delete();
     } else {
       // Same key — only non-identifying fields changed, update in place.
       await wardrobeRef.doc(oldId).update(updatedData);
