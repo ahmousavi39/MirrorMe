@@ -121,6 +121,28 @@ export async function getWardrobe(): Promise<WardrobeItem[]> {
   return (data.items || []) as WardrobeItem[];
 }
 
+// ── PATCH /api/wardrobe/:id ───────────────────────────────────────────────────────
+export interface WardrobeItemUpdate {
+  category?: string;
+  color?: string | null;
+  fit?: string | null;
+  material?: string | null;
+  pattern?: string | null;
+  style?: string | null;
+}
+
+export async function updateWardrobeItem(id: string, fields: WardrobeItemUpdate): Promise<WardrobeItem> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/wardrobe/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update wardrobe item');
+  return data.item as WardrobeItem;
+}
+
 // ── DELETE /api/wardrobe/:id ──────────────────────────────────────────────────────
 export async function deleteWardrobeItem(id: string): Promise<void> {
   const headers = await authHeaders();

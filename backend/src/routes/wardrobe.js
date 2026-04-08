@@ -143,6 +143,59 @@ router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
   }
 });
 
+// ── PATCH /api/wardrobe/:id ───────────────────────────────────────────────────
+// Updates editable fields on a wardrobe item. If category/color change, the
+// document key changes — old doc is deleted and a new one is created.
+router.patch('/:id', verifyToken, async (req, res) => {
+  try {
+    const { uid } = req;
+    const oldId = req.params.id;
+    const { category, color, fit, material, pattern, style } = req.body;
+
+    const wardrobeRef = db.collection('users').doc(uid).collection('wardrobe');
+    const oldDoc = await wardrobeRef.doc(oldId).get();
+    if (!oldDoc.exists) {
+      return res.status(404).json({ error: 'Wardrobe item not found' });
+    }
+
+    const oldData = oldDoc.data();
+    const newCategory = category !== undefined ? (category || null) : oldData.category;
+    const newColor    = color    !== undefined ? (color    || null) : oldData.color;
+
+    const updatedData = {
+      ...oldData,
+      category: newCategory,
+      color:    newColor,
+      fit:      fit      !== undefined ? (fit      || null) : oldData.fit,
+      material: material !== undefined ? (material || null) : oldData.material,
+      pattern:  pattern  !== undefined ? (pattern  || null) : oldData.pattern,
+      style:    style    !== undefined ? (style    || null) : oldData.style,
+    };
+
+    const newId = wardrobeKey(newCategory, newColor);
+
+    if (newId !== oldId) {
+      // Key changed — move to new document, merge if target already exists
+      const existing = await wardrobeRef.doc(newId).get();
+      if (existing.exists) {
+        const existingData = existing.data();
+        updatedData.timesWorn   = Math.max(updatedData.timesWorn || 1, existingData.timesWorn || 1);
+        updatedData.firstSeenAt = updatedData.firstSeenAt < existingData.firstSeenAt
+          ? updatedData.firstSeenAt : existingData.firstSeenAt;
+      }
+      await wardrobeRef.doc(oldId).delete();
+      await wardrobeRef.doc(newId).set(updatedData);
+    } else {
+      await wardrobeRef.doc(oldId).update(updatedData);
+    }
+
+    return res.json({ item: { id: newId, ...updatedData } });
+  } catch (error) {
+    console.error('Wardrobe patch error:', error);
+    return res.status(500).json({ error: 'Failed to update wardrobe item' });
+  }
+});
+
 // ── DELETE /api/wardrobe/:id ──────────────────────────────────────────────────────
 // Removes a single piece from the user's wardrobe.
 router.delete('/:id', verifyToken, async (req, res) => {

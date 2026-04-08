@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Share, Platform, Image, Animated, Dimensions,
+  Modal, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { ClothingItem, Occasion } from '@/types/app';
+import { updateWardrobeItem } from '@/services/api';
 
 const OCCASION_META: Record<Occasion, { label: string; emoji: string }> = {
   casual:    { label: 'Casual',    emoji: '🛍️' },
@@ -60,11 +62,139 @@ const chipStyles = StyleSheet.create({
   detail: { fontSize: 11, marginTop: 2 },
 });
 
+// Mirrors the backend wardrobeKey() — used to know which Firestore doc to PATCH.
+function wardrobeKeyFor(category: string, color: string | null): string {
+  const clean = (s: string) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+  return `${clean(category)}_${clean(color || '')}`;
+}
+
+// ── Clothing edit bottom sheet ────────────────────────────────────────────────
+interface EditSheetProps {
+  item: ClothingItem;
+  originalKey: string;
+  onSave: (updated: ClothingItem, newKey: string) => void;
+  onClose: () => void;
+}
+
+function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProps) {
+  const { theme } = useTheme();
+  const [category, setCategory] = useState(item.category ?? '');
+  const [color, setColor]       = useState(item.color ?? '');
+  const [fit, setFit]           = useState(item.fit ?? '');
+  const [material, setMaterial] = useState(item.material ?? '');
+  const [pattern, setPattern]   = useState(item.pattern ?? '');
+  const [style, setStyle]       = useState(item.style ?? '');
+  const [saving, setSaving]     = useState(false);
+
+  const es = editStyles(theme);
+
+  const handleSave = async () => {
+    const trimmed = {
+      category: category.trim(),
+      color:    color.trim()    || null,
+      fit:      fit.trim()      || null,
+      material: material.trim() || null,
+      pattern:  pattern.trim()  || null,
+      style:    style.trim()    || null,
+    };
+    if (!trimmed.category) {
+      Alert.alert('Category required', 'Please enter a category for this item.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateWardrobeItem(originalKey, trimmed);
+      const newKey = wardrobeKeyFor(trimmed.category, trimmed.color);
+      onSave({ ...item, ...trimmed } as ClothingItem, newKey);
+    } catch (e: any) {
+      Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={es.overlay}
+      >
+        <TouchableOpacity style={es.backdrop} activeOpacity={1} onPress={onClose} />
+        <View style={[es.sheet, { backgroundColor: theme.card }]}>
+          {/* Handle */}
+          <View style={[es.handle, { backgroundColor: theme.border }]} />
+
+          {/* Header */}
+          <View style={es.sheetHeader}>
+            <Text style={[es.sheetTitle, { color: theme.text }]}>Edit Item</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <Ionicons name="close" size={22} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={es.fields}>
+            {[
+              { label: 'Category *', value: category, set: setCategory, placeholder: 'e.g. T-Shirt, Jeans' },
+              { label: 'Color',      value: color,    set: setColor,    placeholder: 'e.g. Navy Blue' },
+              { label: 'Fit',        value: fit,      set: setFit,      placeholder: 'e.g. Slim, Regular, Oversized' },
+              { label: 'Material',   value: material, set: setMaterial, placeholder: 'e.g. Cotton, Linen' },
+              { label: 'Pattern',    value: pattern,  set: setPattern,  placeholder: 'e.g. Solid, Striped, Floral' },
+              { label: 'Style',      value: style,    set: setStyle,    placeholder: 'e.g. Casual, Formal' },
+            ].map(({ label, value, set, placeholder }) => (
+              <View key={label} style={es.fieldRow}>
+                <Text style={[es.fieldLabel, { color: theme.textSecondary }]}>{label}</Text>
+                <TextInput
+                  style={[es.fieldInput, { backgroundColor: theme.inputBackground, borderColor: theme.border, color: theme.text }]}
+                  value={value}
+                  onChangeText={set}
+                  placeholder={placeholder}
+                  placeholderTextColor={theme.placeholder}
+                  autoCapitalize="words"
+                />
+              </View>
+            ))}
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[es.saveBtn, { backgroundColor: theme.primary }, saving && { opacity: 0.65 }]}
+            onPress={handleSave}
+            disabled={saving}
+            activeOpacity={0.85}
+          >
+            {saving
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={es.saveBtnText}>Save Changes</Text>
+            }
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+const editStyles = (theme: any) => StyleSheet.create({
+  overlay:    { flex: 1, justifyContent: 'flex-end' },
+  backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet:      { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
+  handle:     { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
+  sheetHeader:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
+  sheetTitle: { fontSize: 17, fontWeight: '700' },
+  fields:     { paddingHorizontal: 20, gap: 14, paddingBottom: 6 },
+  fieldRow:   { gap: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldInput: { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15 },
+  saveBtn:    { marginHorizontal: 20, marginTop: 18, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  saveBtnText:{ color: '#fff', fontSize: 16, fontWeight: '700' },
+});
+
 export default function ResultsScreen() {
   const { theme } = useTheme();
-  const { result, imageUri, clear } = useAnalysis();
+  const { result, imageUri, setResult, clear } = useAnalysis();
   const router = useRouter();
   const s = makeStyles(theme);
+
+  // Local editable copy of clothing items — stays in sync with context on edit
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   // Fade-in animation for the content card
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -124,11 +254,17 @@ export default function ResultsScreen() {
             <View style={s.photoTagsContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
                 {result.clothingItems.map((item, i) => (
-                  <View key={i} style={s.photoTag}>
+                  <TouchableOpacity
+                    key={i}
+                    style={s.photoTag}
+                    onPress={() => setEditingIndex(i)}
+                    activeOpacity={0.75}
+                  >
                     <Text style={s.photoTagText}>
                       {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
                     </Text>
-                  </View>
+                    <Ionicons name="pencil" size={10} color="rgba(255,255,255,0.8)" style={{ marginLeft: 5 }} />
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
@@ -321,6 +457,25 @@ export default function ResultsScreen() {
           <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
         </Animated.View>
       </ScrollView>
+
+      {/* ── Clothing item edit sheet ────────────────────────────────── */}
+      {editingIndex !== null && result.clothingItems?.[editingIndex] && (
+        <ClothingEditSheet
+          item={result.clothingItems[editingIndex]}
+          originalKey={wardrobeKeyFor(
+            result.clothingItems[editingIndex].category,
+            result.clothingItems[editingIndex].color,
+          )}
+          onSave={(updatedItem) => {
+            const newItems = result.clothingItems.map((it, i) =>
+              i === editingIndex ? updatedItem : it,
+            );
+            setResult({ ...result, clothingItems: newItems });
+            setEditingIndex(null);
+          }}
+          onClose={() => setEditingIndex(null)}
+        />
+      )}
     </View>
   );
 }
