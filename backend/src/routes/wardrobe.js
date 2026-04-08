@@ -18,7 +18,8 @@ const upload = multer({
 });
 
 /** Wardrobe document key — includes all 6 identifying fields so items that differ
- *  on even a single field are stored as separate wardrobe entries. */\nfunction wardrobeKey(category, color, fit, material, pattern, style) {
+ *  on even a single field are stored as separate wardrobe entries. */
+function wardrobeKey(category, color, fit, material, pattern, style) {
   const clean = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
   const parts = [
     clean(category) || 'item',
@@ -164,8 +165,34 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
     const wardrobeRef = db.collection('users').doc(uid).collection('wardrobe');
     const oldDoc = await wardrobeRef.doc(oldId).get();
+
     if (!oldDoc.exists) {
-      return res.status(404).json({ error: 'Wardrobe item not found' });
+      // Item not found at the expected key — upsert a fresh entry at the new key.
+      // This handles cases where the wardrobe upsert in analyze.js failed silently
+      // or where the frontend computed a slightly different key.
+      const now = new Date().toISOString();
+      const newCategory = category || null;
+      const newColor    = color    || null;
+      const newFit      = fit      || null;
+      const newMaterial = material || null;
+      const newPattern  = pattern  || null;
+      const newStyle    = style    || null;
+      const newId = wardrobeKey(newCategory, newColor, newFit, newMaterial, newPattern, newStyle);
+      const newItem = {
+        category: newCategory,
+        color:    newColor,
+        fit:      newFit,
+        material: newMaterial,
+        pattern:  newPattern,
+        style:    newStyle,
+        firstSeenAt: now,
+        lastSeenAt:  now,
+        timesWorn:   1,
+        uploadId:    null,
+        imageUrl:    null,
+      };
+      await wardrobeRef.doc(newId).set(newItem, { merge: true });
+      return res.json({ item: { id: newId, ...newItem } });
     }
 
     const oldData = oldDoc.data();
