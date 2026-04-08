@@ -36,13 +36,28 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
     }
   }, []);
 
+  const socialErrorMessage = (e: any): string => {
+    switch (e?.code) {
+      case 'auth/operation-not-allowed':
+        return 'This sign-in method is not enabled. Please contact support.';
+      case 'auth/invalid-credential':
+      case 'auth/invalid-verification-token':
+        return 'Sign-in credential was invalid. Please try again.';
+      case 'auth/network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      default:
+        return null as any;
+    }
+  };
+
   const finishSocialAuth = async (
     firebaseCredential: ReturnType<typeof GoogleAuthProvider.credential>,
   ) => {
     const userCredential = await signInWithCredential(auth, firebaseCredential as any);
     const info = getAdditionalUserInfo(userCredential);
     if (info?.isNewUser) {
-      // Set flag synchronously — onAuthStateChanged reads it on next microtask
       setPendingOnboarding(true);
     }
   };
@@ -54,17 +69,21 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
     try {
       const result = await promptAsync();
       if (result.type === 'success') {
-        const idToken = result.authentication?.idToken;
-        if (!idToken) {
-          onError('Google sign-in failed. Please try again.');
+        // expo-auth-session PKCE flow may return idToken, accessToken, or both.
+        // GoogleAuthProvider.credential accepts (idToken, accessToken) — use whichever is available.
+        const idToken = result.authentication?.idToken ?? null;
+        const accessToken = result.authentication?.accessToken ?? null;
+        if (!idToken && !accessToken) {
+          onError('Google sign-in failed: no token received. Please try again.');
           return;
         }
-        const credential = GoogleAuthProvider.credential(idToken);
+        const credential = GoogleAuthProvider.credential(idToken, accessToken);
         await finishSocialAuth(credential as any);
       }
-      // type === 'cancel' or 'dismiss' → do nothing
+      // type === 'cancel' | 'dismiss' → user backed out, do nothing
     } catch (e: any) {
-      onError('Google sign-in failed. Please try again.');
+      console.error('[Google sign-in error]', e?.code, e?.message);
+      onError(socialErrorMessage(e) ?? 'Google sign-in failed. Please try again.');
     } finally {
       setGoogleLoading(false);
       onLoadingChange?.(false);
@@ -86,21 +105,23 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
+        // Pass the HASHED nonce to Apple — Apple embeds it in the JWT as-is.
+        // Pass the RAW nonce to Firebase — Firebase hashes it locally and compares.
         nonce: hashedNonce,
       });
       const { identityToken } = appleCredential;
       if (!identityToken) {
-        onError('Apple sign-in failed. Please try again.');
+        onError('Apple sign-in failed: no identity token received. Please try again.');
         return;
       }
       const provider = new OAuthProvider('apple.com');
       const firebaseCredential = provider.credential({ idToken: identityToken, rawNonce });
       await finishSocialAuth(firebaseCredential as any);
     } catch (e: any) {
-      // ERR_REQUEST_CANCELED = user dismissed the Apple sheet
-      if (e.code !== 'ERR_REQUEST_CANCELED' && e.code !== 'ERR_CANCELED') {
-        onError('Apple sign-in failed. Please try again.');
-      }
+      // ERR_REQUEST_CANCELED / ERR_CANCELED = user dismissed the sheet
+      if (e.code === 'ERR_REQUEST_CANCELED' || e.code === 'ERR_CANCELED') return;
+      console.error('[Apple sign-in error]', e?.code, e?.message);
+      onError(socialErrorMessage(e) ?? 'Apple sign-in failed. Please try again.');
     } finally {
       setAppleLoading(false);
       onLoadingChange?.(false);
