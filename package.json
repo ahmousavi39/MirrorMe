@@ -25,6 +25,7 @@
     "expo-font": "~14.0.9",
     "expo-haptics": "~15.0.7",
     "expo-image": "~3.0.10",
+    "expo-image-loader": "^6.0.0",
     "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "^55.0.16",
     "expo-linking": "~8.0.9",
