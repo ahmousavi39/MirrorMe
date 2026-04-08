@@ -17,10 +17,18 @@ const upload = multer({
   },
 });
 
-/** Stable wardrobe key from category + color */
-function wardrobeKey(category, color) {
-  const clean = (s) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
-  return `${clean(category)}_${clean(color)}`;
+/** Wardrobe document key — includes all 6 identifying fields so items that differ
+ *  on even a single field are stored as separate wardrobe entries. */\nfunction wardrobeKey(category, color, fit, material, pattern, style) {
+  const clean = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
+  const parts = [
+    clean(category) || 'item',
+    clean(color),
+    clean(fit),
+    clean(material),
+    clean(pattern),
+    clean(style),
+  ].filter(Boolean);
+  return parts.join('_').slice(0, 120);
 }
 
 // ── GET /api/wardrobe ─────────────────────────────────────────────────────────────
@@ -103,7 +111,7 @@ router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
 
     // Use the first (most prominent) detected item
     const item = clothingItems[0];
-    const key = wardrobeKey(item.category, item.color);
+    const key = wardrobeKey(item.category, item.color, item.fit, item.material, item.pattern, item.style);
     const now = new Date().toISOString();
     const wardrobeRef = userRef.collection('wardrobe');
     const itemRef = wardrobeRef.doc(key);
@@ -174,7 +182,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
       style:    style    !== undefined ? (style    || null) : oldData.style,
     };
 
-    const newId = wardrobeKey(newCategory, newColor);
+    const newId = wardrobeKey(newCategory, newColor, updatedData.fit, updatedData.material, updatedData.pattern, updatedData.style);
 
     if (newId !== oldId) {
       // Key changed — the original item stays untouched; create a fresh entry.

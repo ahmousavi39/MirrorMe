@@ -35,10 +35,19 @@ function getWeekKey() {
   return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
-/** Stable wardrobe key from category + color */
-function wardrobeKey(category, color) {
-  const clean = (s) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
-  return `${clean(category)}_${clean(color)}`;
+/** Wardrobe document key — includes all 6 identifying fields so items that differ
+ *  on even a single field (e.g. fit) are stored as separate wardrobe entries. */
+function wardrobeKey(category, color, fit, material, pattern, style) {
+  const clean = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
+  const parts = [
+    clean(category) || 'item',
+    clean(color),
+    clean(fit),
+    clean(material),
+    clean(pattern),
+    clean(style),
+  ].filter(Boolean);
+  return parts.join('_').slice(0, 120);
 }
 
 // ── POST /api/analyze ─────────────────────────────────────────────────────────────
@@ -122,8 +131,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
 
     // ── 2c. Fetch user's existing wardrobe to inform Gemini suggestions ───────
     let wardrobeItems = [];
+    let wardrobeSnap = null;
     try {
-      const wardrobeSnap = await userRef.collection('wardrobe').get();
+      wardrobeSnap = await userRef.collection('wardrobe').get();
       wardrobeItems = wardrobeSnap.docs.map((d) => d.data());
     } catch (e) {
       console.warn('Could not fetch wardrobe:', e.message);
@@ -220,34 +230,48 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     await batch.commit();
 
     // ── 5b. Upsert detected items into user's wardrobe ────────────────────────
+    // An item is considered the SAME only when all 6 fields match exactly.
+    // If it differs on even one field (e.g. fit: slim vs regular) it is a new item.
     if (clothingItems.length > 0) {
       try {
         const now = new Date().toISOString();
         const wardrobeRef = userRef.collection('wardrobe');
+        const existingDocs = wardrobeSnap ? wardrobeSnap.docs : [];
+        const normalize = (s) => (s || '').toLowerCase().trim();
+
         await Promise.all(clothingItems.map(async (item) => {
-          const key = wardrobeKey(item.category, item.color);
-          const itemRef = wardrobeRef.doc(key);
-          const existing = await itemRef.get();
-          if (existing.exists) {
-            await itemRef.update({
+          // Exact match: every one of the 6 fields must be equal (after normalization)
+          const matchDoc = existingDocs.find((doc) => {
+            const d = doc.data();
+            return normalize(d.category) === normalize(item.category)
+              && normalize(d.color)    === normalize(item.color)
+              && normalize(d.fit)      === normalize(item.fit)
+              && normalize(d.material) === normalize(item.material)
+              && normalize(d.pattern)  === normalize(item.pattern)
+              && normalize(d.style)    === normalize(item.style);
+          });
+
+          if (matchDoc) {
+            // Exact match — update timesWorn and metadata only, no field changes
+            await matchDoc.ref.update({
               lastSeenAt: now,
               uploadId: uploadRef.id,
-              imageUrl: imageUrl || existing.data().imageUrl || null,
-              timesWorn: (existing.data().timesWorn || 1) + 1,
-              // Update fields if we now have better data
-              ...(item.material && { material: item.material }),
-              ...(item.pattern && { pattern: item.pattern }),
-              ...(item.fit     && { fit: item.fit }),
-              ...(item.style   && { style: item.style }),
+              imageUrl: imageUrl || matchDoc.data().imageUrl || null,
+              timesWorn: (matchDoc.data().timesWorn || 1) + 1,
             });
           } else {
-            await itemRef.set({
-              category:    item.category   || null,
-              color:       item.color      || null,
-              material:    item.material   || null,
-              pattern:     item.pattern    || null,
-              fit:         item.fit        || null,
-              style:       item.style      || null,
+            // New item (no exact match) — create with full-field key
+            const key = wardrobeKey(
+              item.category, item.color, item.fit,
+              item.material, item.pattern, item.style,
+            );
+            await wardrobeRef.doc(key).set({
+              category: item.category || null,
+              color:    item.color    || null,
+              material: item.material || null,
+              pattern:  item.pattern  || null,
+              fit:      item.fit      || null,
+              style:    item.style    || null,
               uploadId:    uploadRef.id,
               imageUrl:    imageUrl || null,
               firstSeenAt: now,
