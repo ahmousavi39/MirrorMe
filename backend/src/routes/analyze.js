@@ -232,6 +232,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // ── 5b. Upsert detected items into user's wardrobe ────────────────────────
     // An item is considered the SAME only when all 6 fields match exactly.
     // If it differs on even one field (e.g. fit: slim vs regular) it is a new item.
+    // clothingItemKeys tracks the ACTUAL Firestore doc ID used for each item so the
+    // frontend can PATCH the right document later (avoids key-formula mismatches).
+    const clothingItemKeys = clothingItems.map(() => null); // default null
     if (clothingItems.length > 0) {
       try {
         const now = new Date().toISOString();
@@ -239,7 +242,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
         const existingDocs = wardrobeSnap ? wardrobeSnap.docs : [];
         const normalize = (s) => (s || '').toLowerCase().trim();
 
-        await Promise.all(clothingItems.map(async (item) => {
+        await Promise.all(clothingItems.map(async (item, idx) => {
           // Exact match: every one of the 6 fields must be equal (after normalization)
           const matchDoc = existingDocs.find((doc) => {
             const d = doc.data();
@@ -253,6 +256,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
 
           if (matchDoc) {
             // Exact match — update timesWorn and metadata only, no field changes
+            clothingItemKeys[idx] = matchDoc.id;
             await matchDoc.ref.update({
               lastSeenAt: now,
               uploadId: uploadRef.id,
@@ -265,6 +269,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
               item.category, item.color, item.fit,
               item.material, item.pattern, item.style,
             );
+            clothingItemKeys[idx] = key;
             await wardrobeRef.doc(key).set({
               category: item.category || null,
               color:    item.color    || null,
@@ -296,6 +301,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       occasionScores: geminiResult.occasionScores,
       colorPalette: geminiResult.colorPalette,
       clothingItems,
+      clothingItemKeys,
       occasion: occasion || null,
       imageUrl: imageUrl || null,
       uploadsUsedThisWeek: weeklyCount + 1,

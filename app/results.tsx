@@ -477,14 +477,19 @@ export default function ResultsScreen() {
       {editingIndex !== null && result.clothingItems?.[editingIndex] && (
         <ClothingEditSheet
           item={result.clothingItems[editingIndex]}
-          originalKey={wardrobeKeyFor(
-            result.clothingItems[editingIndex].category,
-            result.clothingItems[editingIndex].color,
-            result.clothingItems[editingIndex].fit,
-            result.clothingItems[editingIndex].material,
-            result.clothingItems[editingIndex].pattern,
-            result.clothingItems[editingIndex].style,
-          )}
+          originalKey={
+            // Use the actual Firestore doc key returned by the backend (avoids any
+            // key-formula mismatch). Fall back to computing it locally for history items.
+            result.clothingItemKeys?.[editingIndex]
+            ?? wardrobeKeyFor(
+              result.clothingItems[editingIndex].category,
+              result.clothingItems[editingIndex].color,
+              result.clothingItems[editingIndex].fit,
+              result.clothingItems[editingIndex].material,
+              result.clothingItems[editingIndex].pattern,
+              result.clothingItems[editingIndex].style,
+            )
+          }
           onSave={(updatedItem) => {
             const newItems = result.clothingItems.map((it, i) =>
               i === editingIndex ? updatedItem : it,
