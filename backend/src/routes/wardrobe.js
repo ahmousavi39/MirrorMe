@@ -167,11 +167,9 @@ router.patch('/:id', verifyToken, async (req, res) => {
     const now = new Date().toISOString();
     const normalize = (s) => (s || '').toLowerCase().trim();
 
-    // Fetch the old doc (may not exist if the wardrobe upsert in analyze.js failed)
     const oldDoc = await wardrobeRef.doc(oldId).get();
     const oldData = oldDoc.exists ? oldDoc.data() : {};
 
-    // Resolve new field values, falling back to old doc's values if not provided
     const newCategory = category !== undefined ? (category || null) : (oldData.category || null);
     const newColor    = color    !== undefined ? (color    || null) : (oldData.color    || null);
     const newFit      = fit      !== undefined ? (fit      || null) : (oldData.fit      || null);
@@ -181,7 +179,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
     const newKey = wardrobeKey(newCategory, newColor, newFit, newMaterial, newPattern, newStyle);
 
-    // ── Same key, just update in place (no identity change) ──────────────────
+    // ── No identity change — update fields in place, no count changes ─────────
     if (newKey === oldId && oldDoc.exists) {
       const updatedData = {
         ...oldData,
@@ -193,8 +191,18 @@ router.patch('/:id', verifyToken, async (req, res) => {
       return res.json({ item: { id: oldId, ...updatedData } });
     }
 
-    // ── Key changed: find exact 6-field match among ALL wardrobe docs ─────────
-    // (key-based lookup is not reliable — existing items may have old-format keys)
+    // ── Identity changed ──────────────────────────────────────────────────────
+    // Step 1: always decrement (or delete) the old doc — this edit "un-wears" it.
+    if (oldDoc.exists) {
+      const oldWorn = oldData.timesWorn || 1;
+      if (oldWorn <= 1) {
+        await wardrobeRef.doc(oldId).delete();
+      } else {
+        await wardrobeRef.doc(oldId).update({ timesWorn: oldWorn - 1, lastSeenAt: now });
+      }
+    }
+
+    // Step 2: find an exact 6-field match among remaining wardrobe docs.
     const allSnap = await wardrobeRef.get();
     const matchDoc = allSnap.docs.find((doc) => {
       if (doc.id === oldId) return false;
@@ -208,26 +216,15 @@ router.patch('/:id', verifyToken, async (req, res) => {
     });
 
     if (matchDoc) {
-      // ── Case A: new fields match an existing wardrobe item ────────────────
-      // The user corrected a misdetection — credit the real item.
-      await matchDoc.ref.update({
-        timesWorn:  (matchDoc.data().timesWorn || 1) + 1,
-        lastSeenAt: now,
-      });
-      // Remove the wrongly-detected doc (it was created/incremented during analysis)
-      if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
-      const resultData = { ...matchDoc.data(), timesWorn: (matchDoc.data().timesWorn || 1) + 1 };
-      return res.json({ item: { id: matchDoc.id, ...resultData } });
+      // New fields match an existing wardrobe item → wore +1
+      const worn = (matchDoc.data().timesWorn || 1) + 1;
+      await matchDoc.ref.update({ timesWorn: worn, lastSeenAt: now });
+      return res.json({ item: { id: matchDoc.id, ...matchDoc.data(), timesWorn: worn, lastSeenAt: now } });
     } else {
-      // ── Case B: new fields don't match anything — create new item ─────────
-      // The user edited to a genuinely different item. Create it with timesWorn=1.
+      // No match → create a fresh item with timesWorn = 1
       const newItemData = {
-        category:    newCategory,
-        color:       newColor,
-        fit:         newFit,
-        material:    newMaterial,
-        pattern:     newPattern,
-        style:       newStyle,
+        category: newCategory, color: newColor,
+        fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle,
         uploadId:    oldData.uploadId || null,
         imageUrl:    oldData.imageUrl || null,
         firstSeenAt: now,
@@ -235,16 +232,6 @@ router.patch('/:id', verifyToken, async (req, res) => {
         timesWorn:   1,
       };
       await wardrobeRef.doc(newKey).set(newItemData);
-
-      // Decrement (or delete) the old doc — it was falsely +1'd during detection
-      if (oldDoc.exists) {
-        const oldWorn = oldData.timesWorn || 1;
-        if (oldWorn <= 1) {
-          await wardrobeRef.doc(oldId).delete();
-        } else {
-          await wardrobeRef.doc(oldId).update({ timesWorn: oldWorn - 1, lastSeenAt: now });
-        }
-      }
       return res.json({ item: { id: newKey, ...newItemData } });
     }
   } catch (error) {
