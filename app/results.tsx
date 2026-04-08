@@ -495,6 +495,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 14, gap: 6,
   },
   photoTag: {
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.58)',
     paddingHorizontal: 11, paddingVertical: 5,
     borderRadius: 20,
