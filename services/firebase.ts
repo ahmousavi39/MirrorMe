@@ -1,6 +1,7 @@
 ﻿import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeAuth, getAuth, getReactNativePersistence } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDvXpEybD2AoXkh00LQr5LdTWxdBCZyekk',
@@ -13,16 +14,23 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Always use AsyncStorage persistence so the user stays logged in across restarts.
-// The try/catch handles the "already initialized" error from hot-reloads.
+// Expo Go (StoreClient) + new architecture hangs when initializeAuth is called
+// with AsyncStorage persistence. Use plain getAuth() there — session won't
+// persist across Expo Go restarts, but that's fine for development/testing.
+// Real dev-client and production builds get full AsyncStorage persistence.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 export const auth = (() => {
+  if (isExpoGo) {
+    return getAuth(app);
+  }
   try {
     return initializeAuth(app, {
       persistence: getReactNativePersistence(AsyncStorage),
     });
   } catch {
-    // Auth already initialized (e.g. hot reload) — getAuth returns the same instance
-    // which already has AsyncStorage persistence applied.
+    // Auth already initialized (e.g. fast refresh) — getAuth returns the same
+    // instance which already has AsyncStorage persistence configured.
     return getAuth(app);
   }
 })();
