@@ -101,7 +101,26 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
   const [style, setStyle]       = useState(item.style ?? '');
   const [saving, setSaving]     = useState(false);
 
-  const es = editStyles(theme);
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(anim, {
+      toValue: 1,
+      tension: 50,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const dismiss = (callback?: () => void) => {
+    Animated.timing(anim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => callback?.());
+  };
+
+  const handleClose = () => dismiss(onClose);
 
   const handleSave = async () => {
     const trimmed = {
@@ -120,7 +139,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
     try {
       await updateWardrobeItem(originalKey, trimmed);
       const newKey = wardrobeKeyFor(trimmed.category, trimmed.color, trimmed.fit ?? null, trimmed.material ?? null, trimmed.pattern ?? null, trimmed.style ?? null);
-      onSave({ ...item, ...trimmed } as ClothingItem, newKey);
+      dismiss(() => onSave({ ...item, ...trimmed } as ClothingItem, newKey));
     } catch (e: any) {
       Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');
     } finally {
@@ -128,21 +147,27 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
     }
   };
 
+  const es = editStyles(theme);
+
   return (
-    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible animationType="none" transparent onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={es.overlay}
       >
-        <TouchableOpacity style={es.backdrop} activeOpacity={1} onPress={onClose} />
-        <View style={[es.sheet, { backgroundColor: theme.card }]}>
+        <Animated.View style={[es.backdrop, { opacity: anim }]}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleClose} />
+        </Animated.View>
+        <Animated.View
+          style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }] }]}
+        >
           {/* Handle */}
           <View style={[es.handle, { backgroundColor: theme.border }]} />
 
           {/* Header */}
           <View style={es.sheetHeader}>
             <Text style={[es.sheetTitle, { color: theme.text }]}>Edit Item</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="close" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -181,7 +206,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
               : <Text style={es.saveBtnText}>Save Changes</Text>
             }
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
