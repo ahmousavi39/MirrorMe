@@ -62,10 +62,25 @@ const chipStyles = StyleSheet.create({
   detail: { fontSize: 11, marginTop: 2 },
 });
 
-// Mirrors the backend wardrobeKey() — used to know which Firestore doc to PATCH.
-function wardrobeKeyFor(category: string, color: string | null): string {
-  const clean = (s: string) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
-  return `${clean(category)}_${clean(color || '')}`;
+// Mirrors the backend wardrobeKey() exactly — all 6 fields so keys are consistent.
+function wardrobeKeyFor(
+  category: string,
+  color: string | null,
+  fit: string | null,
+  material: string | null,
+  pattern: string | null,
+  style: string | null,
+): string {
+  const clean = (s: string | null) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
+  const parts = [
+    clean(category) || 'item',
+    clean(color),
+    clean(fit),
+    clean(material),
+    clean(pattern),
+    clean(style),
+  ].filter(Boolean);
+  return parts.join('_').slice(0, 120);
 }
 
 // ── Clothing edit bottom sheet ────────────────────────────────────────────────
@@ -104,7 +119,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
     setSaving(true);
     try {
       await updateWardrobeItem(originalKey, trimmed);
-      const newKey = wardrobeKeyFor(trimmed.category, trimmed.color);
+      const newKey = wardrobeKeyFor(trimmed.category, trimmed.color, trimmed.fit ?? null, trimmed.material ?? null, trimmed.pattern ?? null, trimmed.style ?? null);
       onSave({ ...item, ...trimmed } as ClothingItem, newKey);
     } catch (e: any) {
       Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');
@@ -465,6 +480,10 @@ export default function ResultsScreen() {
           originalKey={wardrobeKeyFor(
             result.clothingItems[editingIndex].category,
             result.clothingItems[editingIndex].color,
+            result.clothingItems[editingIndex].fit,
+            result.clothingItems[editingIndex].material,
+            result.clothingItems[editingIndex].pattern,
+            result.clothingItems[editingIndex].style,
           )}
           onSave={(updatedItem) => {
             const newItems = result.clothingItems.map((it, i) =>
@@ -495,14 +514,14 @@ const makeStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 14, gap: 6,
   },
   photoTag: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap',
     backgroundColor: 'rgba(0,0,0,0.58)',
     paddingHorizontal: 11, paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
   },
   photoTagText: {
-    color: '#fff', fontSize: 12, fontWeight: '600',
+    color: '#fff', fontSize: 12, fontWeight: '600', flexShrink: 1,
   },
   floatingHeader: {
     position: 'absolute',
