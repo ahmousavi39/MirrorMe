@@ -144,8 +144,10 @@ router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
 });
 
 // ── PATCH /api/wardrobe/:id ───────────────────────────────────────────────────
-// Updates editable fields on a wardrobe item. If category/color change, the
-// document key changes — old doc is deleted and a new one is created.
+// Updates editable fields on a wardrobe item.
+// If category/color change (key changes), the OLD item is left untouched and a
+// NEW wardrobe entry is created — so the original item is never modified.
+// If only non-key fields change (fit/material etc.) the existing doc is updated.
 router.patch('/:id', verifyToken, async (req, res) => {
   try {
     const { uid } = req;
@@ -175,17 +177,36 @@ router.patch('/:id', verifyToken, async (req, res) => {
     const newId = wardrobeKey(newCategory, newColor);
 
     if (newId !== oldId) {
-      // Key changed — move to new document, merge if target already exists
+      // Key changed — the original item stays untouched; create a fresh entry.
+      // Build a clean "new item" rather than inheriting timesWorn from the old one.
+      const now = new Date().toISOString();
       const existing = await wardrobeRef.doc(newId).get();
       if (existing.exists) {
-        const existingData = existing.data();
-        updatedData.timesWorn   = Math.max(updatedData.timesWorn || 1, existingData.timesWorn || 1);
-        updatedData.firstSeenAt = updatedData.firstSeenAt < existingData.firstSeenAt
-          ? updatedData.firstSeenAt : existingData.firstSeenAt;
+        // Target already exists — just update its non-key fields, don't reset counts.
+        await wardrobeRef.doc(newId).update({
+          fit:      updatedData.fit,
+          material: updatedData.material,
+          pattern:  updatedData.pattern,
+          style:    updatedData.style,
+          lastSeenAt: now,
+        });
+      } else {
+        await wardrobeRef.doc(newId).set({
+          category:    newCategory,
+          color:       newColor,
+          fit:         updatedData.fit,
+          material:    updatedData.material,
+          pattern:     updatedData.pattern,
+          style:       updatedData.style,
+          uploadId:    oldData.uploadId || null,
+          imageUrl:    oldData.imageUrl || null,
+          firstSeenAt: now,
+          lastSeenAt:  now,
+          timesWorn:   1,
+        });
       }
-      await wardrobeRef.doc(oldId).delete();
-      await wardrobeRef.doc(newId).set(updatedData);
     } else {
+      // Same key — only non-identifying fields changed, update in place.
       await wardrobeRef.doc(oldId).update(updatedData);
     }
 
