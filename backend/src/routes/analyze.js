@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const sharp = require('sharp');
 const router = express.Router();
 
+const { FieldValue } = require('firebase-admin/firestore');
 const verifyToken = require('../middleware/verifyToken');
 const { db, bucket } = require('../services/firebase');
 const { analyzeClothing } = require('../services/ximilar');
@@ -293,7 +294,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
               lastSeenAt: now,
               uploadId:   uploadRef.id,
               imageUrl:   imageUrl || matchDoc.data().imageUrl || null,
-              timesWorn:  (matchDoc.data().timesWorn || 1) + 1,
+              timesWorn:  FieldValue.increment(1),
             });
           } else {
             // No match — create a new wardrobe item with all detected fields

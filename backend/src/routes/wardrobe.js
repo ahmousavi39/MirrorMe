@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const sharp = require('sharp');
 const router = express.Router();
 
+const { FieldValue } = require('firebase-admin/firestore');
 const verifyToken = require('../middleware/verifyToken');
 const { db, bucket } = require('../services/firebase');
 const { extractClothingFromImage } = require('../services/gemini');
@@ -198,7 +199,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
       if (oldWorn <= 1) {
         await wardrobeRef.doc(oldId).delete();
       } else {
-        await wardrobeRef.doc(oldId).update({ timesWorn: oldWorn - 1, lastSeenAt: now });
+        await wardrobeRef.doc(oldId).update({ timesWorn: FieldValue.increment(-1), lastSeenAt: now });
       }
     }
 
@@ -217,8 +218,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
     if (matchDoc) {
       // New fields match an existing wardrobe item → wore +1
-      const worn = (matchDoc.data().timesWorn || 1) + 1;
-      await matchDoc.ref.update({ timesWorn: worn, lastSeenAt: now });
+      await matchDoc.ref.update({ timesWorn: FieldValue.increment(1), lastSeenAt: now });
       return res.json({ item: { id: matchDoc.id, ...matchDoc.data(), timesWorn: worn, lastSeenAt: now } });
     } else {
       // No match → create a fresh item with timesWorn = 1
