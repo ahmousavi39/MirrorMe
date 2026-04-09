@@ -250,26 +250,39 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
           const categoryNorm = normalize(item.category);
           const colorNorm    = normalize(item.color);
 
+          const secondaryFields = ['fit', 'material', 'pattern', 'style'];
+
           const candidates = existingDocs.filter((doc) => {
             const d = doc.data();
             return normalize(d.category) === categoryNorm
                 && normalize(d.color)    === colorNorm;
           });
 
+          // Score each candidate by how many secondary fields agree with the detection.
+          const scored = candidates.map((doc) => {
+            const d = doc.data();
+            const hasAnySecondary = secondaryFields.some((f) => (d[f] || '').trim() !== '');
+            const matchCount = secondaryFields.filter(
+              (f) => normalize(d[f]) === normalize(item[f])
+            ).length;
+            return { doc, matchCount, hasAnySecondary };
+          });
+
+          // A candidate qualifies only if:
+          //   • it has no secondary fields stored (minimal entry — accept on category+color), OR
+          //   • at least 1 secondary field matches the detected value.
+          const qualified = scored.filter(
+            ({ matchCount, hasAnySecondary }) => !hasAnySecondary || matchCount >= 1
+          );
+
           let matchDoc = null;
-          if (candidates.length === 1) {
-            matchDoc = candidates[0];
-          } else if (candidates.length > 1) {
-            // Pick the candidate with the most matching secondary fields
-            const secondaryFields = ['fit', 'material', 'pattern', 'style'];
-            let bestScore = -1;
-            for (const doc of candidates) {
-              const d = doc.data();
-              const score = secondaryFields.filter(
-                (f) => normalize(d[f]) === normalize(item[f])
-              ).length;
-              if (score > bestScore) { bestScore = score; matchDoc = doc; }
-            }
+          if (qualified.length === 1) {
+            matchDoc = qualified[0].doc;
+          } else if (qualified.length > 1) {
+            // Multiple qualify — pick the one with the highest secondary-field score.
+            matchDoc = qualified.reduce(
+              (best, cur) => cur.matchCount > best.matchCount ? cur : best
+            ).doc;
           }
 
           if (matchDoc) {
