@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Share, Platform, Image, Animated, Dimensions,
@@ -246,6 +247,16 @@ export default function ResultsScreen() {
 
   // Local editable copy of clothing items — stays in sync with context on edit
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [addToWardrobe, setAddToWardrobe] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
+  }, []);
+  const [addToWardrobe, setAddToWardrobe] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
+  }, []);
 
   // Fade-in animation for the content card
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -305,17 +316,25 @@ export default function ResultsScreen() {
             <View style={s.photoTagsContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
                 {result.clothingItems.map((item, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={s.photoTag}
-                    onPress={() => setEditingIndex(i)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={s.photoTagText}>
-                      {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
-                    </Text>
-                    <Ionicons name="pencil" size={10} color="rgba(255,255,255,0.8)" style={{ marginLeft: 5 }} />
-                  </TouchableOpacity>
+                  addToWardrobe ? (
+                    <TouchableOpacity
+                      key={i}
+                      style={s.photoTag}
+                      onPress={() => setEditingIndex(i)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={s.photoTagText}>
+                        {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
+                      </Text>
+                      <Ionicons name="pencil" size={10} color="rgba(255,255,255,0.8)" style={{ marginLeft: 5 }} />
+                    </TouchableOpacity>
+                  ) : (
+                    <View key={i} style={s.photoTag}>
+                      <Text style={s.photoTagText}>
+                        {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
+                      </Text>
+                    </View>
+                  )
                 ))}
               </ScrollView>
             </View>
