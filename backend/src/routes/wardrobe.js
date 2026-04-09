@@ -44,7 +44,10 @@ router.get('/', verifyToken, async (req, res) => {
       .orderBy('lastSeenAt', 'desc')
       .get();
 
-    const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const items = snap.docs.map((doc) => {
+      const { _geminiFilledFields, ...data } = doc.data();
+      return { id: doc.id, ...data };
+    });
     return res.json({ items });
   } catch (error) {
     console.error('Wardrobe fetch error:', error);
@@ -182,14 +185,27 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
     // ── No identity change — update fields in place, no count changes ─────────
     if (newKey === oldId && oldDoc.exists) {
+      // Remove any fields the user explicitly edited from _geminiFilledFields —
+      // they're now user-owned values and should never be auto-reverted.
+      const editedFields = ['fit', 'material', 'pattern', 'style'].filter((f) => {
+        const submitted = req.body[f];
+        return submitted !== undefined && normalize(submitted) !== normalize(oldData[f]);
+      });
+      const remainingFilled = (oldData._geminiFilledFields || []).filter(
+        (f) => !editedFields.includes(f)
+      );
       const updatedData = {
         ...oldData,
         category: newCategory, color: newColor,
         fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle,
         lastSeenAt: now,
+        ...(remainingFilled.length > 0
+          ? { _geminiFilledFields: remainingFilled }
+          : { _geminiFilledFields: FieldValue.delete() }),
       };
       await wardrobeRef.doc(oldId).update(updatedData);
-      return res.json({ item: { id: oldId, ...updatedData } });
+      const { _geminiFilledFields: _gff, ...responseData } = updatedData;
+      return res.json({ item: { id: oldId, ...responseData } });
     }
 
     // ── Identity changed ──────────────────────────────────────────────────────

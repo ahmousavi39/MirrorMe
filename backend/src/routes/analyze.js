@@ -301,11 +301,15 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
             // Track which fields Gemini filled so PATCH can revert them if the user
             // later corrects this detection to a different identity.
             const geminiFilledFields = Object.keys(merged);
+            // Union-merge with existing _geminiFilledFields so previous fills
+            // aren't forgotten when the same item is analyzed multiple times.
+            const existingFilled = Array.isArray(d._geminiFilledFields) ? d._geminiFilledFields : [];
+            const unionFilled = [...new Set([...existingFilled, ...geminiFilledFields])];
             clothingItemKeys[idx] = matchDoc.id;
             await matchDoc.ref.update({
               ...merged,
-              ...(geminiFilledFields.length > 0
-                ? { _geminiFilledFields: geminiFilledFields }
+              ...(unionFilled.length > 0
+                ? { _geminiFilledFields: unionFilled }
                 : { _geminiFilledFields: FieldValue.delete() }),
               lastSeenAt: now,
               uploadId:   uploadRef.id,
