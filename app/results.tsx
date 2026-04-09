@@ -252,11 +252,6 @@ export default function ResultsScreen() {
   useEffect(() => {
     AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
   }, []);
-  const [addToWardrobe, setAddToWardrobe] = useState(true);
-
-  useEffect(() => {
-    AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
-  }, []);
 
   // Fade-in animation for the content card
   const fadeAnim = useRef(new Animated.Value(0)).current;
