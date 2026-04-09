@@ -181,6 +181,10 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     }
 
     // ── 5. Save result to Firestore (Firestore only — no Storage needed) ───────
+    // Strip any [key:...] labels Gemini may have embedded inline in tip text —
+    // they are internal references, not user-visible content.
+    const stripKeys = (s) => (typeof s === 'string' ? s.replace(/\[key:[^\]]+\]/g, '').replace(/\s{2,}/g, ' ').trim() : s);
+
     // Resolve each styleTipRef key to a human-readable item label (or null)
     const wardrobeByKey = {};
     wardrobeItems.forEach((w) => {
@@ -203,13 +207,16 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       return details ? `${item.category} · ${details}` : item.category;
     });
 
+    const cleanStyleTips   = (geminiResult.styleTips   || []).map(stripKeys);
+    const cleanOccasionTips = (geminiResult.occasionTips || []).map(stripKeys);
+
     const uploadRef = userRef.collection('uploads').doc();
     const uploadData = {
       score: geminiResult.score,
       feedback: geminiResult.feedback,
-      styleTips: geminiResult.styleTips,
+      styleTips: cleanStyleTips,
       styleTipItems,
-      occasionTips: geminiResult.occasionTips,
+      occasionTips: cleanOccasionTips,
       occasionTipItems,
       occasionScores: geminiResult.occasionScores,
       colorPalette: geminiResult.colorPalette,
@@ -366,9 +373,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       uploadId: uploadRef.id,
       score: geminiResult.score,
       feedback: geminiResult.feedback,
-      styleTips: geminiResult.styleTips,
+      styleTips: cleanStyleTips,
       styleTipItems,
-      occasionTips: geminiResult.occasionTips,
+      occasionTips: cleanOccasionTips,
       occasionTipItems,
       occasionScores: geminiResult.occasionScores,
       colorPalette: geminiResult.colorPalette,
