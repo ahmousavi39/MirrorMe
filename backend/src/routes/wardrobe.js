@@ -240,31 +240,20 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
     if (matchDoc) {
       // ── Case A: new identity matches an existing item ─────────────────────
-      // The user corrected a misdetection. Old doc loses 1 wear (it was wrong),
-      // existing item gains 1 wear. Fill any blanks on the matched item.
-      if (oldDoc.exists) {
-        const oldWorn = oldData.timesWorn || 1;
-        if (oldWorn <= 1) {
-          await wardrobeRef.doc(oldId).delete();
-        } else {
-          const revert = {};
-          for (const f of (oldData._geminiFilledFields || [])) revert[f] = null;
-          await wardrobeRef.doc(oldId).update({
-            timesWorn: FieldValue.increment(-1),
-            lastSeenAt: now,
-            ...revert,
-            _geminiFilledFields: FieldValue.delete(),
-          });
-        }
-      }
+      // Transfer ALL wears from the old doc to the matched item, then delete
+      // the old doc. Gemini-filled fields on the old doc are irrelevant since
+      // it's being fully absorbed.
+      const transferWorn = oldDoc.exists ? (oldData.timesWorn || 1) : 1;
+      if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
+
       const d = matchDoc.data();
       const fills = {};
       for (const f of allFields) {
         if (!(d[f] || '').trim() && (newValues[f] || '').trim()) fills[f] = newValues[f];
       }
-      await matchDoc.ref.update({ ...fills, timesWorn: FieldValue.increment(1), lastSeenAt: now });
+      await matchDoc.ref.update({ ...fills, timesWorn: FieldValue.increment(transferWorn), lastSeenAt: now });
       const { _geminiFilledFields: _gff, ...matchData } = d;
-      return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (d.timesWorn || 1) + 1, lastSeenAt: now } });
+      return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (d.timesWorn || 0) + transferWorn, lastSeenAt: now } });
     } else {
       // ── Case B: genuinely new identity — rename/correct the item ─────────
       // All existing wear history belongs to the corrected item. Delete the old
