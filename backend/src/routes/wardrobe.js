@@ -230,23 +230,41 @@ router.patch('/:id', verifyToken, async (req, res) => {
       }
     }
 
-    // Step 2: find an exact 6-field match among remaining wardrobe docs.
+    // Step 2: find a match among remaining wardrobe docs.
+    // Rules per field:
+    //   • Wardrobe value is blank → wildcard, always passes (will be filled on match)
+    //   • Wardrobe value is set   → must equal the edited value
+    const newValues = { category: newCategory, color: newColor, fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle };
+    const allFields = ['category', 'color', 'fit', 'material', 'pattern', 'style'];
+
     const allSnap = await wardrobeRef.get();
     const matchDoc = allSnap.docs.find((doc) => {
       if (doc.id === oldId) return false;
       const d = doc.data();
-      return normalize(d.category) === normalize(newCategory)
-          && normalize(d.color)    === normalize(newColor)
-          && normalize(d.fit)      === normalize(newFit)
-          && normalize(d.material) === normalize(newMaterial)
-          && normalize(d.pattern)  === normalize(newPattern)
-          && normalize(d.style)    === normalize(newStyle);
+      return allFields.every((f) => {
+        const wardrobeVal = normalize(d[f]);
+        if (!wardrobeVal) return true; // blank on wardrobe = wildcard
+        return wardrobeVal === normalize(newValues[f]);
+      });
     });
 
     if (matchDoc) {
-      // New fields match an existing wardrobe item → wore +1
-      await matchDoc.ref.update({ timesWorn: FieldValue.increment(1), lastSeenAt: now });
-      return res.json({ item: { id: matchDoc.id, ...matchDoc.data(), timesWorn: (matchDoc.data().timesWorn || 1) + 1, lastSeenAt: now } });
+      // Match — fill in any blanks on the wardrobe item with the edited values,
+      // then increment timesWorn.
+      const d = matchDoc.data();
+      const fills = {};
+      for (const f of allFields) {
+        if (!(d[f] || '').trim() && (newValues[f] || '').trim()) {
+          fills[f] = newValues[f];
+        }
+      }
+      await matchDoc.ref.update({
+        ...fills,
+        timesWorn: FieldValue.increment(1),
+        lastSeenAt: now,
+      });
+      const { _geminiFilledFields: _gff, ...matchData } = d;
+      return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (d.timesWorn || 1) + 1, lastSeenAt: now } });
     } else {
       // No match → create a fresh item with timesWorn = 1
       const newItemData = {
