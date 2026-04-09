@@ -63,7 +63,7 @@ function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
 
     setSaving(true);
     try {
-      const updated = await updateWardrobeItem(item.id, trimmed);
+      const updated = await updateWardrobeItem(item.id, { ...trimmed, source: 'wardrobe' });
       dismiss(() => onSave(updated));
     } catch (e: any) {
       Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');

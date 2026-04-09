@@ -129,6 +129,7 @@ export interface WardrobeItemUpdate {
   material?: string | null;
   pattern?: string | null;
   style?: string | null;
+  source?: 'results' | 'wardrobe';
 }
 
 export async function updateWardrobeItem(id: string, fields: WardrobeItemUpdate): Promise<WardrobeItem> {

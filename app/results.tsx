@@ -148,7 +148,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
 
     setSaving(true);
     try {
-      await updateWardrobeItem(originalKey, trimmed);
+      await updateWardrobeItem(originalKey, { ...trimmed, source: 'results' });
       const newKey = wardrobeKeyFor(trimmed.category, trimmed.color, trimmed.fit ?? null, trimmed.material ?? null, trimmed.pattern ?? null, trimmed.style ?? null);
       dismiss(() => onSave({ ...item, ...trimmed } as ClothingItem, newKey));
     } catch (e: any) {

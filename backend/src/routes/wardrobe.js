@@ -172,7 +172,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
   try {
     const { uid } = req;
     const oldId = req.params.id;
-    const { category, color, fit, material, pattern, style } = req.body;
+    const { category, color, fit, material, pattern, style, source } = req.body;
 
     const wardrobeRef = db.collection('users').doc(uid).collection('wardrobe');
     const now = new Date().toISOString();
@@ -216,13 +216,15 @@ router.patch('/:id', verifyToken, async (req, res) => {
     }
 
     // ── Identity changed ──────────────────────────────────────────────────────
-    // First find whether the new identity matches an existing wardrobe item,
-    // then decide what to do with the old doc depending on the outcome.
-
-    // Step 1: find a match among remaining wardrobe docs.
+    // Behaviour depends on where the edit came from:
+    //   source='wardrobe'  → rename intent: delete old, full wear transfer
+    //   source='results'   → misdetection correction: old -1, new/matched +1
+    //
+    // Step 1: find a matching wardrobe doc for the new identity.
     // Rules per field:
-    //   • Either side blank   → wildcard (passes)
-    //   • Both sides set      → must match
+    //   • Either side blank  → wildcard (passes)
+    //   • Both sides set     → must match exactly
+    const editSource = source === 'wardrobe' ? 'wardrobe' : 'results';
     const newValues = { category: newCategory, color: newColor, fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle };
     const allFields = ['category', 'color', 'fit', 'material', 'pattern', 'style'];
 
@@ -238,28 +240,39 @@ router.patch('/:id', verifyToken, async (req, res) => {
       });
     });
 
+    // Fields to fill from the user's edit onto the matched/new doc
+    const fills = {};
     if (matchDoc) {
-      // ── Case A: new identity matches an existing item ─────────────────────
-      // Transfer ALL wears from the old doc to the matched item, then delete
-      // the old doc. Gemini-filled fields on the old doc are irrelevant since
-      // it's being fully absorbed.
-      const transferWorn = oldDoc.exists ? (oldData.timesWorn || 1) : 1;
-      if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
-
       const d = matchDoc.data();
-      const fills = {};
       for (const f of allFields) {
         if (!(d[f] || '').trim() && (newValues[f] || '').trim()) fills[f] = newValues[f];
       }
-      await matchDoc.ref.update({ ...fills, timesWorn: FieldValue.increment(transferWorn), lastSeenAt: now });
-      const { _geminiFilledFields: _gff, ...matchData } = d;
-      return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (d.timesWorn || 0) + transferWorn, lastSeenAt: now } });
+    }
+
+    if (matchDoc) {
+      // ── Case A: new identity matches an existing wardrobe doc ─────────────
+      if (editSource === 'wardrobe') {
+        // Rename / merge — delete old doc and transfer ALL wears to matched item
+        const transferWorn = oldDoc.exists ? (oldData.timesWorn || 1) : 1;
+        if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
+        await matchDoc.ref.update({ ...fills, timesWorn: FieldValue.increment(transferWorn), lastSeenAt: now });
+        const { _geminiFilledFields: _gff, ...matchData } = matchDoc.data();
+        return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (matchData.timesWorn || 0) + transferWorn, lastSeenAt: now } });
+      } else {
+        // Misdetection correction — old item loses 1 wear, matched item gains 1
+        if (oldDoc.exists) {
+          if ((oldData.timesWorn || 1) <= 1) {
+            await wardrobeRef.doc(oldId).delete();
+          } else {
+            await wardrobeRef.doc(oldId).update({ timesWorn: FieldValue.increment(-1) });
+          }
+        }
+        await matchDoc.ref.update({ ...fills, timesWorn: FieldValue.increment(1), lastSeenAt: now });
+        const { _geminiFilledFields: _gff, ...matchData } = matchDoc.data();
+        return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (matchData.timesWorn || 0) + 1, lastSeenAt: now } });
+      }
     } else {
-      // ── Case B: genuinely new identity — rename/correct the item ─────────
-      // All existing wear history belongs to the corrected item. Delete the old
-      // doc and recreate under the new key, preserving full timesWorn count.
-      const inheritedWorn = oldData.timesWorn || 1;
-      if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
+      // ── Case B: no match — either rename or new item ──────────────────────
       const newItemData = {
         category: newCategory, color: newColor,
         fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle,
@@ -267,10 +280,26 @@ router.patch('/:id', verifyToken, async (req, res) => {
         imageUrl:    oldData.imageUrl || null,
         firstSeenAt: oldData.firstSeenAt || now,
         lastSeenAt:  now,
-        timesWorn:   inheritedWorn,
       };
-      await wardrobeRef.doc(newKey).set(newItemData);
-      return res.json({ item: { id: newKey, ...newItemData } });
+
+      if (editSource === 'wardrobe') {
+        // Rename — delete old and inherit full wear count
+        const inheritedWorn = oldData.timesWorn || 1;
+        if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
+        await wardrobeRef.doc(newKey).set({ ...newItemData, timesWorn: inheritedWorn });
+        return res.json({ item: { id: newKey, ...newItemData, timesWorn: inheritedWorn } });
+      } else {
+        // Misdetection correction — old item loses 1 wear, new item starts at 1
+        if (oldDoc.exists) {
+          if ((oldData.timesWorn || 1) <= 1) {
+            await wardrobeRef.doc(oldId).delete();
+          } else {
+            await wardrobeRef.doc(oldId).update({ timesWorn: FieldValue.increment(-1) });
+          }
+        }
+        await wardrobeRef.doc(newKey).set({ ...newItemData, timesWorn: 1 });
+        return res.json({ item: { id: newKey, ...newItemData, timesWorn: 1 } });
+      }
     }
   } catch (error) {
     console.error('Wardrobe patch error:', error);
