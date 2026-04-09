@@ -216,31 +216,13 @@ router.patch('/:id', verifyToken, async (req, res) => {
     }
 
     // ── Identity changed ──────────────────────────────────────────────────────
-    // Step 1: always decrement (or delete) the old doc — this edit "un-wears" it.
-    // Also revert any fields that Gemini filled in during the analyze merge, since
-    // the user is now saying this detection was wrong.
-    if (oldDoc.exists) {
-      const oldWorn = oldData.timesWorn || 1;
-      if (oldWorn <= 1) {
-        await wardrobeRef.doc(oldId).delete();
-      } else {
-        const revert = {};
-        for (const f of (oldData._geminiFilledFields || [])) {
-          revert[f] = null; // undo Gemini's fill — field was blank before
-        }
-        await wardrobeRef.doc(oldId).update({
-          timesWorn: FieldValue.increment(-1),
-          lastSeenAt: now,
-          ...revert,
-          _geminiFilledFields: FieldValue.delete(),
-        });
-      }
-    }
+    // First find whether the new identity matches an existing wardrobe item,
+    // then decide what to do with the old doc depending on the outcome.
 
-    // Step 2: find a match among remaining wardrobe docs.
+    // Step 1: find a match among remaining wardrobe docs.
     // Rules per field:
-    //   • Wardrobe value is blank → wildcard, always passes (will be filled on match)
-    //   • Wardrobe value is set   → must equal the edited value
+    //   • Either side blank   → wildcard (passes)
+    //   • Both sides set      → must match
     const newValues = { category: newCategory, color: newColor, fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle };
     const allFields = ['category', 'color', 'fit', 'material', 'pattern', 'style'];
 
@@ -249,39 +231,54 @@ router.patch('/:id', verifyToken, async (req, res) => {
       if (doc.id === oldId) return false;
       const d = doc.data();
       return allFields.every((f) => {
-        const wardrobeVal = normalize(d[f]);
-        if (!wardrobeVal) return true; // blank on wardrobe = wildcard
-        return wardrobeVal === normalize(newValues[f]);
+        const wVal = normalize(d[f]);
+        const eVal = normalize(newValues[f]);
+        if (!wVal || !eVal) return true; // either blank = wildcard
+        return wVal === eVal;
       });
     });
 
     if (matchDoc) {
-      // Match — fill in any blanks on the wardrobe item with the edited values,
-      // then increment timesWorn.
+      // ── Case A: new identity matches an existing item ─────────────────────
+      // The user corrected a misdetection. Old doc loses 1 wear (it was wrong),
+      // existing item gains 1 wear. Fill any blanks on the matched item.
+      if (oldDoc.exists) {
+        const oldWorn = oldData.timesWorn || 1;
+        if (oldWorn <= 1) {
+          await wardrobeRef.doc(oldId).delete();
+        } else {
+          const revert = {};
+          for (const f of (oldData._geminiFilledFields || [])) revert[f] = null;
+          await wardrobeRef.doc(oldId).update({
+            timesWorn: FieldValue.increment(-1),
+            lastSeenAt: now,
+            ...revert,
+            _geminiFilledFields: FieldValue.delete(),
+          });
+        }
+      }
       const d = matchDoc.data();
       const fills = {};
       for (const f of allFields) {
-        if (!(d[f] || '').trim() && (newValues[f] || '').trim()) {
-          fills[f] = newValues[f];
-        }
+        if (!(d[f] || '').trim() && (newValues[f] || '').trim()) fills[f] = newValues[f];
       }
-      await matchDoc.ref.update({
-        ...fills,
-        timesWorn: FieldValue.increment(1),
-        lastSeenAt: now,
-      });
+      await matchDoc.ref.update({ ...fills, timesWorn: FieldValue.increment(1), lastSeenAt: now });
       const { _geminiFilledFields: _gff, ...matchData } = d;
       return res.json({ item: { id: matchDoc.id, ...matchData, ...fills, timesWorn: (d.timesWorn || 1) + 1, lastSeenAt: now } });
     } else {
-      // No match → create a fresh item with timesWorn = 1
+      // ── Case B: genuinely new identity — rename/correct the item ─────────
+      // All existing wear history belongs to the corrected item. Delete the old
+      // doc and recreate under the new key, preserving full timesWorn count.
+      const inheritedWorn = oldData.timesWorn || 1;
+      if (oldDoc.exists) await wardrobeRef.doc(oldId).delete();
       const newItemData = {
         category: newCategory, color: newColor,
         fit: newFit, material: newMaterial, pattern: newPattern, style: newStyle,
         uploadId:    oldData.uploadId || null,
         imageUrl:    oldData.imageUrl || null,
-        firstSeenAt: now,
+        firstSeenAt: oldData.firstSeenAt || now,
         lastSeenAt:  now,
-        timesWorn:   1,
+        timesWorn:   inheritedWorn,
       };
       await wardrobeRef.doc(newKey).set(newItemData);
       return res.json({ item: { id: newKey, ...newItemData } });
