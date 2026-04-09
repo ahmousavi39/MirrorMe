@@ -135,6 +135,17 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
       Alert.alert('Category required', 'Please enter a category for this item.');
       return;
     }
+
+    // Nothing changed — just close without any request
+    const unchanged =
+      trimmed.category === (item.category ?? '').trim() &&
+      (trimmed.color    ?? '') === (item.color    ?? '').trim() &&
+      (trimmed.fit      ?? '') === (item.fit      ?? '').trim() &&
+      (trimmed.material ?? '') === (item.material ?? '').trim() &&
+      (trimmed.pattern  ?? '') === (item.pattern  ?? '').trim() &&
+      (trimmed.style    ?? '') === (item.style    ?? '').trim();
+    if (unchanged) { dismiss(onClose); return; }
+
     setSaving(true);
     try {
       await updateWardrobeItem(originalKey, trimmed);
