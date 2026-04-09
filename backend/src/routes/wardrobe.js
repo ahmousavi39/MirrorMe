@@ -219,7 +219,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
     if (matchDoc) {
       // New fields match an existing wardrobe item → wore +1
       await matchDoc.ref.update({ timesWorn: FieldValue.increment(1), lastSeenAt: now });
-      return res.json({ item: { id: matchDoc.id, ...matchDoc.data(), timesWorn: worn, lastSeenAt: now } });
+      return res.json({ item: { id: matchDoc.id, ...matchDoc.data(), timesWorn: (matchDoc.data().timesWorn || 1) + 1, lastSeenAt: now } });
     } else {
       // No match → create a fresh item with timesWorn = 1
       const newItemData = {
