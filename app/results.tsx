@@ -515,11 +515,14 @@ export default function ResultsScreen() {
               result.clothingItems[editingIndex].style,
             )
           }
-          onSave={(updatedItem) => {
+          onSave={(updatedItem, newKey) => {
             const newItems = result.clothingItems.map((it, i) =>
               i === editingIndex ? updatedItem : it,
             );
-            setResult({ ...result, clothingItems: newItems });
+            const newKeys = (result.clothingItemKeys ?? result.clothingItems.map(() => null)).map(
+              (k, i) => (i === editingIndex ? newKey : k),
+            );
+            setResult({ ...result, clothingItems: newItems, clothingItemKeys: newKeys });
             setEditingIndex(null);
           }}
           onClose={() => setEditingIndex(null)}
