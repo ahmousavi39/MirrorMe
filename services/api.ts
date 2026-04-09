@@ -19,7 +19,8 @@ async function authHeaders() {
 export async function analyzePhoto(
   imageUri: string,
   mimeType: string = 'image/jpeg',
-  occasion: string | null = null
+  occasion: string | null = null,
+  options: { shareWardrobe?: boolean; addToWardrobe?: boolean } = {}
 ): Promise<AnalysisResult> {
   const headers = await authHeaders();
 
@@ -30,6 +31,8 @@ export async function analyzePhoto(
     name: 'photo.jpg',
   } as unknown as Blob);
   if (occasion) formData.append('occasion', occasion);
+  formData.append('shareWardrobe', String(options.shareWardrobe ?? true));
+  formData.append('addToWardrobe', String(options.addToWardrobe ?? true));
 
   const response = await fetch(`${BACKEND_URL}/api/analyze`, {
     method: 'POST',

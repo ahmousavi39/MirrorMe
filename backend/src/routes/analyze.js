@@ -96,6 +96,8 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const base64Image = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
     const occasion = req.body?.occasion || null;
+    const shareWardrobe = req.body?.shareWardrobe !== 'false';
+    const addToWardrobe = req.body?.addToWardrobe !== 'false';
 
     // ── 2b. Upload image to Firebase Storage ──────────────────────────────────
     const token = crypto.randomUUID();
@@ -130,14 +132,21 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       console.error('Firebase Storage upload failed:', storageErr.message);
     }
 
-    // ── 2c. Fetch user's existing wardrobe to inform Gemini suggestions ───────
+    // ── 2c. Fetch user's existing wardrobe ───────────────────────────────────
+    // Always fetch if addToWardrobe (need existingDocs for upsert matching).
+    // Only pass items to Gemini when shareWardrobe is enabled.
+    const needsWardrobe = shareWardrobe || addToWardrobe;
     let wardrobeItems = [];
     let wardrobeSnap = null;
-    try {
-      wardrobeSnap = await userRef.collection('wardrobe').get();
-      wardrobeItems = wardrobeSnap.docs.map((d) => d.data());
-    } catch (e) {
-      console.warn('Could not fetch wardrobe:', e.message);
+    if (needsWardrobe) {
+      try {
+        wardrobeSnap = await userRef.collection('wardrobe').get();
+        if (shareWardrobe) {
+          wardrobeItems = wardrobeSnap.docs.map((d) => d.data());
+        }
+      } catch (e) {
+        console.warn('Could not fetch wardrobe:', e.message);
+      }
     }
 
     // ── 3. Ximilar — identify clothing items ──────────────────────────────────
@@ -236,7 +245,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // clothingItemKeys tracks the ACTUAL Firestore doc ID used for each item so the
     // frontend can PATCH the right document later (avoids key-formula mismatches).
     const clothingItemKeys = clothingItems.map(() => null); // default null
-    if (clothingItems.length > 0) {
+    if (addToWardrobe && clothingItems.length > 0) {
       try {
         const now = new Date().toISOString();
         const wardrobeRef = userRef.collection('wardrobe');

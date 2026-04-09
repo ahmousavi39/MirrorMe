@@ -4,6 +4,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Image, ActivityIndicator, Alert, Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useRouter } from 'expo-router';
@@ -124,7 +125,14 @@ export default function AnalyzeScreen() {
     if (!imageUri) return;
     setLoading(true);
     try {
-      const result = await analyzePhoto(imageUri, imageMime, occasion);
+      const [sw, atw] = await Promise.all([
+        AsyncStorage.getItem('@shareWardrobe'),
+        AsyncStorage.getItem('@addToWardrobe'),
+      ]);
+      const result = await analyzePhoto(imageUri, imageMime, occasion, {
+        shareWardrobe: sw !== 'false',
+        addToWardrobe: atw !== 'false',
+      });
       setImageUri(imageUri);
       setResult(result);
       // Refresh usage counter after a successful analysis

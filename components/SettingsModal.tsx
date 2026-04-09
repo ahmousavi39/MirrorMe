@@ -1,7 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Animated, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Linking, Modal, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import ProfileEditModal from './ProfileEditModal';
 
@@ -21,7 +22,31 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   }>({ title: '', message: '' });
   const [profileEditVisible, setProfileEditVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(visible);
+  const [shareWardrobe, setShareWardrobe] = useState(true);
+  const [addToWardrobe, setAddToWardrobe] = useState(true);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  // Load wardrobe preferences once on mount
+  React.useEffect(() => {
+    (async () => {
+      const [sw, atw] = await Promise.all([
+        AsyncStorage.getItem('@shareWardrobe'),
+        AsyncStorage.getItem('@addToWardrobe'),
+      ]);
+      setShareWardrobe(sw !== 'false');
+      setAddToWardrobe(atw !== 'false');
+    })();
+  }, []);
+
+  const handleShareWardrobeToggle = async (val: boolean) => {
+    setShareWardrobe(val);
+    await AsyncStorage.setItem('@shareWardrobe', String(val));
+  };
+
+  const handleAddToWardrobeToggle = async (val: boolean) => {
+    setAddToWardrobe(val);
+    await AsyncStorage.setItem('@addToWardrobe', String(val));
+  };
 
   React.useEffect(() => {
     if (visible) {
@@ -136,6 +161,42 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
               </TouchableOpacity>
+            </View>
+
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Wardrobe</Text>
+
+              <View style={[styles.settingItem, { backgroundColor: theme.card }]}>
+                <View style={[styles.settingLeft, { flex: 1, marginRight: 12 }]}>
+                  <Ionicons name="shirt-outline" size={24} color={theme.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.settingText, { color: theme.text }]}>Share My Wardrobe</Text>
+                    <Text style={[styles.settingSubText, { color: theme.textSecondary }]}>Use wardrobe for better suggestions</Text>
+                  </View>
+                </View>
+                <Switch
+                  value={shareWardrobe}
+                  onValueChange={handleShareWardrobeToggle}
+                  trackColor={{ false: theme.border, true: theme.primary }}
+                  thumbColor="#fff"
+                />
+              </View>
+
+              <View style={[styles.settingItem, { backgroundColor: theme.card }]}>
+                <View style={[styles.settingLeft, { flex: 1, marginRight: 12 }]}>
+                  <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.settingText, { color: theme.text }]}>Add to Wardrobe</Text>
+                    <Text style={[styles.settingSubText, { color: theme.textSecondary }]}>Save detected items automatically</Text>
+                  </View>
+                </View>
+                <Switch
+                  value={addToWardrobe}
+                  onValueChange={handleAddToWardrobeToggle}
+                  trackColor={{ false: theme.border, true: theme.primary }}
+                  thumbColor="#fff"
+                />
+              </View>
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
@@ -258,5 +319,9 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 16,
+  },
+  settingSubText: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });
