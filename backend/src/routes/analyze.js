@@ -243,28 +243,47 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
         const normalize = (s) => (s || '').toLowerCase().trim();
 
         await Promise.all(clothingItems.map(async (item, idx) => {
-          // Exact match: every one of the 6 fields must be equal (after normalization)
-          const matchDoc = existingDocs.find((doc) => {
+          // Loose match on category + color — Gemini's secondary fields (fit, material,
+          // pattern, style) are often imprecise, so we don't require them to match.
+          // If multiple docs share the same category+color (e.g. two blue t-shirts),
+          // prefer the one whose secondary fields are closest (most fields match).
+          const categoryNorm = normalize(item.category);
+          const colorNorm    = normalize(item.color);
+
+          const candidates = existingDocs.filter((doc) => {
             const d = doc.data();
-            return normalize(d.category) === normalize(item.category)
-              && normalize(d.color)    === normalize(item.color)
-              && normalize(d.fit)      === normalize(item.fit)
-              && normalize(d.material) === normalize(item.material)
-              && normalize(d.pattern)  === normalize(item.pattern)
-              && normalize(d.style)    === normalize(item.style);
+            return normalize(d.category) === categoryNorm
+                && normalize(d.color)    === colorNorm;
           });
 
+          let matchDoc = null;
+          if (candidates.length === 1) {
+            matchDoc = candidates[0];
+          } else if (candidates.length > 1) {
+            // Pick the candidate with the most matching secondary fields
+            const secondaryFields = ['fit', 'material', 'pattern', 'style'];
+            let bestScore = -1;
+            for (const doc of candidates) {
+              const d = doc.data();
+              const score = secondaryFields.filter(
+                (f) => normalize(d[f]) === normalize(item[f])
+              ).length;
+              if (score > bestScore) { bestScore = score; matchDoc = doc; }
+            }
+          }
+
           if (matchDoc) {
-            // Exact match — update timesWorn and metadata only, no field changes
+            // Match found — increment timesWorn; do NOT overwrite existing field
+            // values since the user may have manually corrected them before.
             clothingItemKeys[idx] = matchDoc.id;
             await matchDoc.ref.update({
               lastSeenAt: now,
-              uploadId: uploadRef.id,
-              imageUrl: imageUrl || matchDoc.data().imageUrl || null,
-              timesWorn: (matchDoc.data().timesWorn || 1) + 1,
+              uploadId:   uploadRef.id,
+              imageUrl:   imageUrl || matchDoc.data().imageUrl || null,
+              timesWorn:  (matchDoc.data().timesWorn || 1) + 1,
             });
           } else {
-            // New item (no exact match) — create with full-field key
+            // No match — create a new wardrobe item with all detected fields
             const key = wardrobeKey(
               item.category, item.color, item.fit,
               item.material, item.pattern, item.style,
@@ -287,6 +306,16 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
         }));
       } catch (e) {
         console.warn('Wardrobe upsert failed (non-fatal):', e.message);
+      }
+
+      // Persist clothingItemKeys to the upload doc so history items can look up the
+      // correct Firestore wardrobe doc IDs when the user edits clothing chips later.
+      if (clothingItemKeys.some((k) => k !== null)) {
+        try {
+          await uploadRef.update({ clothingItemKeys });
+        } catch (e) {
+          console.warn('Could not save clothingItemKeys to upload doc (non-fatal):', e.message);
+        }
       }
     }
 
