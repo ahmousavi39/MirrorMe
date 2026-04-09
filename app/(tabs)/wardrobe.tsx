@@ -1,16 +1,127 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator, RefreshControl,
-  Modal, StatusBar, Platform,
+  Modal, StatusBar, Platform, Animated, KeyboardAvoidingView, TextInput, ScrollView,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { getWardrobe, deleteWardrobeItem, addWardrobeItem, getSubscriptionStatus } from '@/services/api';
+import { getWardrobe, deleteWardrobeItem, addWardrobeItem, getSubscriptionStatus, updateWardrobeItem } from '@/services/api';
 import { WardrobeItem } from '@/types/app';
+
+// ── Wardrobe item edit sheet ──────────────────────────────────────────────────
+interface WardrobeEditSheetProps {
+  item: WardrobeItem;
+  onSave: (updated: WardrobeItem) => void;
+  onClose: () => void;
+}
+
+function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
+  const { theme } = useTheme();
+  const [category, setCategory] = useState(item.category ?? '');
+  const [color, setColor]       = useState(item.color ?? '');
+  const [fit, setFit]           = useState(item.fit ?? '');
+  const [material, setMaterial] = useState(item.material ?? '');
+  const [pattern, setPattern]   = useState(item.pattern ?? '');
+  const [style, setStyle]       = useState(item.style ?? '');
+  const [saving, setSaving]     = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(anim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }).start();
+  }, []);
+
+  const dismiss = (cb?: () => void) =>
+    Animated.timing(anim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => cb?.());
+
+  const handleClose = () => dismiss(onClose);
+
+  const handleSave = async () => {
+    const trimmed = {
+      category: category.trim(),
+      color:    color.trim()    || null,
+      fit:      fit.trim()      || null,
+      material: material.trim() || null,
+      pattern:  pattern.trim()  || null,
+      style:    style.trim()    || null,
+    };
+    if (!trimmed.category) {
+      Alert.alert('Category required', 'Please enter a category for this item.');
+      return;
+    }
+    const unchanged =
+      trimmed.category === (item.category ?? '').trim() &&
+      (trimmed.color    ?? '') === (item.color    ?? '').trim() &&
+      (trimmed.fit      ?? '') === (item.fit      ?? '').trim() &&
+      (trimmed.material ?? '') === (item.material ?? '').trim() &&
+      (trimmed.pattern  ?? '') === (item.pattern  ?? '').trim() &&
+      (trimmed.style    ?? '') === (item.style    ?? '').trim();
+    if (unchanged) { dismiss(onClose); return; }
+
+    setSaving(true);
+    try {
+      const updated = await updateWardrobeItem(item.id, trimmed);
+      dismiss(() => onSave(updated));
+    } catch (e: any) {
+      Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const es = wardrobeEditStyles(theme);
+  return (
+    <Modal visible animationType="none" transparent onRequestClose={handleClose}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={es.overlay}>
+        <Animated.View style={[es.backdrop, { opacity: anim }]}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleClose} />
+        </Animated.View>
+        <Animated.View style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }] }]}>
+          <View style={[es.handle, { backgroundColor: theme.border }]} />
+          <View style={es.sheetHeader}>
+            <Text style={[es.sheetTitle, { color: theme.text }]}>Edit Item</Text>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <Ionicons name="close" size={22} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={es.fields}>
+            {([
+              { label: 'Category *', value: category, set: setCategory, placeholder: 'e.g. T-Shirt, Jeans' },
+              { label: 'Color',      value: color,    set: setColor,    placeholder: 'e.g. Navy Blue' },
+              { label: 'Fit',        value: fit,      set: setFit,      placeholder: 'e.g. Slim, Regular, Oversized' },
+              { label: 'Material',   value: material, set: setMaterial, placeholder: 'e.g. Cotton, Linen' },
+              { label: 'Pattern',    value: pattern,  set: setPattern,  placeholder: 'e.g. Solid, Striped, Floral' },
+              { label: 'Style',      value: style,    set: setStyle,    placeholder: 'e.g. Casual, Formal' },
+            ] as const).map(({ label, value, set, placeholder }) => (
+              <View key={label} style={es.fieldRow}>
+                <Text style={[es.fieldLabel, { color: theme.textSecondary }]}>{label}</Text>
+                <TextInput
+                  style={[es.fieldInput, { backgroundColor: theme.inputBackground, borderColor: theme.border, color: theme.text }]}
+                  value={value}
+                  onChangeText={set}
+                  placeholder={placeholder}
+                  placeholderTextColor={theme.placeholder}
+                  autoCapitalize="words"
+                />
+              </View>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={[es.saveBtn, { backgroundColor: theme.primary }, saving && { opacity: 0.65 }]}
+            onPress={handleSave}
+            disabled={saving}
+            activeOpacity={0.85}
+          >
+            {saving ? <ActivityIndicator color="#fff" /> : <Text style={es.saveBtnText}>Save Changes</Text>}
+          </TouchableOpacity>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
 
 export default function WardrobeScreen() {
   const { theme } = useTheme();
@@ -22,6 +133,7 @@ export default function WardrobeScreen() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -159,9 +271,14 @@ export default function WardrobeScreen() {
             </View>
           </View>
         </View>
-        <TouchableOpacity style={s.deleteBtn} onPress={() => handleDelete(item)} hitSlop={8}>
-          <Ionicons name="trash-outline" size={18} color={theme.textSecondary} />
-        </TouchableOpacity>
+        <View style={s.actions}>
+          <TouchableOpacity onPress={() => setEditingItem(item)} hitSlop={8}>
+            <Ionicons name="pencil-outline" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
+            <Ionicons name="trash-outline" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -207,6 +324,17 @@ export default function WardrobeScreen() {
         </TouchableOpacity>
       </View>
 
+      {editingItem && (
+        <WardrobeEditSheet
+          item={editingItem}
+          onSave={(updated) => {
+            setItems((prev) => prev.map((i) => i.id === editingItem.id ? updated : i));
+            setEditingItem(null);
+          }}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
+
       {loading ? (
         <View style={s.center}>
           <ActivityIndicator size="large" color={theme.primary} />
@@ -221,7 +349,7 @@ export default function WardrobeScreen() {
         </View>
       ) : (
         <FlatList
-          data={items}
+          data={items.filter((item, idx, arr) => arr.findIndex((x) => x.id === item.id) === idx)}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={s.list}
@@ -292,5 +420,20 @@ const makeStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
   },
   badgeText: { fontSize: 11, fontWeight: '700' },
-  deleteBtn: { padding: 4 },
+  actions: { gap: 12, alignItems: 'center' },
+});
+
+const wardrobeEditStyles = (theme: any) => StyleSheet.create({
+  overlay:    { flex: 1, justifyContent: 'flex-end' },
+  backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet:      { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
+  handle:     { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
+  sheetHeader:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
+  sheetTitle: { fontSize: 17, fontWeight: '700' },
+  fields:     { paddingHorizontal: 20, gap: 14, paddingBottom: 6 },
+  fieldRow:   { gap: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldInput: { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15 },
+  saveBtn:    { marginHorizontal: 20, marginTop: 18, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  saveBtnText:{ color: '#fff', fontSize: 16, fontWeight: '700' },
 });

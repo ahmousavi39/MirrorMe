@@ -44,10 +44,17 @@ router.get('/', verifyToken, async (req, res) => {
       .orderBy('lastSeenAt', 'desc')
       .get();
 
-    const items = snap.docs.map((doc) => {
-      const { _geminiFilledFields, ...data } = doc.data();
-      return { id: doc.id, ...data };
-    });
+    const seen = new Set();
+    const items = snap.docs
+      .map((doc) => {
+        const { _geminiFilledFields, ...data } = doc.data();
+        return { id: doc.id, ...data };
+      })
+      .filter((item) => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
     return res.json({ items });
   } catch (error) {
     console.error('Wardrobe fetch error:', error);
