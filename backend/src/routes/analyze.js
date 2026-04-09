@@ -287,13 +287,23 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
           }
 
           if (matchDoc) {
-            // Match found — increment timesWorn; do NOT overwrite existing field
-            // values since the user may have manually corrected them before.
+            // Match found — merge fields:
+            // • Wardrobe value wins when present (user may have corrected it)
+            // • Gemini fills in fields that are blank/null on the wardrobe item
+            const d = matchDoc.data();
+            const merged = {};
+            for (const f of ['fit', 'material', 'pattern', 'style']) {
+              const wardrobeVal = (d[f] || '').trim();
+              const geminiVal   = (item[f] || '').trim();
+              if (!wardrobeVal && geminiVal) merged[f] = item[f]; // fill blank
+              // wardrobe value already present — don't touch it
+            }
             clothingItemKeys[idx] = matchDoc.id;
             await matchDoc.ref.update({
+              ...merged,
               lastSeenAt: now,
               uploadId:   uploadRef.id,
-              imageUrl:   imageUrl || matchDoc.data().imageUrl || null,
+              imageUrl:   imageUrl || d.imageUrl || null,
               timesWorn:  FieldValue.increment(1),
             });
           } else {
