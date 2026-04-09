@@ -194,12 +194,23 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
     // ── Identity changed ──────────────────────────────────────────────────────
     // Step 1: always decrement (or delete) the old doc — this edit "un-wears" it.
+    // Also revert any fields that Gemini filled in during the analyze merge, since
+    // the user is now saying this detection was wrong.
     if (oldDoc.exists) {
       const oldWorn = oldData.timesWorn || 1;
       if (oldWorn <= 1) {
         await wardrobeRef.doc(oldId).delete();
       } else {
-        await wardrobeRef.doc(oldId).update({ timesWorn: FieldValue.increment(-1), lastSeenAt: now });
+        const revert = {};
+        for (const f of (oldData._geminiFilledFields || [])) {
+          revert[f] = null; // undo Gemini's fill — field was blank before
+        }
+        await wardrobeRef.doc(oldId).update({
+          timesWorn: FieldValue.increment(-1),
+          lastSeenAt: now,
+          ...revert,
+          _geminiFilledFields: FieldValue.delete(),
+        });
       }
     }
 

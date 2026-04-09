@@ -298,9 +298,15 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
               if (!wardrobeVal && geminiVal) merged[f] = item[f]; // fill blank
               // wardrobe value already present — don't touch it
             }
+            // Track which fields Gemini filled so PATCH can revert them if the user
+            // later corrects this detection to a different identity.
+            const geminiFilledFields = Object.keys(merged);
             clothingItemKeys[idx] = matchDoc.id;
             await matchDoc.ref.update({
               ...merged,
+              ...(geminiFilledFields.length > 0
+                ? { _geminiFilledFields: geminiFilledFields }
+                : { _geminiFilledFields: FieldValue.delete() }),
               lastSeenAt: now,
               uploadId:   uploadRef.id,
               imageUrl:   imageUrl || d.imageUrl || null,
