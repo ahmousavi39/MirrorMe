@@ -122,10 +122,6 @@ export default function OnboardingScreen() {
   };
 
   const handleFinish = async () => {
-    if (step === 2 && selectedStyles.length === 0) {
-      Alert.alert('Pick at least one style', 'Select 1 or more style categories to help us personalize your ratings.');
-      return;
-    }
     setSaving(true);
     try {
       // Merge: use form values for steps that were shown, keep existing data for skipped steps
@@ -277,7 +273,7 @@ export default function OnboardingScreen() {
                 <Ionicons name="color-palette-outline" size={40} color="#fff" />
               </View>
               <Text style={s.stepTitle}>Your style vibe</Text>
-              <Text style={s.stepSubtitle}>Pick all that apply — you can have more than one!</Text>
+              <Text style={s.stepSubtitle}>Optional — pick all that apply</Text>
 
               <View style={s.styleGrid}>
                 {STYLE_CATEGORIES.map((cat) => {
