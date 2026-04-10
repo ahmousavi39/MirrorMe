@@ -299,7 +299,7 @@ export default function AnalyzeScreen() {
               source={require('@/assets/sales_man_v2.json')}
               autoPlay
               loop
-              style={{ width: 180, height: 180 }}
+              style={{ width: 260, height: 260 }}
             />
             <Text style={[s.overlaySub, { color: theme.textSecondary }]}>
               Identifying clothes · Getting AI feedback
