@@ -276,6 +276,7 @@ export default function ResultsScreen() {
   const handleShare = async () => {
     if (!result) return;
     const scoreColor = getScoreColor(result.score);
+    const shareText = `${result.score}/10 — ${getScoreLabel(result.score)}\n\n"${result.feedback}"\n\nRated by MirrorMe`;
     // Prefer the remote Firebase URL for server-side composition;
     // fall back to the local file URI only if unavailable.
     const remoteUri = result.imageUrl;
@@ -309,17 +310,17 @@ export default function ResultsScreen() {
 
       if (localUri) {
         if (Platform.OS === 'ios') {
-          await Share.share({ url: localUri });
+          await Share.share({ url: localUri, message: shareText });
         } else {
           const canShare = await Sharing.isAvailableAsync();
           if (canShare) {
             await Sharing.shareAsync(localUri, { mimeType: 'image/jpeg', dialogTitle: 'Share your style' });
           } else {
-            await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by MirrorMe` });
+            await Share.share({ message: shareText });
           }
         }
       } else {
-        await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by MirrorMe` });
+        await Share.share({ message: shareText });
       }
     } catch { /* dismissed */ }
   };
