@@ -299,7 +299,7 @@ export default function AnalyzeScreen() {
               source={require('@/assets/sales_man_v2.json')}
               autoPlay
               loop
-              style={{ width: 260, height: 260 }}
+              style={{ width: 260, height: 260, marginVertical: -24 }}
             />
             <Text style={[s.overlaySub, { color: theme.textSecondary }]}>
               Identifying clothes · Getting AI feedback
@@ -412,6 +412,6 @@ const makeStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center', alignItems: 'center',
   },
-  overlayCard: { borderRadius: 20, padding: 24, paddingVertical: 16, alignItems: 'center', gap: 4, width: 260 },
+  overlayCard: { borderRadius: 20, paddingHorizontal: 24, paddingVertical: 20, alignItems: 'center', gap: 0, width: 260 },
   overlaySub: { fontSize: 13, textAlign: 'center' },
 });
