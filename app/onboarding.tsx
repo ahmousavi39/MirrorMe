@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Animated, Dimensions, Alert,
+  Animated, Dimensions, Alert, Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,6 +54,31 @@ export default function OnboardingScreen() {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const bottomBarPad = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        Animated.timing(bottomBarPad, {
+          toValue: e.endCoordinates.height,
+          duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
+          useNativeDriver: false,
+        }).start();
+      }
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        Animated.timing(bottomBarPad, {
+          toValue: 0,
+          duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
+          useNativeDriver: false,
+        }).start();
+      }
+    );
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   // Load existing profile on mount → pre-fill fields, compute which steps to show
   useEffect(() => {
@@ -154,7 +179,7 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <View style={s.container}>
       {/* Progress bar */}
       <View style={s.progressRow}>
         {Array.from({ length: activeSteps.length }).map((_, i) => (
@@ -302,7 +327,7 @@ export default function OnboardingScreen() {
       </Animated.View>
 
       {/* Bottom navigation */}
-      <View style={s.bottomBar}>
+      <Animated.View style={[s.bottomBar, { marginBottom: bottomBarPad }]}>
         {stepIndex > 0 ? (
           <TouchableOpacity style={s.backBtn} onPress={handleBack}>
             <Ionicons name="arrow-back" size={20} color={theme.text} />
@@ -329,8 +354,8 @@ export default function OnboardingScreen() {
             )}
           </TouchableOpacity>
         )}
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -484,7 +509,7 @@ function makeStyles(theme: any) {
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 24,
-      paddingVertical: 20,
+      paddingTop: 16,
       paddingBottom: Platform.OS === 'ios' ? 36 : 20,
       borderTopWidth: 1,
       borderTopColor: theme.border,
