@@ -302,13 +302,6 @@ export default function AnalyzeScreen() {
       {loading && (
         <View style={s.overlay}>
           <View style={[s.overlayCard, { backgroundColor: theme.card }]}>
-            <TouchableOpacity
-              style={s.overlayClose}
-              onPress={() => { abortRef.current?.abort(); setLoading(false); }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="close" size={20} color={theme.textSecondary} />
-            </TouchableOpacity>
             <LottieView
               source={require('@/assets/sales_man_v2.json')}
               autoPlay
@@ -318,6 +311,13 @@ export default function AnalyzeScreen() {
             <Text style={[s.overlaySub, { color: theme.textSecondary }]}>
               Identifying clothes · Getting AI feedback
             </Text>
+            <TouchableOpacity
+              style={s.overlayClose}
+              onPress={() => { abortRef.current?.abort(); setLoading(false); }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name="close" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
         </View>
       )}
