@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { captureRef } from 'react-native-view-shot';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -258,6 +260,7 @@ export default function ResultsScreen() {
   // Fade-in animation for the content card
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const shareCardRef = useRef<View>(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -275,29 +278,18 @@ export default function ResultsScreen() {
 
   const handleShare = async () => {
     if (!result) return;
-    const shareText = `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\n"${result.feedback}"\n\nRated by AI Stylist`;
-    const uri = imageUri || result.imageUrl;
     try {
-      if (uri) {
-        // Download to cache if it's a remote URL
-        let localUri = uri;
-        if (uri.startsWith('http')) {
-          const dest = `${FileSystem.cacheDirectory}share_${Date.now()}.jpg`;
-          const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest);
-          localUri = downloaded;
-        }
-        if (Platform.OS === 'ios') {
-          await Share.share({ url: localUri, message: shareText });
-        } else {
-          const canShare = await Sharing.isAvailableAsync();
-          if (canShare) {
-            await Sharing.shareAsync(localUri, { mimeType: 'image/jpeg', dialogTitle: 'Share your style' });
-          } else {
-            await Share.share({ message: shareText });
-          }
-        }
+      // Capture the hidden share card (photo + score overlay burned in)
+      const capturedUri = await captureRef(shareCardRef, { format: 'jpg', quality: 0.92 });
+      if (Platform.OS === 'ios') {
+        await Share.share({ url: capturedUri });
       } else {
-        await Share.share({ message: shareText });
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(capturedUri, { mimeType: 'image/jpeg', dialogTitle: 'Share your style' });
+        } else {
+          await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by AI Stylist` });
+        }
       }
     } catch { /* dismissed */ }
   };
@@ -313,10 +305,36 @@ export default function ResultsScreen() {
     );
   }
 
+  const photoUri = imageUri || result.imageUrl;
   const scoreColor = getScoreColor(result.score);
 
   return (
     <View style={s.container}>
+      {/* ── Hidden share card — captured as image before sharing ──── */}
+      <View
+        ref={shareCardRef}
+        collapsable={false}
+        style={s.shareCard}
+        pointerEvents="none"
+      >
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={s.shareCardPhoto} resizeMode="cover" />
+        ) : (
+          <View style={[s.shareCardPhoto, { backgroundColor: '#111' }]} />
+        )}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.82)']}
+          style={s.shareCardGradient}
+        >
+          <View style={s.shareCardScoreRow}>
+            <Text style={[s.shareCardScore, { color: scoreColor }]}>{result.score.toFixed(1)}</Text>
+            <Text style={s.shareCardScoreOf}>/10</Text>
+          </View>
+          <Text style={[s.shareCardLabel, { color: scoreColor }]}>{getScoreLabel(result.score)}</Text>
+          <Text style={s.shareCardBrand}>AI Stylist</Text>
+        </LinearGradient>
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false} bounces>
 
         {/* ── Hero photo ─────────────────────────────────────────────── */}
@@ -582,6 +600,16 @@ export default function ResultsScreen() {
 const makeStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.background },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+
+  // Hidden share card (captured as image before sharing)
+  shareCard: { position: 'absolute', left: -9999, top: 0, width: 360, height: 480, overflow: 'hidden', borderRadius: 0 },
+  shareCardPhoto: { width: '100%', height: '100%', position: 'absolute' },
+  shareCardGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, justifyContent: 'flex-end', padding: 24, paddingBottom: 28 },
+  shareCardScoreRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 4 },
+  shareCardScore: { fontSize: 64, fontWeight: '900', lineHeight: 68 },
+  shareCardScoreOf: { fontSize: 22, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: 8, marginLeft: 4 },
+  shareCardLabel: { fontSize: 20, fontWeight: '800', marginBottom: 10 },
+  shareCardBrand: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.5)', letterSpacing: 1.5, textTransform: 'uppercase' },
 
   // Hero
   heroContainer: { width: SCREEN_WIDTH, height: PHOTO_HEIGHT, position: 'relative' },
