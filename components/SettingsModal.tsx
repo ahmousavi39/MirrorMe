@@ -284,20 +284,6 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text, color: theme.error }]}>Danger Zone</Text>
-
-              <TouchableOpacity
-                style={[styles.settingItem, { backgroundColor: `${theme.error}12`, borderWidth: 1, borderColor: `${theme.error}30` }]}
-                onPress={() => { setDeleteStep('warning'); setDeletePassword(''); setDeleteError(''); }}
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="trash-outline" size={24} color={theme.error} />
-                  <Text style={[styles.settingText, { color: theme.error, fontWeight: '600' }]}>Delete Account</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>About</Text>
               
               <TouchableOpacity
@@ -311,6 +297,16 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingItem, { backgroundColor: `${theme.error}12`, borderWidth: 1, borderColor: `${theme.error}30` }]}
+                onPress={() => { setDeleteStep('warning'); setDeletePassword(''); setDeleteError(''); }}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="trash-outline" size={24} color={theme.error} />
+                  <Text style={[styles.settingText, { color: theme.error, fontWeight: '600' }]}>Delete Account</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </ScrollView>
