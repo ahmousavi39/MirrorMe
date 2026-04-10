@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, User } from 'firebase/auth';
 import { auth } from '@/services/firebase';
-import { initUser, getProfile } from '@/services/api';
+import { initUser, getProfile, getSettings } from '@/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RC_IOS_API_KEY } from '@/constants/config';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
@@ -78,12 +79,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // initUser ensures the Firestore doc exists.
         // Then check if the profile is complete — if name is missing, send the
         // user through onboarding again to fill in their details.
+        // Also sync settings from the server into AsyncStorage so the analyze
+        // screen can read them locally without waiting on a network call.
         try {
           await initUser();
-          const profile = await getProfile();
+          const [profile, settings] = await Promise.all([getProfile(), getSettings()]);
           if (!profile.name) {
             setIsNewUser(true);
           }
+          await Promise.all([
+            AsyncStorage.setItem('@shareWardrobe', String(settings.shareWardrobe)),
+            AsyncStorage.setItem('@addToWardrobe', String(settings.addToWardrobe)),
+          ]);
         } catch (e) {
           console.warn('User init / profile check error:', e);
         }

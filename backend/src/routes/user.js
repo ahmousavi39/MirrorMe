@@ -120,4 +120,42 @@ router.get('/history/:uploadId', verifyToken, async (req, res) => {
   }
 });
 
+// ── GET /api/user/settings ────────────────────────────────────────────────────────
+// Returns the user's app settings stored on their Firestore doc.
+router.get('/settings', verifyToken, async (req, res) => {
+  try {
+    const userSnap = await db.collection('users').doc(req.uid).get();
+    const d = userSnap.data() || {};
+    return res.json({
+      shareWardrobe: d.shareWardrobe !== false, // default true
+      addToWardrobe: d.addToWardrobe !== false, // default true
+    });
+  } catch (error) {
+    console.error('Get settings error:', error);
+    return res.status(500).json({ error: 'Failed to get settings' });
+  }
+});
+
+// ── PATCH /api/user/settings ──────────────────────────────────────────────────────
+// Updates one or more app settings on the user's Firestore doc.
+router.patch('/settings', verifyToken, async (req, res) => {
+  try {
+    const allowed = ['shareWardrobe', 'addToWardrobe'];
+    const update = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        update[key] = req.body[key] === true || req.body[key] === 'true';
+      }
+    }
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: 'No valid settings provided' });
+    }
+    await db.collection('users').doc(req.uid).update(update);
+    return res.json({ success: true, ...update });
+  } catch (error) {
+    console.error('Save settings error:', error);
+    return res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
 module.exports = router;

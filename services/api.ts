@@ -115,8 +115,29 @@ export async function saveProfile(profile: UserProfile): Promise<void> {
   if (!res.ok) throw new Error('Failed to save profile');
 }
 
-// ── GET /api/wardrobe ─────────────────────────────────────────────────────────────
-export async function getWardrobe(): Promise<WardrobeItem[]> {
+// ── GET/PATCH /api/user/settings ──────────────────────────────────────────────────
+export interface AppSettings {
+  shareWardrobe: boolean;
+  addToWardrobe: boolean;
+}
+
+export async function getSettings(): Promise<AppSettings> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/user/settings`, { headers });
+  if (!res.ok) return { shareWardrobe: true, addToWardrobe: true };
+  return res.json();
+}
+
+export async function saveSettings(settings: Partial<AppSettings>): Promise<void> {
+  const headers = await authHeaders();
+  await fetch(`${BACKEND_URL}/api/user/settings`, {
+    method: 'PATCH',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
+}
+
+// ── GET /api/wardrobe ─────────────────────────────────────────────────────────────export async function getWardrobe(): Promise<WardrobeItem[]> {
   const headers = await authHeaders();
   const res = await fetch(`${BACKEND_URL}/api/wardrobe`, { headers });
   if (!res.ok) throw new Error('Failed to fetch wardrobe');

@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Animated, Linking, Modal, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import ProfileEditModal from './ProfileEditModal';
+import { getSettings, saveSettings } from '@/services/api';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -26,26 +27,37 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   const [addToWardrobe, setAddToWardrobe] = useState(true);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
-  // Load wardrobe preferences once on mount
+  // Load wardrobe preferences: AsyncStorage first (instant), then API (source of truth)
   React.useEffect(() => {
     (async () => {
+      // Show cached values instantly
       const [sw, atw] = await Promise.all([
         AsyncStorage.getItem('@shareWardrobe'),
         AsyncStorage.getItem('@addToWardrobe'),
       ]);
       setShareWardrobe(sw !== 'false');
       setAddToWardrobe(atw !== 'false');
+      // Then sync from the server (overwrites if different)
+      try {
+        const remote = await getSettings();
+        setShareWardrobe(remote.shareWardrobe);
+        setAddToWardrobe(remote.addToWardrobe);
+        await AsyncStorage.setItem('@shareWardrobe', String(remote.shareWardrobe));
+        await AsyncStorage.setItem('@addToWardrobe', String(remote.addToWardrobe));
+      } catch { /* non-critical — keep local values */ }
     })();
   }, []);
 
   const handleShareWardrobeToggle = async (val: boolean) => {
     setShareWardrobe(val);
     await AsyncStorage.setItem('@shareWardrobe', String(val));
+    try { await saveSettings({ shareWardrobe: val }); } catch { /* non-critical */ }
   };
 
   const handleAddToWardrobeToggle = async (val: boolean) => {
     setAddToWardrobe(val);
     await AsyncStorage.setItem('@addToWardrobe', String(val));
+    try { await saveSettings({ addToWardrobe: val }); } catch { /* non-critical */ }
   };
 
   React.useEffect(() => {
