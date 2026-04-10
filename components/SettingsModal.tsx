@@ -2,10 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Animated, Linking, Modal, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Linking, Modal, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { EmailAuthProvider, reauthenticateWithCredential, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
+import { auth } from '@/services/firebase';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import ProfileEditModal from './ProfileEditModal';
-import { getSettings, saveSettings } from '@/services/api';
+import { getSettings, saveSettings, deleteAccount } from '@/services/api';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -23,6 +25,11 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   }>({ title: '', message: '' });
   const [profileEditVisible, setProfileEditVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(visible);
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'warning' | 'confirm'>('idle');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [shareWardrobe, setShareWardrobe] = useState(true);
   const [addToWardrobe, setAddToWardrobe] = useState(true);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -107,6 +114,41 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
   const handleTerms = () => {
     Linking.openURL('https://your-website.com/terms.html');
+  };
+
+  const isEmailUser = auth.currentUser?.providerData?.some((p) => p.providerId === 'password');
+
+  const handleDeleteAccount = async () => {
+    if (!auth.currentUser) return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      if (isEmailUser) {
+        // Re-authenticate with password
+        const credential = EmailAuthProvider.credential(
+          auth.currentUser.email!,
+          deletePassword,
+        );
+        await reauthenticateWithCredential(auth.currentUser, credential);
+      } else {
+        // Google / Apple users — re-auth not required for fresh sessions
+        // (Firebase requires re-auth only if session is old; we attempt delete and
+        //  catch 'auth/requires-recent-login' if needed)
+      }
+      await deleteAccount();
+      // Auth state change will sign the user out automatically
+    } catch (e: any) {
+      const code = e.code || '';
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setDeleteError('Incorrect password. Please try again.');
+      } else if (code === 'auth/requires-recent-login') {
+        setDeleteError('Please sign out and sign in again before deleting your account.');
+      } else {
+        setDeleteError(e.message || 'Failed to delete account. Please try again.');
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -242,6 +284,20 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text, color: theme.error }]}>Danger Zone</Text>
+
+              <TouchableOpacity
+                style={[styles.settingItem, { backgroundColor: `${theme.error}12`, borderWidth: 1, borderColor: `${theme.error}30` }]}
+                onPress={() => { setDeleteStep('warning'); setDeletePassword(''); setDeleteError(''); }}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="trash-outline" size={24} color={theme.error} />
+                  <Text style={[styles.settingText, { color: theme.error, fontWeight: '600' }]}>Delete Account</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>About</Text>
               
               <TouchableOpacity
@@ -274,6 +330,97 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
         visible={profileEditVisible}
         onClose={() => setProfileEditVisible(false)}
       />
+
+      {/* ── Delete account — warning step ─────────────────────────── */}
+      <Modal visible={deleteStep === 'warning'} transparent animationType="fade" onRequestClose={() => setDeleteStep('idle')}>
+        <View style={styles.dangerOverlay}>
+          <View style={[styles.dangerSheet, { backgroundColor: theme.background }]}>
+            <View style={styles.dangerIconRow}>
+              <View style={[styles.dangerIconCircle, { backgroundColor: `${theme.error}18` }]}>
+                <Ionicons name="warning-outline" size={36} color={theme.error} />
+              </View>
+            </View>
+            <Text style={[styles.dangerTitle, { color: theme.text }]}>Delete Account?</Text>
+            <Text style={[styles.dangerBody, { color: theme.textSecondary }]}>
+              This will permanently delete your account and all associated data including:
+            </Text>
+            <View style={styles.dangerList}>
+              {['Your profile and preferences', 'All analysis history and photos', 'Your wardrobe items', 'Any active subscription (no refund)'].map((item, i) => (
+                <View key={i} style={styles.dangerListRow}>
+                  <Ionicons name="close-circle" size={16} color={theme.error} />
+                  <Text style={[styles.dangerListText, { color: theme.textSecondary }]}>{item}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={[styles.dangerNote, { color: theme.error }]}>This action cannot be undone.</Text>
+            <View style={styles.dangerBtns}>
+              <TouchableOpacity style={[styles.dangerBtnSecondary, { borderColor: theme.border }]} onPress={() => setDeleteStep('idle')}>
+                <Text style={[styles.dangerBtnSecondaryText, { color: theme.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.dangerBtnPrimary, { backgroundColor: theme.error }]} onPress={() => setDeleteStep('confirm')}>
+                <Text style={styles.dangerBtnPrimaryText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Delete account — password confirmation step ────────────── */}
+      <Modal visible={deleteStep === 'confirm'} transparent animationType="fade" onRequestClose={() => setDeleteStep('idle')}>
+        <View style={styles.dangerOverlay}>
+          <View style={[styles.dangerSheet, { backgroundColor: theme.background }]}>
+            <Text style={[styles.dangerTitle, { color: theme.text }]}>
+              {isEmailUser ? 'Confirm Your Password' : 'Final Confirmation'}
+            </Text>
+            <Text style={[styles.dangerBody, { color: theme.textSecondary }]}>
+              {isEmailUser
+                ? 'Enter your password to confirm account deletion.'
+                : 'Are you sure you want to permanently delete your account and all your data?'}
+            </Text>
+
+            {isEmailUser && (
+              <View style={[styles.passwordWrapper, { backgroundColor: theme.inputBackground, borderColor: deleteError ? theme.error : theme.border }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.placeholder} />
+                <TextInput
+                  style={[styles.passwordInput, { color: theme.text }]}
+                  placeholder="Password"
+                  placeholderTextColor={theme.placeholder}
+                  secureTextEntry={!showDeletePassword}
+                  value={deletePassword}
+                  onChangeText={(t) => { setDeletePassword(t); setDeleteError(''); }}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={() => setShowDeletePassword(!showDeletePassword)}>
+                  <Ionicons name={showDeletePassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={theme.placeholder} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {deleteError ? (
+              <View style={[styles.deleteErrorBox, { backgroundColor: `${theme.error}12`, borderColor: `${theme.error}30` }]}>
+                <Ionicons name="alert-circle-outline" size={15} color={theme.error} />
+                <Text style={[styles.deleteErrorText, { color: theme.error }]}>{deleteError}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.dangerBtns}>
+              <TouchableOpacity style={[styles.dangerBtnSecondary, { borderColor: theme.border }]} onPress={() => setDeleteStep('idle')} disabled={deleteLoading}>
+                <Text style={[styles.dangerBtnSecondaryText, { color: theme.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dangerBtnPrimary, { backgroundColor: theme.error, opacity: deleteLoading || (isEmailUser && !deletePassword) ? 0.6 : 1 }]}
+                onPress={handleDeleteAccount}
+                disabled={deleteLoading || (isEmailUser && !deletePassword)}
+              >
+                {deleteLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.dangerBtnPrimaryText}>Delete My Account</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -336,4 +483,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  dangerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 24 },
+  dangerSheet: { borderRadius: 20, padding: 24 },
+  dangerIconRow: { alignItems: 'center', marginBottom: 16 },
+  dangerIconCircle: { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center' },
+  dangerTitle: { fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 10 },
+  dangerBody: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 16 },
+  dangerList: { gap: 8, marginBottom: 16 },
+  dangerListRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dangerListText: { fontSize: 13, flex: 1 },
+  dangerNote: { fontSize: 13, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
+  dangerBtns: { flexDirection: 'row', gap: 12 },
+  dangerBtnSecondary: { flex: 1, height: 48, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  dangerBtnSecondaryText: { fontSize: 15, fontWeight: '600' },
+  dangerBtnPrimary: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  dangerBtnPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  passwordWrapper: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, height: 52, marginBottom: 12 },
+  passwordInput: { flex: 1, fontSize: 15 },
+  deleteErrorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 12 },
+  deleteErrorText: { fontSize: 13, flex: 1 },
 });

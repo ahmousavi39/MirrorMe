@@ -158,6 +158,38 @@ router.patch('/settings', verifyToken, async (req, res) => {
   }
 });
 
+// ── DELETE /api/user/account ──────────────────────────────────────────────────────
+// Deletes all Firestore sub-collections and documents for the user, then removes
+// the Firebase Auth account. The client must re-authenticate before calling this.
+router.delete('/account', verifyToken, async (req, res) => {
+  const { uid } = req;
+  try {
+    const userRef = db.collection('users').doc(uid);
+
+    // Delete known sub-collections
+    const subCollections = ['history', 'wardrobe'];
+    for (const col of subCollections) {
+      const snap = await userRef.collection(col).get();
+      if (!snap.empty) {
+        const batch = db.batch();
+        snap.docs.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+    }
+
+    // Delete the user document itself
+    await userRef.delete();
+
+    // Delete the Firebase Auth account
+    await auth.deleteUser(uid);
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 // ── POST /api/user/check-email ────────────────────────────────────────────────────
 // Public endpoint — checks if an email address belongs to a registered user.
 router.post('/check-email', async (req, res) => {

@@ -214,7 +214,6 @@ export async function addWardrobeItem(imageUri: string): Promise<WardrobeItem> {
 }
 
 // ── POST /api/share-image ─────────────────────────────────────────────────────────
-// Composites the score overlay onto the image server-side, returns base64 JPEG.
 export async function composeShareImage(
   imageUrl: string,
   score: number,
@@ -232,3 +231,16 @@ export async function composeShareImage(
   return `data:image/jpeg;base64,${data.image}`;
 }
 
+// ── DELETE /api/user/account ──────────────────────────────────────────────────────
+// Deletes all user data from Firestore and removes the Firebase Auth account.
+export async function deleteAccount(): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/user/account`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to delete account');
+  }
+}
