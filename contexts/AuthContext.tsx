@@ -84,7 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await initUser();
         const [profile, settings] = await Promise.all([getProfile(), getSettings()]);
-        if (!profile.name) needsOnboarding = true;
+        if (
+          !profile.name ||
+          !profile.sex ||
+          !profile.age ||
+          !profile.heightCm ||
+          !profile.weightKg ||
+          !profile.styleCategories?.length
+        ) needsOnboarding = true;
         await Promise.all([
           AsyncStorage.setItem('@shareWardrobe', String(settings.shareWardrobe)),
           AsyncStorage.setItem('@addToWardrobe', String(settings.addToWardrobe)),
