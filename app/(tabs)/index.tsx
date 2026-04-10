@@ -412,6 +412,6 @@ const makeStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center', alignItems: 'center',
   },
-  overlayCard: { borderRadius: 20, padding: 24, alignItems: 'center', gap: 8, width: 260 },
+  overlayCard: { borderRadius: 20, padding: 24, paddingVertical: 16, alignItems: 'center', gap: 4, width: 260 },
   overlaySub: { fontSize: 13, textAlign: 'center' },
 });
