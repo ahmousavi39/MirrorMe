@@ -25,7 +25,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
 
-  const [request, , promptAsync] = Google.useAuthRequest({
+  const [request, googleResponse, promptAsync] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
   });
@@ -35,6 +35,55 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
       AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
     }
   }, []);
+
+  // ── Process Google response via state (NOT promptAsync return value) ─────────
+  // expo-auth-session resolves promptAsync() as soon as the OAuth redirect
+  // arrives — before the async PKCE code exchange finishes — so
+  // result.authentication is always null at that point.
+  // The 'googleResponse' state is only set AFTER the exchange completes,
+  // making it the only reliable place to read idToken / accessToken.
+  useEffect(() => {
+    if (!googleResponse) return;
+
+    if (googleResponse.type === 'cancel' || googleResponse.type === 'dismiss') {
+      setGoogleLoading(false);
+      onLoadingChange?.(false);
+      return;
+    }
+
+    if (googleResponse.type === 'error') {
+      setGoogleLoading(false);
+      onLoadingChange?.(false);
+      onError('Google sign-in failed. Please try again.');
+      return;
+    }
+
+    if (googleResponse.type !== 'success') return;
+
+    (async () => {
+      try {
+        const idToken     = googleResponse.authentication?.idToken
+                         ?? (googleResponse.params as any)?.id_token
+                         ?? null;
+        const accessToken = googleResponse.authentication?.accessToken
+                         ?? (googleResponse.params as any)?.access_token
+                         ?? null;
+
+        if (!idToken && !accessToken) {
+          onError('Google sign-in failed: no token received. Please try again.');
+          return;
+        }
+        const credential = GoogleAuthProvider.credential(idToken, accessToken);
+        await finishSocialAuth(credential as any);
+      } catch (e: any) {
+        console.error('[Google sign-in error]', e?.code, e?.message);
+        onError(socialErrorMessage(e) ?? 'Google sign-in failed. Please try again.');
+      } finally {
+        setGoogleLoading(false);
+        onLoadingChange?.(false);
+      }
+    })();
+  }, [googleResponse]);
 
   const socialErrorMessage = (e: any): string => {
     switch (e?.code) {
@@ -67,24 +116,11 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
     setGoogleLoading(true);
     onLoadingChange?.(true);
     try {
-      const result = await promptAsync();
-      if (result.type === 'success') {
-        // expo-auth-session PKCE flow may return idToken, accessToken, or both.
-        // GoogleAuthProvider.credential accepts (idToken, accessToken) — use whichever is available.
-        const idToken = result.authentication?.idToken ?? null;
-        const accessToken = result.authentication?.accessToken ?? null;
-        if (!idToken && !accessToken) {
-          onError('Google sign-in failed: no token received. Please try again.');
-          return;
-        }
-        const credential = GoogleAuthProvider.credential(idToken, accessToken);
-        await finishSocialAuth(credential as any);
-      }
-      // type === 'cancel' | 'dismiss' → user backed out, do nothing
+      await promptAsync();
+      // Token handling + loading reset are done in the googleResponse useEffect
     } catch (e: any) {
-      console.error('[Google sign-in error]', e?.code, e?.message);
-      onError(socialErrorMessage(e) ?? 'Google sign-in failed. Please try again.');
-    } finally {
+      console.error('[Google prompt error]', e?.code, e?.message);
+      onError('Google sign-in failed. Please try again.');
       setGoogleLoading(false);
       onLoadingChange?.(false);
     }
@@ -96,10 +132,10 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
     onLoadingChange?.(true);
     try {
       const rawNonce = Crypto.randomUUID();
-      const hashedNonce = await Crypto.digestStringAsync(
+      const hashedNonce = (await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         rawNonce,
-      );
+      )).toLowerCase();
       const appleCredential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
