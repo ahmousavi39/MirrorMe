@@ -8,6 +8,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { BACKEND_URL } from '@/constants/config';
 
 export default function ForgotPasswordScreen() {
   const { theme } = useTheme();
@@ -25,12 +26,25 @@ export default function ForgotPasswordScreen() {
     setError('');
     setLoading(true);
     try {
+      // Check if email is registered before sending the reset link
+      const res = await fetch(`${BACKEND_URL}/api/user/check-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      if (res.status === 404) {
+        setError('No account found with this email address');
+        return;
+      }
+      if (!res.ok) {
+        setError('Something went wrong. Please try again');
+        return;
+      }
       await sendPasswordResetEmail(auth, email.trim().toLowerCase());
       setSent(true);
     } catch (e: any) {
       const msg =
-        e.code === 'auth/user-not-found' ? 'No account found with this email'
-        : e.code === 'auth/invalid-email' ? 'Please enter a valid email address'
+        e.code === 'auth/invalid-email' ? 'Please enter a valid email address'
         : e.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later'
         : 'Something went wrong. Please try again';
       setError(msg);

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { db } = require('../services/firebase');
+const { db, auth } = require('../services/firebase');
 const verifyToken = require('../middleware/verifyToken');
 
 // ── POST /api/user/init ───────────────────────────────────────────────────────────
@@ -155,6 +155,25 @@ router.patch('/settings', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Save settings error:', error);
     return res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
+// ── POST /api/user/check-email ────────────────────────────────────────────────────
+// Public endpoint — checks if an email address belongs to a registered user.
+router.post('/check-email', async (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  try {
+    await auth.getUserByEmail(email.trim().toLowerCase());
+    return res.json({ exists: true });
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') {
+      return res.status(404).json({ exists: false });
+    }
+    console.error('check-email error:', e);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
