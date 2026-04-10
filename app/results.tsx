@@ -5,6 +5,8 @@ import {
   Share, Platform, Image, Animated, Dimensions,
   Modal, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -273,10 +275,30 @@ export default function ResultsScreen() {
 
   const handleShare = async () => {
     if (!result) return;
+    const shareText = `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\n"${result.feedback}"\n\nRated by AI Stylist`;
+    const uri = imageUri || result.imageUrl;
     try {
-      await Share.share({
-        message: `My AI Stylist score: ${result.score}/10 ✨\n\n"${result.feedback}"\n\nGet your style rated at AI Stylist!`,
-      });
+      if (uri) {
+        // Download to cache if it's a remote URL
+        let localUri = uri;
+        if (uri.startsWith('http')) {
+          const dest = `${FileSystem.cacheDirectory}share_${Date.now()}.jpg`;
+          const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest);
+          localUri = downloaded;
+        }
+        if (Platform.OS === 'ios') {
+          await Share.share({ url: localUri, message: shareText });
+        } else {
+          const canShare = await Sharing.isAvailableAsync();
+          if (canShare) {
+            await Sharing.shareAsync(localUri, { mimeType: 'image/jpeg', dialogTitle: 'Share your style' });
+          } else {
+            await Share.share({ message: shareText });
+          }
+        }
+      } else {
+        await Share.share({ message: shareText });
+      }
     } catch { /* dismissed */ }
   };
 
