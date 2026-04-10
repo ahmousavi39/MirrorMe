@@ -211,6 +211,102 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const cleanOccasionTips = (geminiResult.occasionTips || []).map(stripKeys);
 
     const uploadRef = userRef.collection('uploads').doc();
+    const batch = db.batch();
+
+    // ── 5b. Resolve wardrobe upserts BEFORE batch commit ─────────────────────
+    // All wardrobe writes are added to the SAME batch as the upload doc so that
+    // everything commits atomically.  This guarantees:
+    //   • If Gemini failed (step 4) we returned early — batch never built.
+    //   • If the batch itself fails — neither the upload NOR wardrobe are touched.
+    //   • Items are never added to the wardrobe unless the full analysis succeeded.
+    const clothingItemKeys = clothingItems.map(() => null); // default null
+    if (addToWardrobe && clothingItems.length > 0) {
+      const now = new Date().toISOString();
+      const wardrobeRef = userRef.collection('wardrobe');
+      const existingDocs = wardrobeSnap ? wardrobeSnap.docs : [];
+      const normalize = (s) => (s || '').toLowerCase().trim();
+
+      for (let idx = 0; idx < clothingItems.length; idx++) {
+        const item = clothingItems[idx];
+        const categoryNorm = normalize(item.category);
+        const colorNorm    = normalize(item.color);
+        const secondaryFields = ['fit', 'material', 'pattern', 'style'];
+
+        const candidates = existingDocs.filter((doc) => {
+          const d = doc.data();
+          return normalize(d.category) === categoryNorm
+              && normalize(d.color)    === colorNorm;
+        });
+
+        const scored = candidates.map((doc) => {
+          const d = doc.data();
+          const hasAnySecondary = secondaryFields.some((f) => (d[f] || '').trim() !== '');
+          const matchCount = secondaryFields.filter(
+            (f) => normalize(d[f]) === normalize(item[f])
+          ).length;
+          return { doc, matchCount, hasAnySecondary };
+        });
+
+        const qualified = scored.filter(
+          ({ matchCount, hasAnySecondary }) => !hasAnySecondary || matchCount >= 1
+        );
+
+        let matchDoc = null;
+        if (qualified.length === 1) {
+          matchDoc = qualified[0].doc;
+        } else if (qualified.length > 1) {
+          matchDoc = qualified.reduce(
+            (best, cur) => cur.matchCount > best.matchCount ? cur : best
+          ).doc;
+        }
+
+        if (matchDoc) {
+          const d = matchDoc.data();
+          const merged = {};
+          for (const f of secondaryFields) {
+            const wardrobeVal = (d[f] || '').trim();
+            const geminiVal   = (item[f] || '').trim();
+            if (!wardrobeVal && geminiVal) merged[f] = item[f];
+          }
+          const geminiFilledFields = Object.keys(merged);
+          const existingFilled = Array.isArray(d._geminiFilledFields) ? d._geminiFilledFields : [];
+          const unionFilled = [...new Set([...existingFilled, ...geminiFilledFields])];
+          clothingItemKeys[idx] = matchDoc.id;
+          batch.update(matchDoc.ref, {
+            ...merged,
+            ...(unionFilled.length > 0
+              ? { _geminiFilledFields: unionFilled }
+              : { _geminiFilledFields: FieldValue.delete() }),
+            lastSeenAt: now,
+            uploadId:   uploadRef.id,
+            imageUrl:   imageUrl || d.imageUrl || null,
+            timesWorn:  FieldValue.increment(1),
+          });
+        } else {
+          const key = wardrobeKey(
+            item.category, item.color, item.fit,
+            item.material, item.pattern, item.style,
+          );
+          clothingItemKeys[idx] = key;
+          batch.set(wardrobeRef.doc(key), {
+            category: item.category || null,
+            color:    item.color    || null,
+            material: item.material || null,
+            pattern:  item.pattern  || null,
+            fit:      item.fit      || null,
+            style:    item.style    || null,
+            uploadId:    uploadRef.id,
+            imageUrl:    imageUrl || null,
+            firstSeenAt: now,
+            lastSeenAt:  now,
+            timesWorn:   1,
+          });
+        }
+      }
+    }
+
+    // ── 5. Commit everything atomically ──────────────────────────────────────
+    // uploadData now includes clothingItemKeys so no separate update is needed.
     const uploadData = {
       score: geminiResult.score,
       feedback: geminiResult.feedback,
@@ -221,13 +317,12 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       occasionScores: geminiResult.occasionScores,
       colorPalette: geminiResult.colorPalette,
       clothingItems,
+      clothingItemKeys,
       occasion: occasion || null,
       imageUrl: imageUrl || null,
       weekKey,
       createdAt: new Date().toISOString(),
     };
-
-    const batch = db.batch();
 
     // Save upload result
     batch.set(uploadRef, uploadData);
@@ -245,129 +340,6 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     }
 
     await batch.commit();
-
-    // ── 5b. Upsert detected items into user's wardrobe ────────────────────────
-    // An item is considered the SAME only when all 6 fields match exactly.
-    // If it differs on even one field (e.g. fit: slim vs regular) it is a new item.
-    // clothingItemKeys tracks the ACTUAL Firestore doc ID used for each item so the
-    // frontend can PATCH the right document later (avoids key-formula mismatches).
-    const clothingItemKeys = clothingItems.map(() => null); // default null
-    if (addToWardrobe && clothingItems.length > 0) {
-      try {
-        const now = new Date().toISOString();
-        const wardrobeRef = userRef.collection('wardrobe');
-        const existingDocs = wardrobeSnap ? wardrobeSnap.docs : [];
-        const normalize = (s) => (s || '').toLowerCase().trim();
-
-        await Promise.all(clothingItems.map(async (item, idx) => {
-          // Loose match on category + color — Gemini's secondary fields (fit, material,
-          // pattern, style) are often imprecise, so we don't require them to match.
-          // If multiple docs share the same category+color (e.g. two blue t-shirts),
-          // prefer the one whose secondary fields are closest (most fields match).
-          const categoryNorm = normalize(item.category);
-          const colorNorm    = normalize(item.color);
-
-          const secondaryFields = ['fit', 'material', 'pattern', 'style'];
-
-          const candidates = existingDocs.filter((doc) => {
-            const d = doc.data();
-            return normalize(d.category) === categoryNorm
-                && normalize(d.color)    === colorNorm;
-          });
-
-          // Score each candidate by how many secondary fields agree with the detection.
-          const scored = candidates.map((doc) => {
-            const d = doc.data();
-            const hasAnySecondary = secondaryFields.some((f) => (d[f] || '').trim() !== '');
-            const matchCount = secondaryFields.filter(
-              (f) => normalize(d[f]) === normalize(item[f])
-            ).length;
-            return { doc, matchCount, hasAnySecondary };
-          });
-
-          // A candidate qualifies only if:
-          //   • it has no secondary fields stored (minimal entry — accept on category+color), OR
-          //   • at least 1 secondary field matches the detected value.
-          const qualified = scored.filter(
-            ({ matchCount, hasAnySecondary }) => !hasAnySecondary || matchCount >= 1
-          );
-
-          let matchDoc = null;
-          if (qualified.length === 1) {
-            matchDoc = qualified[0].doc;
-          } else if (qualified.length > 1) {
-            // Multiple qualify — pick the one with the highest secondary-field score.
-            matchDoc = qualified.reduce(
-              (best, cur) => cur.matchCount > best.matchCount ? cur : best
-            ).doc;
-          }
-
-          if (matchDoc) {
-            // Match found — merge fields:
-            // • Wardrobe value wins when present (user may have corrected it)
-            // • Gemini fills in fields that are blank/null on the wardrobe item
-            const d = matchDoc.data();
-            const merged = {};
-            for (const f of ['fit', 'material', 'pattern', 'style']) {
-              const wardrobeVal = (d[f] || '').trim();
-              const geminiVal   = (item[f] || '').trim();
-              if (!wardrobeVal && geminiVal) merged[f] = item[f]; // fill blank
-              // wardrobe value already present — don't touch it
-            }
-            // Track which fields Gemini filled so PATCH can revert them if the user
-            // later corrects this detection to a different identity.
-            const geminiFilledFields = Object.keys(merged);
-            // Union-merge with existing _geminiFilledFields so previous fills
-            // aren't forgotten when the same item is analyzed multiple times.
-            const existingFilled = Array.isArray(d._geminiFilledFields) ? d._geminiFilledFields : [];
-            const unionFilled = [...new Set([...existingFilled, ...geminiFilledFields])];
-            clothingItemKeys[idx] = matchDoc.id;
-            await matchDoc.ref.update({
-              ...merged,
-              ...(unionFilled.length > 0
-                ? { _geminiFilledFields: unionFilled }
-                : { _geminiFilledFields: FieldValue.delete() }),
-              lastSeenAt: now,
-              uploadId:   uploadRef.id,
-              imageUrl:   imageUrl || d.imageUrl || null,
-              timesWorn:  FieldValue.increment(1),
-            });
-          } else {
-            // No match — create a new wardrobe item with all detected fields
-            const key = wardrobeKey(
-              item.category, item.color, item.fit,
-              item.material, item.pattern, item.style,
-            );
-            clothingItemKeys[idx] = key;
-            await wardrobeRef.doc(key).set({
-              category: item.category || null,
-              color:    item.color    || null,
-              material: item.material || null,
-              pattern:  item.pattern  || null,
-              fit:      item.fit      || null,
-              style:    item.style    || null,
-              uploadId:    uploadRef.id,
-              imageUrl:    imageUrl || null,
-              firstSeenAt: now,
-              lastSeenAt:  now,
-              timesWorn:   1,
-            });
-          }
-        }));
-      } catch (e) {
-        console.warn('Wardrobe upsert failed (non-fatal):', e.message);
-      }
-
-      // Persist clothingItemKeys to the upload doc so history items can look up the
-      // correct Firestore wardrobe doc IDs when the user edits clothing chips later.
-      if (clothingItemKeys.some((k) => k !== null)) {
-        try {
-          await uploadRef.update({ clothingItemKeys });
-        } catch (e) {
-          console.warn('Could not save clothingItemKeys to upload doc (non-fatal):', e.message);
-        }
-      }
-    }
 
     return res.json({
       uploadId: uploadRef.id,
