@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { ClothingItem, Occasion } from '@/types/app';
-import { updateWardrobeItem } from '@/services/api';
+import { updateWardrobeItem, composeShareImage } from '@/services/api';
 
 const OCCASION_META: Record<Occasion, { label: string; emoji: string }> = {
   casual:    { label: 'Casual',    emoji: '🛍️' },
@@ -275,28 +275,51 @@ export default function ResultsScreen() {
 
   const handleShare = async () => {
     if (!result) return;
-    const shareText = `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by AI Stylist`;
-    const uri = imageUri || result.imageUrl;
+    const scoreColor = getScoreColor(result.score);
+    // Prefer the remote Firebase URL for server-side composition;
+    // fall back to the local file URI only if unavailable.
+    const remoteUri = result.imageUrl;
+    const localFallbackUri = imageUri;
     try {
-      if (uri) {
-        let localUri = uri;
-        if (uri.startsWith('http')) {
+      let localUri: string | undefined;
+
+      if (remoteUri) {
+        // Compose score overlay server-side
+        try {
+          const base64DataUri = await composeShareImage(
+            remoteUri,
+            result.score,
+            getScoreLabel(result.score),
+            scoreColor,
+          );
           const dest = `${FileSystem.cacheDirectory}share_${Date.now()}.jpg`;
-          const { uri: downloaded } = await FileSystem.downloadAsync(uri, dest);
+          await FileSystem.writeAsStringAsync(dest, base64DataUri.replace(/^data:image\/jpeg;base64,/, ''), {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          localUri = dest;
+        } catch {
+          // Fallback: share original photo without overlay
+          const dest = `${FileSystem.cacheDirectory}share_${Date.now()}.jpg`;
+          const { uri: downloaded } = await FileSystem.downloadAsync(remoteUri, dest);
           localUri = downloaded;
         }
+      } else if (localFallbackUri) {
+        localUri = localFallbackUri;
+      }
+
+      if (localUri) {
         if (Platform.OS === 'ios') {
-          await Share.share({ url: localUri, message: shareText });
+          await Share.share({ url: localUri });
         } else {
           const canShare = await Sharing.isAvailableAsync();
           if (canShare) {
             await Sharing.shareAsync(localUri, { mimeType: 'image/jpeg', dialogTitle: 'Share your style' });
           } else {
-            await Share.share({ message: shareText });
+            await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by AI Stylist` });
           }
         }
       } else {
-        await Share.share({ message: shareText });
+        await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by AI Stylist` });
       }
     } catch { /* dismissed */ }
   };

@@ -212,3 +212,23 @@ export async function addWardrobeItem(imageUri: string): Promise<WardrobeItem> {
   }
   return data.item as WardrobeItem;
 }
+
+// ── POST /api/share-image ─────────────────────────────────────────────────────────
+// Composites the score overlay onto the image server-side, returns base64 JPEG.
+export async function composeShareImage(
+  imageUrl: string,
+  score: number,
+  scoreLabel: string,
+  scoreColor: string,
+): Promise<string> {
+  const headers = await authHeaders();
+  const res = await fetch(`${BACKEND_URL}/api/share-image`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageUrl, score, scoreLabel, scoreColor }),
+  });
+  if (!res.ok) throw new Error('Failed to compose share image');
+  const data = await res.json();
+  return `data:image/jpeg;base64,${data.image}`;
+}
+
