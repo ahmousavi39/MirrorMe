@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Image, ActivityIndicator, Alert, Platform,
+  Image, ActivityIndicator, Alert, Platform, Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -51,6 +51,7 @@ export default function AnalyzeScreen() {
   const [occasion, setOccasion] = useState<Occasion | null>(null);
   const [loading, setLoading] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [tipsVisible, setTipsVisible] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
@@ -257,42 +258,34 @@ export default function AnalyzeScreen() {
           </ScrollView>
         </View>
 
-        {/* Analyze button */}
-        <TouchableOpacity
-          style={[s.analyzeBtn, !imageUri && s.analyzeBtnDisabled]}
-          onPress={handleAnalyze}
-          disabled={!imageUri || loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <>
-              <Ionicons name="sparkles" size={20} color="#fff" />
-              <Text style={s.analyzeBtnText}>
-                {occasion ? `Analyze for ${OCCASIONS.find(o => o.key === occasion)?.label}` : 'Analyze My Style'}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {/* Analyze button + info */}
+        <View style={s.analyzeRow}>
+          <TouchableOpacity
+            style={[s.analyzeBtn, !imageUri && s.analyzeBtnDisabled]}
+            onPress={handleAnalyze}
+            disabled={!imageUri || loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="sparkles" size={20} color="#fff" />
+                <Text style={s.analyzeBtnText}>
+                  {occasion ? `Analyze for ${OCCASIONS.find(o => o.key === occasion)?.label}` : 'Analyze My Style'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={s.infoBtn} onPress={() => setTipsVisible(true)} activeOpacity={0.75}>
+            <Ionicons name="information-circle-outline" size={26} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
 
         {loading && (
           <Text style={[s.loadingHint, { color: theme.textSecondary }]}>
             Identifying clothing with AI… this takes ~10 seconds
           </Text>
-        )}
-
-        {/* Tips */}
-        {!imageUri && (
-          <View style={[s.tipsCard, { backgroundColor: theme.card }]}>
-            <Text style={[s.tipsTitle, { color: theme.text }]}>📸 Tips for best results</Text>
-            {['Full body shot shows the complete outfit', 'Good lighting makes colors accurate', 'Avoid heavy filters', 'Stand in front of a plain background'].map((tip) => (
-              <View style={s.tipRow} key={tip}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.primary} />
-                <Text style={[s.tipText, { color: theme.textSecondary }]}>{tip}</Text>
-              </View>
-            ))}
-          </View>
         )}
       </ScrollView>
 
@@ -310,6 +303,37 @@ export default function AnalyzeScreen() {
       )}
 
       <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
+
+      {/* Tips & disclaimer modal */}
+      <Modal visible={tipsVisible} transparent animationType="fade" onRequestClose={() => setTipsVisible(false)}>
+        <TouchableOpacity style={s.modalBackdrop} activeOpacity={1} onPress={() => setTipsVisible(false)}>
+          <TouchableOpacity style={[s.modalCard, { backgroundColor: theme.card }]} activeOpacity={1}>
+            <View style={s.modalHeader}>
+              <Text style={[s.modalTitle, { color: theme.text }]}>📸 Tips for best results</Text>
+              <TouchableOpacity onPress={() => setTipsVisible(false)}>
+                <Ionicons name="close" size={22} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            {[
+              'Full body shot shows the complete outfit',
+              'Good lighting makes colors accurate',
+              'Avoid heavy filters or extreme crops',
+              'Stand in front of a plain background',
+            ].map((tip) => (
+              <View style={s.tipRow} key={tip}>
+                <Ionicons name="checkmark-circle" size={16} color={theme.primary} />
+                <Text style={[s.tipText, { color: theme.textSecondary }]}>{tip}</Text>
+              </View>
+            ))}
+            <View style={[s.disclaimerBox, { backgroundColor: `${theme.primary}12`, borderColor: `${theme.primary}30` }]}>
+              <Ionicons name="alert-circle-outline" size={16} color={theme.primary} style={{ marginTop: 1 }} />
+              <Text style={[s.disclaimerText, { color: theme.textSecondary }]}>
+                AI results are generated automatically and may not be 100% accurate. Clothing detection, color matching, and style scores can vary. Please treat results as helpful suggestions, not definitive judgments.
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -348,7 +372,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
   },
   pickBtnText: { fontSize: 15, fontWeight: '600' },
   analyzeBtn: {
-    height: 56, borderRadius: 16, backgroundColor: theme.primary,
+    flex: 1, height: 56, borderRadius: 16, backgroundColor: theme.primary,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
@@ -356,10 +380,16 @@ const makeStyles = (theme: any) => StyleSheet.create({
   analyzeBtnDisabled: { opacity: 0.4 },
   analyzeBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   loadingHint: { textAlign: 'center', fontSize: 13 },
-  tipsCard: { borderRadius: 14, padding: 16, gap: 10 },
-  tipsTitle: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  analyzeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  infoBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  tipText: { fontSize: 14, flex: 1 },
+  tipText: { fontSize: 14, flex: 1, lineHeight: 20 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalCard: { width: '100%', borderRadius: 20, padding: 20, gap: 12 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  modalTitle: { fontSize: 16, fontWeight: '700' },
+  disclaimerBox: { flexDirection: 'row', gap: 8, padding: 12, borderRadius: 10, borderWidth: 1, marginTop: 4 },
+  disclaimerText: { fontSize: 13, flex: 1, lineHeight: 19 },
   // Occasion picker
   occasionSection: { gap: 10 },
   occasionTitle: { fontSize: 15, fontWeight: '700' },
