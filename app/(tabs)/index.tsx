@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import LottieView from 'lottie-react-native';
 import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
@@ -294,8 +295,12 @@ export default function AnalyzeScreen() {
       {loading && (
         <View style={s.overlay}>
           <View style={[s.overlayCard, { backgroundColor: theme.card }]}>
-            <ActivityIndicator size="large" color={theme.primary} />
-            <Text style={[s.overlayTitle, { color: theme.text }]}>Analyzing your style…</Text>
+            <LottieView
+              source={require('@/assets/sales_man_v2.json')}
+              autoPlay
+              loop
+              style={{ width: 180, height: 180 }}
+            />
             <Text style={[s.overlaySub, { color: theme.textSecondary }]}>
               Identifying clothes · Getting AI feedback
             </Text>
@@ -407,7 +412,6 @@ const makeStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center', alignItems: 'center',
   },
-  overlayCard: { borderRadius: 20, padding: 32, alignItems: 'center', gap: 12, width: 240 },
-  overlayTitle: { fontSize: 17, fontWeight: '700' },
+  overlayCard: { borderRadius: 20, padding: 24, alignItems: 'center', gap: 8, width: 260 },
   overlaySub: { fontSize: 13, textAlign: 'center' },
 });
