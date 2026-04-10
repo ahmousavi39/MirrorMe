@@ -39,6 +39,9 @@ export interface AnalysisResult {
   uploadsUsedThisWeek: number;
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;
+  monthlyUploadsUsed: number | null;
+  monthlyUploadsLimit: number | null;
+  remainingPremiumUploads: number | null;
   isSubscribed: boolean;
 }
 
@@ -67,6 +70,9 @@ export interface SubscriptionStatus {
   uploadsUsedThisWeek: number;
   uploadsLimitPerWeek: number;
   remainingFreeUploads: number | null;
+  monthlyUploadsUsed: number | null;
+  monthlyUploadsLimit: number | null;
+  remainingPremiumUploads: number | null;
 }
 
 // ── Wardrobe item stored in Firestore ────────────────────────────────────────────

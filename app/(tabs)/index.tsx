@@ -183,6 +183,12 @@ export default function AnalyzeScreen() {
             ]
           );
         }
+      } else if (e.code === 'PREMIUM_LIMIT_REACHED') {
+        Alert.alert(
+          '📊 Monthly Limit Reached',
+          'You\'ve used all 100 Premium scans for this month.\nYour limit resets on the 1st of next month.',
+          [{ text: 'OK' }]
+        );
       } else if (e.code === 'NO_PERSON') {
         Alert.alert('No person detected', 'We couldn\'t find a person in this photo. Please upload a photo of yourself wearing an outfit.');
       } else if (e.code === 'NO_OUTFIT') {

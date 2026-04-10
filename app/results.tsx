@@ -554,6 +554,17 @@ export default function ResultsScreen() {
             </View>
           )}
 
+          {result.isSubscribed && result.remainingPremiumUploads !== null && (
+            <View style={[s.usageNote, { backgroundColor: `${theme.secondary}12`, borderColor: `${theme.secondary}25` }]}>
+              <Ionicons name="information-circle-outline" size={16} color={theme.secondary} />
+              <Text style={[s.usageNoteText, { color: theme.secondary }]}>
+                {result.remainingPremiumUploads === 0
+                  ? 'You\'ve used all 100 Premium scans this month. Resets on the 1st.'
+                  : `${result.remainingPremiumUploads} Premium scan${result.remainingPremiumUploads === 1 ? '' : 's'} remaining this month`}
+              </Text>
+            </View>
+          )}
+
           {/* Analyze again button */}
           <TouchableOpacity
             style={[s.analyzeBtn, { backgroundColor: theme.primary }]}

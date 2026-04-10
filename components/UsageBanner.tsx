@@ -7,17 +7,39 @@ interface UsageBannerProps {
   used: number;
   limit: number;
   isSubscribed: boolean;
+  monthlyUsed?: number | null;
+  monthlyLimit?: number | null;
 }
 
-export default function UsageBanner({ used, limit, isSubscribed }: UsageBannerProps) {
+export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, monthlyLimit }: UsageBannerProps) {
   const { theme } = useTheme();
   const router = useRouter();
 
   if (isSubscribed) {
+    const mUsed = monthlyUsed ?? 0;
+    const mLimit = monthlyLimit ?? 100;
+    const mRemaining = mLimit - mUsed;
+    const isAtMonthlyLimit = mRemaining <= 0;
+    const barColor = isAtMonthlyLimit ? theme.error : mRemaining <= 10 ? '#FF9F0A' : theme.success;
+
     return (
-      <View style={[styles.container, { backgroundColor: `${theme.success}15`, borderColor: `${theme.success}30` }]}>
-        <Ionicons name="checkmark-circle" size={18} color={theme.success} />
-        <Text style={[styles.text, { color: theme.success }]}>Premium — Unlimited uploads ✨</Text>
+      <View style={[styles.container, { backgroundColor: isAtMonthlyLimit ? `${theme.error}12` : `${theme.success}15`, borderColor: isAtMonthlyLimit ? `${theme.error}40` : `${theme.success}30` }]}>
+        <View style={styles.row}>
+          <Ionicons
+            name={isAtMonthlyLimit ? 'ban-outline' : 'checkmark-circle'}
+            size={18}
+            color={isAtMonthlyLimit ? theme.error : theme.success}
+          />
+          <Text style={[styles.text, { color: isAtMonthlyLimit ? theme.error : theme.success }]}>
+            {isAtMonthlyLimit ? 'Monthly Premium limit reached' : `Premium — ${mRemaining} scan${mRemaining === 1 ? '' : 's'} left this month`}
+          </Text>
+        </View>
+        <View style={[styles.barBg, { backgroundColor: theme.border }]}>
+          <View style={[styles.barFill, { width: `${Math.min((mUsed / mLimit) * 100, 100)}%`, backgroundColor: barColor }]} />
+        </View>
+        <Text style={[styles.sub, { color: theme.textSecondary }]}>
+          {mUsed}/{mLimit} scans used this month
+        </Text>
       </View>
     );
   }

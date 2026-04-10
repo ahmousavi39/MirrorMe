@@ -11,6 +11,7 @@ const { analyzeClothing } = require('../services/ximilar');
 const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
 const FREE_UPLOADS_PER_WEEK = 2;
+const PREMIUM_UPLOADS_PER_MONTH = 100;
 
 // ── Cancel-token map ──────────────────────────────────────────────────────────────
 // Tracks in-flight requests by client-supplied UUID.
@@ -52,6 +53,12 @@ function getWeekKey() {
   return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
+/** Returns the month key for the current date, e.g. "2026-04" */
+function getMonthKey() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 /** Wardrobe document key — includes all 6 identifying fields so items that differ
  *  on even a single field (e.g. fit) are stored as separate wardrobe entries. */
 function wardrobeKey(category, color, fit, material, pattern, style) {
@@ -77,16 +84,23 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       return res.status(400).json({ error: 'No photo provided. Send a multipart/form-data request with field "photo".' });
     }
 
-    // ── 1. Check weekly upload limit ──────────────────────────────────────────
+    // ── 1. Check upload limits ────────────────────────────────────────────────
     const weekKey = getWeekKey();
+    const monthKey = getMonthKey();
     const userRef = db.collection('users').doc(uid);
     const weeklyRef = userRef.collection('weeklyUploads').doc(weekKey);
+    const monthlyRef = userRef.collection('monthlyUploads').doc(monthKey);
 
-    const [userSnap, weeklySnap] = await Promise.all([userRef.get(), weeklyRef.get()]);
+    const [userSnap, weeklySnap, monthlySnap] = await Promise.all([
+      userRef.get(),
+      weeklyRef.get(),
+      monthlyRef.get(),
+    ]);
 
     const userData = userSnap.data() || {};
     const isSubscribed = userData.isSubscribed === true;
     const weeklyCount = weeklySnap.exists ? (weeklySnap.data().count || 0) : 0;
+    const monthlyCount = monthlySnap.exists ? (monthlySnap.data().count || 0) : 0;
 
     // Pull profile fields already stored on the user doc (set during onboarding)
     const userProfile = {
@@ -106,6 +120,17 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
         uploadsUsedThisWeek: weeklyCount,
         uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
         isSubscribed: false,
+      });
+    }
+
+    if (isSubscribed && monthlyCount >= PREMIUM_UPLOADS_PER_MONTH) {
+      return res.status(403).json({
+        error: 'Monthly premium limit reached',
+        code: 'PREMIUM_LIMIT_REACHED',
+        message: `You have used all ${PREMIUM_UPLOADS_PER_MONTH} Premium scans for this month. Your limit resets on the 1st of next month.`,
+        monthlyUploadsUsed: monthlyCount,
+        monthlyUploadsLimit: PREMIUM_UPLOADS_PER_MONTH,
+        isSubscribed: true,
       });
     }
 
@@ -346,8 +371,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // Save upload result
     batch.set(uploadRef, uploadData);
 
-    // Increment weekly counter
+    // Increment weekly counter (free users) and monthly counter (all users)
     batch.set(weeklyRef, { count: weeklyCount + 1 }, { merge: true });
+    batch.set(monthlyRef, { count: monthlyCount + 1 }, { merge: true });
 
     // Create user document on first upload
     if (!userSnap.exists) {
@@ -384,6 +410,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       uploadsUsedThisWeek: weeklyCount + 1,
       uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
       remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_PER_WEEK - (weeklyCount + 1)),
+      monthlyUploadsUsed: isSubscribed ? monthlyCount + 1 : null,
+      monthlyUploadsLimit: isSubscribed ? PREMIUM_UPLOADS_PER_MONTH : null,
+      remainingPremiumUploads: isSubscribed ? Math.max(0, PREMIUM_UPLOADS_PER_MONTH - (monthlyCount + 1)) : null,
       isSubscribed,
     });
   } catch (error) {

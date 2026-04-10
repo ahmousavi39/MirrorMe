@@ -147,7 +147,7 @@ export default function ProfileScreen() {
                   </Text>
                   <Text style={[s.cardSub, { color: theme.textSecondary }]}>
                     {status?.isSubscribed
-                      ? 'Unlimited outfit analyses'
+                      ? `${status?.monthlyUploadsUsed ?? 0}/${status?.monthlyUploadsLimit ?? 100} scans used this month`
                       : `${status?.uploadsUsedThisWeek ?? 0}/${status?.uploadsLimitPerWeek ?? 2} free uploads used this week`
                     }
                   </Text>
@@ -171,17 +171,30 @@ export default function ProfileScreen() {
                   ]} />
                 </View>
               )}
+
+              {/* Progress bar for premium users */}
+              {status?.isSubscribed && (
+                <View style={[s.barBg, { backgroundColor: theme.border }]}>
+                  <View style={[
+                    s.barFill,
+                    {
+                      width: `${Math.min(((status?.monthlyUploadsUsed ?? 0) / (status?.monthlyUploadsLimit ?? 100)) * 100, 100)}%`,
+                      backgroundColor: (status?.remainingPremiumUploads ?? 1) === 0 ? theme.error : theme.primary,
+                    }
+                  ]} />
+                </View>
+              )}
             </View>
 
             {/* Upgrade section */}
             {!status?.isSubscribed && (
               <View style={[s.upgradeCard, { backgroundColor: `${theme.primary}10`, borderColor: `${theme.primary}30` }]}>
-                <Text style={[s.upgradeTitle, { color: theme.text }]}>Go Unlimited ✨</Text>
+                <Text style={[s.upgradeTitle, { color: theme.text }]}>Go Premium ✨</Text>
                 <Text style={[s.upgradeSub, { color: theme.textSecondary }]}>
-                  Get unlimited outfit analyses every week with Premium.
+                  Get up to 100 outfit analyses per month with Premium.
                 </Text>
                 <View style={s.perks}>
-                  {['Unlimited weekly analyses', 'Priority AI processing', 'Full history access'].map((perk) => (
+                  {['100 analyses per month', 'Priority AI processing', 'Full history access'].map((perk) => (
                     <View style={s.perkRow} key={perk}>
                       <Ionicons name="checkmark-circle" size={16} color={theme.primary} />
                       <Text style={[s.perkText, { color: theme.text }]}>{perk}</Text>

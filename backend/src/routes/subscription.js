@@ -5,6 +5,7 @@ const { db } = require('../services/firebase');
 const verifyToken = require('../middleware/verifyToken');
 
 const FREE_UPLOADS_PER_WEEK = 2;
+const PREMIUM_UPLOADS_PER_MONTH = 100;
 
 // ── Helper ────────────────────────────────────────────────────────────────────────
 function getWeekKey() {
@@ -16,6 +17,11 @@ function getWeekKey() {
   return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
+function getMonthKey() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 // ── GET /api/subscription/status ─────────────────────────────────────────────────
 // Returns the current user's subscription state and weekly upload usage.
 // The app also reads entitlements directly from RevenueCat SDK on-device,
@@ -23,15 +29,18 @@ function getWeekKey() {
 router.get('/status', verifyToken, async (req, res) => {
   try {
     const weekKey = getWeekKey();
+    const monthKey = getMonthKey();
     const userRef = db.collection('users').doc(req.uid);
 
-    const [userSnap, weeklySnap] = await Promise.all([
+    const [userSnap, weeklySnap, monthlySnap] = await Promise.all([
       userRef.get(),
       userRef.collection('weeklyUploads').doc(weekKey).get(),
+      userRef.collection('monthlyUploads').doc(monthKey).get(),
     ]);
 
     const userData = userSnap.data() || {};
     const weeklyCount = weeklySnap.exists ? (weeklySnap.data().count || 0) : 0;
+    const monthlyCount = monthlySnap.exists ? (monthlySnap.data().count || 0) : 0;
     const isSubscribed = userData.isSubscribed === true;
 
     return res.json({
@@ -39,6 +48,9 @@ router.get('/status', verifyToken, async (req, res) => {
       uploadsUsedThisWeek: weeklyCount,
       uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
       remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_PER_WEEK - weeklyCount),
+      monthlyUploadsUsed: isSubscribed ? monthlyCount : null,
+      monthlyUploadsLimit: isSubscribed ? PREMIUM_UPLOADS_PER_MONTH : null,
+      remainingPremiumUploads: isSubscribed ? Math.max(0, PREMIUM_UPLOADS_PER_MONTH - monthlyCount) : null,
     });
   } catch (error) {
     console.error('Status error:', error);
