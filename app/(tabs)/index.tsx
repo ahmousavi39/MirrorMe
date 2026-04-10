@@ -258,29 +258,30 @@ export default function AnalyzeScreen() {
           </ScrollView>
         </View>
 
-        {/* Analyze button + info */}
-        <View style={s.analyzeRow}>
-          <TouchableOpacity
-            style={[s.analyzeBtn, !imageUri && s.analyzeBtnDisabled]}
-            onPress={handleAnalyze}
-            disabled={!imageUri || loading}
-            activeOpacity={0.85}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="sparkles" size={20} color="#fff" />
-                <Text style={s.analyzeBtnText}>
-                  {occasion ? `Analyze for ${OCCASIONS.find(o => o.key === occasion)?.label}` : 'Analyze My Style'}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity style={s.infoBtn} onPress={() => setTipsVisible(true)} activeOpacity={0.75}>
-            <Ionicons name="information-circle-outline" size={26} color={theme.textSecondary} />
-          </TouchableOpacity>
-        </View>
+        {/* Analyze button */}
+        <TouchableOpacity
+          style={[s.analyzeBtn, !imageUri && s.analyzeBtnDisabled]}
+          onPress={handleAnalyze}
+          disabled={!imageUri || loading}
+          activeOpacity={0.85}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <>
+              <Ionicons name="sparkles" size={20} color="#fff" />
+              <Text style={s.analyzeBtnText}>
+                {occasion ? `Analyze for ${OCCASIONS.find(o => o.key === occasion)?.label}` : 'Analyze My Style'}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* Info link */}
+        <TouchableOpacity style={s.infoLink} onPress={() => setTipsVisible(true)} activeOpacity={0.7}>
+          <Ionicons name="information-circle-outline" size={14} color={theme.textSecondary} />
+          <Text style={[s.infoLinkText, { color: theme.textSecondary }]}>How it works</Text>
+        </TouchableOpacity>
 
         {loading && (
           <Text style={[s.loadingHint, { color: theme.textSecondary }]}>
@@ -372,7 +373,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
   },
   pickBtnText: { fontSize: 15, fontWeight: '600' },
   analyzeBtn: {
-    flex: 1, height: 56, borderRadius: 16, backgroundColor: theme.primary,
+    height: 56, borderRadius: 16, backgroundColor: theme.primary,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     shadowColor: theme.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
@@ -380,8 +381,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   analyzeBtnDisabled: { opacity: 0.4 },
   analyzeBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   loadingHint: { textAlign: 'center', fontSize: 13 },
-  analyzeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  infoBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  infoLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 4 },
+  infoLinkText: { fontSize: 13 },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   tipText: { fontSize: 14, flex: 1, lineHeight: 20 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
