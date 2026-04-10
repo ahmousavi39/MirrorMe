@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { saveProfile, UserProfile } from '@/services/api';
+import { saveProfile, getProfile, UserProfile } from '@/services/api';
 
 const STYLE_CATEGORIES = [
   { id: 'classic',      label: 'Classic',      icon: 'shirt-outline' },
@@ -23,7 +23,7 @@ const STYLE_CATEGORIES = [
   { id: 'techwear',     label: 'Techwear',     icon: 'hardware-chip-outline' },
 ];
 
-const TOTAL_STEPS = 3;
+const ALL_STEPS = 3;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function OnboardingScreen() {
@@ -31,25 +31,59 @@ export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
   const router = useRouter();
 
-  const [step, setStep] = useState(0);
+  // Which step indices (0/1/2) actually need to be filled
+  const [activeSteps, setActiveSteps] = useState<number[]>([0, 1, 2]);
+  // Index into activeSteps (not the raw step number)
+  const [stepIndex, setStepIndex] = useState(0);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Step 1 — Name
+  // Existing profile — used to merge fields that were skipped
+  const [existingProfile, setExistingProfile] = useState<Partial<UserProfile>>({});
+
+  // Step 0 — Name
   const [name, setName] = useState('');
 
-  // Step 2 — Body stats
+  // Step 1 — Body stats
   const [sex, setSex] = useState<'male' | 'female' | 'other' | null>(null);
   const [age, setAge] = useState('');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
 
-  // Step 3 — Style categories
+  // Step 2 — Style categories
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const animateTo = (nextStep: number) => {
-    const direction = nextStep > step ? -1 : 1;
+  // Load existing profile on mount → pre-fill fields, compute which steps to show
+  useEffect(() => {
+    getProfile().then((p) => {
+      setExistingProfile(p);
+      if (p.name)               setName(p.name);
+      if (p.sex)                setSex(p.sex);
+      if (p.age)                setAge(String(p.age));
+      if (p.heightCm)           setHeight(String(p.heightCm));
+      if (p.weightKg)           setWeight(String(p.weightKg));
+      if (p.styleCategories?.length) setSelectedStyles(p.styleCategories);
+
+      const missing: number[] = [];
+      if (!p.name)                                                           missing.push(0);
+      if (!p.sex || !p.age || !p.heightCm || !p.weightKg)                   missing.push(1);
+      if (!p.styleCategories?.length)                                        missing.push(2);
+      // Show all steps if somehow nothing is missing (shouldn't happen, but safe fallback)
+      setActiveSteps(missing.length > 0 ? missing : [0, 1, 2]);
+      setProfileLoading(false);
+    }).catch(() => {
+      setActiveSteps([0, 1, 2]);
+      setProfileLoading(false);
+    });
+  }, []);
+
+  // The actual step number (0, 1, or 2) for the current position
+  const step = activeSteps[stepIndex];
+
+  const animateTo = (nextIndex: number) => {
+    const direction = nextIndex > stepIndex ? -1 : 1;
     Animated.sequence([
       Animated.timing(slideAnim, {
         toValue: direction * SCREEN_WIDTH,
@@ -67,7 +101,7 @@ export default function OnboardingScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-    setStep(nextStep);
+    setStepIndex(nextIndex);
   };
 
   const toggleStyle = (id: string) => {
@@ -79,33 +113,32 @@ export default function OnboardingScreen() {
   const handleNext = () => {
     if (step === 0) {
       if (!name.trim()) { Alert.alert('Please enter your name'); return; }
-      animateTo(1);
-    } else if (step === 1) {
-      animateTo(2);
     }
+    animateTo(stepIndex + 1);
   };
 
   const handleBack = () => {
-    if (step > 0) animateTo(step - 1);
+    if (stepIndex > 0) animateTo(stepIndex - 1);
   };
 
   const handleFinish = async () => {
-    if (selectedStyles.length === 0) {
+    if (step === 2 && selectedStyles.length === 0) {
       Alert.alert('Pick at least one style', 'Select 1 or more style categories to help us personalize your ratings.');
       return;
     }
     setSaving(true);
     try {
+      // Merge: use form values for steps that were shown, keep existing data for skipped steps
       const profile: UserProfile = {
-        name: name.trim(),
-        sex,
-        age: age ? parseInt(age, 10) : null,
-        heightCm: height ? parseFloat(height) : null,
-        weightKg: weight ? parseFloat(weight) : null,
-        styleCategories: selectedStyles,
+        name:             activeSteps.includes(0) ? name.trim()                       : (existingProfile.name      ?? ''),
+        sex:              activeSteps.includes(1) ? sex                               : (existingProfile.sex       ?? null),
+        age:              activeSteps.includes(1) ? (age    ? parseInt(age, 10)    : null) : (existingProfile.age       ?? null),
+        heightCm:         activeSteps.includes(1) ? (height ? parseFloat(height)   : null) : (existingProfile.heightCm  ?? null),
+        weightKg:         activeSteps.includes(1) ? (weight ? parseFloat(weight)   : null) : (existingProfile.weightKg  ?? null),
+        styleCategories:  activeSteps.includes(2) ? selectedStyles                    : (existingProfile.styleCategories ?? []),
       };
       await saveProfile(profile);
-      completeOnboarding(); // clear isNewUser before navigating so guard doesn't redirect back
+      completeOnboarding();
       router.replace('/(tabs)');
     } catch {
       Alert.alert('Error', 'Could not save your profile. Please try again.');
@@ -116,12 +149,20 @@ export default function OnboardingScreen() {
 
   const s = makeStyles(theme);
 
+  if (profileLoading) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       {/* Progress bar */}
       <View style={s.progressRow}>
-        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-          <View key={i} style={[s.progressDot, i <= step && s.progressDotActive]} />
+        {Array.from({ length: activeSteps.length }).map((_, i) => (
+          <View key={i} style={[s.progressDot, i <= stepIndex && s.progressDotActive]} />
         ))}
       </View>
 
@@ -266,7 +307,7 @@ export default function OnboardingScreen() {
 
       {/* Bottom navigation */}
       <View style={s.bottomBar}>
-        {step > 0 ? (
+        {stepIndex > 0 ? (
           <TouchableOpacity style={s.backBtn} onPress={handleBack}>
             <Ionicons name="arrow-back" size={20} color={theme.text} />
             <Text style={s.backBtnText}>Back</Text>
@@ -275,7 +316,7 @@ export default function OnboardingScreen() {
           <View style={s.backBtn} />
         )}
 
-        {step < TOTAL_STEPS - 1 ? (
+        {stepIndex < activeSteps.length - 1 ? (
           <TouchableOpacity style={s.nextBtn} onPress={handleNext}>
             <Text style={s.nextBtnText}>Next</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
