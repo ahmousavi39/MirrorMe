@@ -3,7 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ActivityIndicator, Animated, Linking, Modal, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { EmailAuthProvider, reauthenticateWithCredential, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
+import { EmailAuthProvider, reauthenticateWithCredential, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import ProfileEditModal from './ProfileEditModal';
@@ -136,7 +136,10 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
         //  catch 'auth/requires-recent-login' if needed)
       }
       await deleteAccount();
-      // Auth state change will sign the user out automatically
+      // Clear all local storage, then sign out the Firebase client session.
+      // The auth guard in _layout.tsx will redirect to /auth/login once user = null.
+      await AsyncStorage.clear();
+      await firebaseSignOut(auth);
     } catch (e: any) {
       const code = e.code || '';
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
