@@ -315,11 +315,11 @@ export default function ResultsScreen() {
           if (canShare) {
             await Sharing.shareAsync(localUri, { mimeType: 'image/jpeg', dialogTitle: 'Share your style' });
           } else {
-            await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by AI Stylist` });
+            await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by MirrorMe` });
           }
         }
       } else {
-        await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by AI Stylist` });
+        await Share.share({ message: `My style score: ${result.score}/10 — ${getScoreLabel(result.score)}\n\nRated by MirrorMe` });
       }
     } catch { /* dismissed */ }
   };

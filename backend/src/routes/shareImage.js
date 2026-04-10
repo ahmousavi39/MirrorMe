@@ -75,7 +75,7 @@ router.post('/', verifyToken, async (req, res) => {
           font-size="${brandFontSize}" font-weight="600"
           fill="rgba(255,255,255,0.5)"
           letter-spacing="2"
-        >AI STYLIST</text>
+        >MIRRORME</text>
       </svg>
     `.trim();
 
