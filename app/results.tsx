@@ -5,7 +5,7 @@ import {
   Share, Platform, Image, Animated, Dimensions,
   Modal, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
