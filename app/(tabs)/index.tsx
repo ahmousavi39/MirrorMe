@@ -279,7 +279,7 @@ export default function AnalyzeScreen() {
 
         {/* Info link */}
         <TouchableOpacity style={s.infoLink} onPress={() => setTipsVisible(true)} activeOpacity={0.7}>
-          <Ionicons name="information-circle-outline" size={14} color={theme.textSecondary} />
+          <Ionicons name="information-circle-outline" size={12} color={theme.textSecondary} />
           <Text style={[s.infoLinkText, { color: theme.textSecondary }]}>How it works</Text>
         </TouchableOpacity>
 
@@ -381,8 +381,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   analyzeBtnDisabled: { opacity: 0.4 },
   analyzeBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   loadingHint: { textAlign: 'center', fontSize: 13 },
-  infoLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 4 },
-  infoLinkText: { fontSize: 13 },
+  infoLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: -8, paddingVertical: 2 },
+  infoLinkText: { fontSize: 11 },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   tipText: { fontSize: 14, flex: 1, lineHeight: 20 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
