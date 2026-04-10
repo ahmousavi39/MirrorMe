@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSubscriptionStatus } from '@/services/api';
+import { getSubscriptionStatus, getProfile } from '@/services/api';
 import { SubscriptionStatus } from '@/types/app';
 import SettingsModal from '@/components/SettingsModal';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
@@ -22,7 +22,13 @@ try {
   PAYWALL_RESULT = rcUI.PAYWALL_RESULT;
 } catch { /* Expo Go */ }
 
-function getInitials(email: string): string {
+function getInitials(name: string, email: string): string {
+  if (name?.trim()) {
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : parts[0].slice(0, 2).toUpperCase();
+  }
   return email.slice(0, 2).toUpperCase();
 }
 
@@ -34,6 +40,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [profileName, setProfileName] = useState<string>('');
 
   const loadStatus = useCallback(async () => {
     try {
@@ -44,6 +51,10 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    getProfile().then((p) => { if (p.name) setProfileName(p.name); }).catch(() => {});
   }, []);
 
   useEffect(() => { loadStatus(); }, []);
@@ -98,7 +109,7 @@ export default function ProfileScreen() {
 
   const s = makeStyles(theme);
   const email = user?.email || '';
-  const initials = getInitials(email);
+  const initials = getInitials(profileName, email);
 
   return (
     <View style={s.container}>
@@ -112,7 +123,10 @@ export default function ProfileScreen() {
           <View style={[s.avatar, { backgroundColor: theme.primary }]}>
             <Text style={s.avatarText}>{initials}</Text>
           </View>
-          <Text style={[s.email, { color: theme.text }]}>{email}</Text>
+          {profileName ? (
+            <Text style={[s.displayName, { color: theme.text }]}>{profileName}</Text>
+          ) : null}
+          <Text style={[s.email, { color: theme.textSecondary }]}>{email}</Text>
         </View>
 
         {loading ? (
@@ -252,7 +266,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   avatarText: { color: '#fff', fontSize: 28, fontWeight: '800' },
-  email: { fontSize: 15, fontWeight: '500' },
+  displayName: { fontSize: 18, fontWeight: '700', marginTop: 2 },
+  email: { fontSize: 13, fontWeight: '400', marginTop: 2 },
   card: { borderRadius: 14, padding: 14, gap: 10 },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cardTitle: { fontSize: 15, fontWeight: '700' },

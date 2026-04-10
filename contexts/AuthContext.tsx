@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, User } from 'firebase/auth';
 import { auth } from '@/services/firebase';
-import { initUser } from '@/services/api';
+import { initUser, getProfile } from '@/services/api';
 import { RC_IOS_API_KEY } from '@/constants/config';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
@@ -75,9 +75,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.warn('RevenueCat logIn error:', e);
           }
         }
-        // initUser runs in background — isNewUser is set by register.tsx directly
-        try { await initUser(); } catch (e) {
-          console.warn('User init error:', e);
+        // initUser ensures the Firestore doc exists.
+        // Then check if the profile is complete — if name is missing, send the
+        // user through onboarding again to fill in their details.
+        try {
+          await initUser();
+          const profile = await getProfile();
+          if (!profile.name) {
+            setIsNewUser(true);
+          }
+        } catch (e) {
+          console.warn('User init / profile check error:', e);
         }
       } else {
         setIsNewUser(false);
