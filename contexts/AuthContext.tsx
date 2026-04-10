@@ -60,46 +60,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       clearTimeout(timeout);
 
-      // Unblock UI immediately — don't wait for initUser
-      if (_pendingOnboarding) {
-        setIsNewUser(true);
-        _pendingOnboarding = false;
-      } else {
+      if (!firebaseUser) {
+        // Signed out — unblock immediately
         setIsNewUser(false);
-      }
-      setUser(firebaseUser);
-      setLoading(false);
-
-      if (firebaseUser) {
-        if (Purchases && rcConfigured) {
-          try { await Purchases.logIn(firebaseUser.uid); } catch (e) {
-            console.warn('RevenueCat logIn error:', e);
-          }
-        }
-        // initUser ensures the Firestore doc exists.
-        // Then check if the profile is complete — if name is missing, send the
-        // user through onboarding again to fill in their details.
-        // Also sync settings from the server into AsyncStorage so the analyze
-        // screen can read them locally without waiting on a network call.
-        try {
-          await initUser();
-          const [profile, settings] = await Promise.all([getProfile(), getSettings()]);
-          if (!profile.name) {
-            setIsNewUser(true);
-          }
-          await Promise.all([
-            AsyncStorage.setItem('@shareWardrobe', String(settings.shareWardrobe)),
-            AsyncStorage.setItem('@addToWardrobe', String(settings.addToWardrobe)),
-          ]);
-        } catch (e) {
-          console.warn('User init / profile check error:', e);
-        }
-      } else {
-        setIsNewUser(false);
+        setUser(null);
+        setLoading(false);
         if (Purchases && rcConfigured) {
           try { await Purchases.logOut(); } catch { /* ignore */ }
         }
+        return;
       }
+
+      // Signed in — keep loading=true until we know if onboarding is needed
+      if (Purchases && rcConfigured) {
+        try { await Purchases.logIn(firebaseUser.uid); } catch (e) {
+          console.warn('RevenueCat logIn error:', e);
+        }
+      }
+
+      let needsOnboarding = _pendingOnboarding;
+      _pendingOnboarding = false;
+
+      try {
+        await initUser();
+        const [profile, settings] = await Promise.all([getProfile(), getSettings()]);
+        if (!profile.name) needsOnboarding = true;
+        await Promise.all([
+          AsyncStorage.setItem('@shareWardrobe', String(settings.shareWardrobe)),
+          AsyncStorage.setItem('@addToWardrobe', String(settings.addToWardrobe)),
+        ]);
+      } catch (e) {
+        console.warn('User init / profile check error:', e);
+      }
+
+      setIsNewUser(needsOnboarding);
+      setUser(firebaseUser);
+      setLoading(false);
     });
 
     return () => {

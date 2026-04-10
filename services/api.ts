@@ -137,7 +137,8 @@ export async function saveSettings(settings: Partial<AppSettings>): Promise<void
   });
 }
 
-// ── GET /api/wardrobe ─────────────────────────────────────────────────────────────export async function getWardrobe(): Promise<WardrobeItem[]> {
+// ── GET /api/wardrobe ─────────────────────────────────────────────────────────────
+export async function getWardrobe(): Promise<WardrobeItem[]> {
   const headers = await authHeaders();
   const res = await fetch(`${BACKEND_URL}/api/wardrobe`, { headers });
   if (!res.ok) throw new Error('Failed to fetch wardrobe');
