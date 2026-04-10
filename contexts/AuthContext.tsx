@@ -71,6 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Block unverified email/password accounts from entering the app.
+      // Google & Apple sign-in users always have emailVerified=true.
+      if (!firebaseUser.emailVerified) {
+        await firebaseSignOut(auth);
+        return; // onAuthStateChanged will fire again with null
+      }
+
       // Signed in — keep loading=true until we know if onboarding is needed
       if (Purchases && rcConfigured) {
         try { await Purchases.logIn(firebaseUser.uid); } catch (e) {
