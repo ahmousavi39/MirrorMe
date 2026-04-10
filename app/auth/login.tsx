@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { signInWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -29,6 +29,7 @@ function firebaseErrorMessage(code: string): string {
 
 export default function LoginScreen() {
   const { theme } = useTheme();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -150,6 +151,10 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity style={s.forgotBtn} onPress={() => router.push('/auth/forgot-password')}>
+            <Text style={[s.forgotText, { color: theme.primary }]}>Forgot password?</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[s.button, loading && s.buttonDisabled]}
             onPress={handleLogin}
@@ -202,6 +207,8 @@ const styles = (theme: any) => StyleSheet.create({
   errorText: { color: theme.error, fontSize: 14, flex: 1 },
   resendBtn: { alignItems: 'center', paddingTop: 8 },
   resendText: { fontSize: 14, fontWeight: '600' },
+  forgotBtn: { alignItems: 'flex-end' },
+  forgotText: { fontSize: 14, fontWeight: '600' },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: theme.inputBackground, borderRadius: 12,
