@@ -310,7 +310,7 @@ export default function AnalyzeScreen() {
         <TouchableOpacity style={s.modalBackdrop} activeOpacity={1} onPress={() => setTipsVisible(false)}>
           <TouchableOpacity style={[s.modalCard, { backgroundColor: theme.card }]} activeOpacity={1}>
             <View style={s.modalHeader}>
-              <Text style={[s.modalTitle, { color: theme.text }]}>📸 Tips for best results</Text>
+              <Text style={[s.modalTitle, { color: theme.text }]}>Tips for best results</Text>
               <TouchableOpacity onPress={() => setTipsVisible(false)}>
                 <Ionicons name="close" size={22} color={theme.textSecondary} />
               </TouchableOpacity>
@@ -355,7 +355,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
   photoArea: {
-    height: 320, borderRadius: 20, overflow: 'hidden',
+    height: 370, borderRadius: 20, overflow: 'hidden',
     backgroundColor: theme.card,
     borderWidth: 2, borderColor: theme.border, borderStyle: 'dashed',
   },
