@@ -3,8 +3,8 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
-import { Link } from 'expo-router';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { Link, useRouter } from 'expo-router';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { setPendingOnboarding } from '@/contexts/AuthContext';
@@ -13,12 +13,14 @@ import SocialSignInButtons from '@/components/SocialSignInButtons';
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const handleRegister = async () => {
     if (!email.trim() || !password || !confirmPassword) {
@@ -36,12 +38,12 @@ export default function RegisterScreen() {
     setError('');
     setLoading(true);
     try {
-      // Set the sync flag BEFORE Firebase creates the user so onAuthStateChanged
-      // can read it immediately when it fires — no React batching race condition.
-      setPendingOnboarding(true);
-      await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      await sendEmailVerification(cred.user);
+      // Sign out immediately — user must verify before accessing the app
+      await signOut(auth);
+      setSent(true);
     } catch (e: any) {
-      setPendingOnboarding(false); // reset flag if registration failed
       const msg =
         e.code === 'auth/email-already-in-use' ? 'An account with this email already exists'
         : e.code === 'auth/invalid-email' ? 'Please enter a valid email address'
@@ -54,6 +56,25 @@ export default function RegisterScreen() {
   };
 
   const s = styles(theme);
+
+  // ── Verification sent screen ───────────────────────────────────────────────
+  if (sent) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <View style={s.logoCircle}>
+          <Ionicons name="mail-outline" size={44} color="#fff" />
+        </View>
+        <Text style={[s.title, { marginTop: 24, textAlign: 'center' }]}>Check your inbox</Text>
+        <Text style={[s.subtitle, { textAlign: 'center', marginTop: 10, lineHeight: 22 }]}>
+          We sent a verification link to{`\n`}<Text style={{ color: theme.primary, fontWeight: '600' }}>{email.trim().toLowerCase()}</Text>.
+          {`\n`}Tap the link, then sign in.
+        </Text>
+        <TouchableOpacity style={[s.button, { marginTop: 40, width: '100%' }]} onPress={() => router.replace('/auth/login')}>
+          <Text style={s.buttonText}>Go to Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

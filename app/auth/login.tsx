@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { Link } from 'expo-router';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +34,8 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [unverifiedUser, setUnverifiedUser] = useState<any>(null);
+  const [resending, setResending] = useState(false);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -43,12 +45,33 @@ export default function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      const cred = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      if (!cred.user.emailVerified) {
+        // Sign out immediately and prompt them to verify
+        setUnverifiedUser(cred.user);
+        await signOut(auth);
+        setError('Please verify your email before signing in.');
+        return;
+      }
       // Auth guard in _layout.tsx automatically redirects to (tabs)
     } catch (e: any) {
       setError(firebaseErrorMessage(e.code));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedUser) return;
+    setResending(true);
+    try {
+      await sendEmailVerification(unverifiedUser);
+      setError('Verification email resent. Check your inbox.');
+    } catch {
+      setError('Could not resend. Please try again later.');
+    } finally {
+      setResending(false);
+      setUnverifiedUser(null);
     }
   };
 
@@ -78,9 +101,19 @@ export default function LoginScreen() {
         {/* Form */}
         <View style={s.form}>
           {error ? (
-            <View style={s.errorBox}>
-              <Ionicons name="alert-circle-outline" size={16} color={theme.error} />
-              <Text style={s.errorText}>{error}</Text>
+            <View>
+              <View style={s.errorBox}>
+                <Ionicons name="alert-circle-outline" size={16} color={theme.error} />
+                <Text style={s.errorText}>{error}</Text>
+              </View>
+              {unverifiedUser && (
+                <TouchableOpacity style={s.resendBtn} onPress={handleResendVerification} disabled={resending}>
+                  {resending
+                    ? <ActivityIndicator size="small" color={theme.primary} />
+                    : <Text style={[s.resendText, { color: theme.primary }]}>Resend verification email</Text>
+                  }
+                </TouchableOpacity>
+              )}
             </View>
           ) : null}
 
@@ -167,6 +200,8 @@ const styles = (theme: any) => StyleSheet.create({
     borderColor: `${theme.error}40`, borderRadius: 10, padding: 12,
   },
   errorText: { color: theme.error, fontSize: 14, flex: 1 },
+  resendBtn: { alignItems: 'center', paddingTop: 8 },
+  resendText: { fontSize: 14, fontWeight: '600' },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: theme.inputBackground, borderRadius: 12,
