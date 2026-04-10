@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import LottieView from 'lottie-react-native';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -53,6 +53,7 @@ export default function AnalyzeScreen() {
   const [loading, setLoading] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [tipsVisible, setTipsVisible] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
@@ -125,6 +126,8 @@ export default function AnalyzeScreen() {
 
   const handleAnalyze = async () => {
     if (!imageUri) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     try {
       const [sw, atw] = await Promise.all([
@@ -134,13 +137,17 @@ export default function AnalyzeScreen() {
       const result = await analyzePhoto(imageUri, imageMime, occasion, {
         shareWardrobe: sw !== 'false',
         addToWardrobe: atw !== 'false',
-      });
+      }, controller.signal);
       setImageUri(imageUri);
       setResult(result);
       // Refresh usage counter after a successful analysis
       loadStatus();
       router.push('/results');
     } catch (e: any) {
+      if (e.name === 'AbortError') {
+        // User cancelled — silently stop
+        return;
+      }
       if (e.code === 'LIMIT_REACHED') {
         if (RevenueCatUI) {
           try {
@@ -295,6 +302,13 @@ export default function AnalyzeScreen() {
       {loading && (
         <View style={s.overlay}>
           <View style={[s.overlayCard, { backgroundColor: theme.card }]}>
+            <TouchableOpacity
+              style={s.overlayClose}
+              onPress={() => { abortRef.current?.abort(); setLoading(false); }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="close" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
             <LottieView
               source={require('@/assets/sales_man_v2.json')}
               autoPlay
@@ -413,5 +427,6 @@ const makeStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   overlayCard: { borderRadius: 20, paddingHorizontal: 24, paddingVertical: 20, alignItems: 'center', gap: 0, width: 260 },
+  overlayClose: { position: 'absolute', top: 12, right: 12 },
   overlaySub: { fontSize: 13, textAlign: 'center' },
 });

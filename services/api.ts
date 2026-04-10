@@ -20,7 +20,8 @@ export async function analyzePhoto(
   imageUri: string,
   mimeType: string = 'image/jpeg',
   occasion: string | null = null,
-  options: { shareWardrobe?: boolean; addToWardrobe?: boolean } = {}
+  options: { shareWardrobe?: boolean; addToWardrobe?: boolean } = {},
+  signal?: AbortSignal
 ): Promise<AnalysisResult> {
   const headers = await authHeaders();
 
@@ -38,9 +39,9 @@ export async function analyzePhoto(
     method: 'POST',
     headers: {
       ...headers,
-      // Do NOT set Content-Type — fetch sets it automatically with the multipart boundary
     },
     body: formData,
+    signal,
   });
 
   const data = await response.json();
