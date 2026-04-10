@@ -20,7 +20,6 @@ const STYLE_CATEGORIES = [
   { id: 'minimalist',   label: 'Minimalist',   icon: 'remove-outline' },
   { id: 'vintage',      label: 'Vintage',      icon: 'time-outline' },
   { id: 'preppy',       label: 'Preppy',       icon: 'school-outline' },
-  { id: 'techwear',     label: 'Techwear',     icon: 'hardware-chip-outline' },
 ];
 
 const ALL_STEPS = 3;
