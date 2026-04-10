@@ -12,6 +12,22 @@ const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
 const FREE_UPLOADS_PER_WEEK = 2;
 
+// ── Cancel-token map ──────────────────────────────────────────────────────────────
+// Tracks in-flight requests by client-supplied UUID.
+// 'active' = running, 'cancelled' = client pressed cancel before commit.
+// Entries are deleted once the request finishes (committed or cancelled).
+const activeRequests = new Map(); // token -> 'active' | 'cancelled'
+
+// DELETE /api/analyze/:cancelToken  — called by client to cancel before commit
+router.delete('/:cancelToken', verifyToken, (req, res) => {
+  const { cancelToken } = req.params;
+  if (activeRequests.has(cancelToken)) {
+    activeRequests.set(cancelToken, 'cancelled');
+    return res.json({ cancelled: true });
+  }
+  // Token not found (request already finished) — treat as no-op
+  return res.json({ cancelled: false });
+});
 // ── Multer: store file in memory as Buffer (no disk, no Firebase Storage needed) ──
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -53,6 +69,7 @@ function wardrobeKey(category, color, fit, material, pattern, style) {
 
 // ── POST /api/analyze ─────────────────────────────────────────────────────────────
 router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
+  let cancelToken = null;
   try {
     const { uid, email } = req;
 
@@ -98,6 +115,8 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const occasion = req.body?.occasion || null;
     const shareWardrobe = req.body?.shareWardrobe !== 'false';
     const addToWardrobe = req.body?.addToWardrobe !== 'false';
+    cancelToken = req.body?.cancelToken || null;
+    if (cancelToken) activeRequests.set(cancelToken, 'active');
 
     // ── 2b. Upload image to Firebase Storage ──────────────────────────────────
     const token = crypto.randomUUID();
@@ -339,8 +358,15 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       });
     }
 
+    // Check if client cancelled before we commit anything to Firestore
+    if (cancelToken && activeRequests.get(cancelToken) === 'cancelled') {
+      activeRequests.delete(cancelToken);
+      return res.status(499).json({ error: 'Cancelled by client', code: 'CANCELLED' });
+    }
+
     await batch.commit();
 
+    if (cancelToken) activeRequests.delete(cancelToken);
     return res.json({
       uploadId: uploadRef.id,
       score: geminiResult.score,
@@ -361,6 +387,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       isSubscribed,
     });
   } catch (error) {
+    if (cancelToken) activeRequests.delete(cancelToken);
     console.error('Analyze route error:', error);
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }

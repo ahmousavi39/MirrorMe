@@ -21,7 +21,8 @@ export async function analyzePhoto(
   mimeType: string = 'image/jpeg',
   occasion: string | null = null,
   options: { shareWardrobe?: boolean; addToWardrobe?: boolean } = {},
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  cancelToken?: string
 ): Promise<AnalysisResult> {
   const headers = await authHeaders();
 
@@ -34,6 +35,7 @@ export async function analyzePhoto(
   if (occasion) formData.append('occasion', occasion);
   formData.append('shareWardrobe', String(options.shareWardrobe ?? true));
   formData.append('addToWardrobe', String(options.addToWardrobe ?? true));
+  if (cancelToken) formData.append('cancelToken', cancelToken);
 
   const response = await fetch(`${BACKEND_URL}/api/analyze`, {
     method: 'POST',
@@ -52,6 +54,18 @@ export async function analyzePhoto(
     throw err;
   }
   return data as AnalysisResult;
+}
+
+export async function cancelAnalysis(cancelToken: string): Promise<void> {
+  try {
+    const headers = await authHeaders();
+    await fetch(`${BACKEND_URL}/api/analyze/${encodeURIComponent(cancelToken)}`, {
+      method: 'DELETE',
+      headers,
+    });
+  } catch {
+    // Best-effort — ignore errors
+  }
 }
 
 // ── GET /api/subscription/status ─────────────────────────────────────────────────

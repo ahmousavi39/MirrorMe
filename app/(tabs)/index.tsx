@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
-import { analyzePhoto, getSubscriptionStatus } from '@/services/api';
+import { analyzePhoto, cancelAnalysis, getSubscriptionStatus } from '@/services/api';
 import SettingsModal from '@/components/SettingsModal';
 import { Occasion, SubscriptionStatus } from '@/types/app';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
@@ -54,6 +54,7 @@ export default function AnalyzeScreen() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [tipsVisible, setTipsVisible] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const cancelTokenRef = useRef<string | null>(null);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
 
@@ -128,6 +129,8 @@ export default function AnalyzeScreen() {
     if (!imageUri) return;
     const controller = new AbortController();
     abortRef.current = controller;
+    const cToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    cancelTokenRef.current = cToken;
     setLoading(true);
     try {
       const [sw, atw] = await Promise.all([
@@ -137,7 +140,7 @@ export default function AnalyzeScreen() {
       const result = await analyzePhoto(imageUri, imageMime, occasion, {
         shareWardrobe: sw !== 'false',
         addToWardrobe: atw !== 'false',
-      }, controller.signal);
+      }, controller.signal, cToken);
       setImageUri(imageUri);
       setResult(result);
       // Refresh usage counter after a successful analysis
@@ -313,7 +316,11 @@ export default function AnalyzeScreen() {
             </Text>
             <TouchableOpacity
               style={s.overlayClose}
-              onPress={() => { abortRef.current?.abort(); setLoading(false); }}
+              onPress={() => {
+                abortRef.current?.abort();
+                if (cancelTokenRef.current) cancelAnalysis(cancelTokenRef.current);
+                setLoading(false);
+              }}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Ionicons name="close" size={20} color={theme.textSecondary} />
