@@ -58,9 +58,14 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={s.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={s.header}>
           <View style={s.logoCircle}>
@@ -156,7 +161,7 @@ export default function RegisterScreen() {
 
 const styles = (theme: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.background },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 80, paddingBottom: 40 },
   header: { alignItems: 'center', marginBottom: 40 },
   logoCircle: {
     width: 90, height: 90, borderRadius: 45,

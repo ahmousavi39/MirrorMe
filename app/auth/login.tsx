@@ -57,9 +57,15 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       style={s.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Logo */}
         <View style={s.logoContainer}>
           <View style={s.logoCircle}>
@@ -143,7 +149,7 @@ export default function LoginScreen() {
 
 const styles = (theme: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.background },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 80, paddingBottom: 40 },
   logoContainer: { alignItems: 'center', marginBottom: 40 },
   logoCircle: {
     width: 90, height: 90, borderRadius: 45,
