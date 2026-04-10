@@ -301,6 +301,10 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
               </TouchableOpacity>
+            </View>
+
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
 
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: `${theme.error}12`, borderWidth: 1, borderColor: `${theme.error}30` }]}
@@ -495,8 +499,8 @@ const styles = StyleSheet.create({
   dangerBtns: { flexDirection: 'row', gap: 12 },
   dangerBtnSecondary: { flex: 1, height: 48, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
   dangerBtnSecondaryText: { fontSize: 15, fontWeight: '600' },
-  dangerBtnPrimary: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  dangerBtnPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  dangerBtnPrimary: { flex: 1, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12 },
+  dangerBtnPrimaryText: { color: '#fff', fontSize: 14, fontWeight: '700', textAlign: 'center' },
   passwordWrapper: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, height: 52, marginBottom: 12 },
   passwordInput: { flex: 1, fontSize: 15 },
   deleteErrorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 12 },
