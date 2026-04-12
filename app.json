@@ -23,12 +23,16 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["com.googleusercontent.apps.511134609232-l6ufeq2gnunaqp2j32kt7p8duop9ffd2"]
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.511134609232-l6ufeq2gnunaqp2j32kt7p8duop9ffd2"
+            ]
           }
         ]
       },
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       }
     },
     "android": {
@@ -59,7 +63,8 @@
         }
       ],
       "expo-asset",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

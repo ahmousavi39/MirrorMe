@@ -31,10 +31,46 @@
               "client_type": 3
             },
             {
-              "client_id": "511134609232-dktbmbvjvc2p4159eq0do70v4crks8o3.apps.googleusercontent.com",
+              "client_id": "511134609232-1g0nj8qe3aia6bbd3fkse3ot3ohvnfme.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.ahmousavi.aistylist"
+                "bundle_id": "com.ahmousavi.mirrorme"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511134609232:android:0ead2b73e0e3b46aaa8655",
+        "android_client_info": {
+          "package_name": "com.ahmousavi.mirrorme"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "511134609232-mbhf5qai24k9vsqbk1i0l6p8k4k0qbgv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjCtJNRG1c76quX3gzL3n0V5Dkq6Y01bE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "511134609232-mbhf5qai24k9vsqbk1i0l6p8k4k0qbgv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "511134609232-1g0nj8qe3aia6bbd3fkse3ot3ohvnfme.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ahmousavi.mirrorme"
               }
             }
           ]

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  ActivityIndicator, Platform, Alert,
+  ActivityIndicator, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -9,7 +10,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getSubscriptionStatus, getProfile } from '@/services/api';
 import { SubscriptionStatus } from '@/types/app';
 import SettingsModal from '@/components/SettingsModal';
+import CustomAlert from '@/components/CustomAlert';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
+import { useTranslation } from 'react-i18next';
 
 // RevenueCat — native modules, not available in Expo Go
 let Purchases: any = null;
@@ -35,12 +38,18 @@ function getInitials(name: string, email: string): string {
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
 
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [profileName, setProfileName] = useState<string>('');
+  const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({
+    visible: false, title: '', message: '', icon: 'info',
+  });
+  const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
+    setCustomAlert({ visible: true, title, message, icon });
 
   const loadStatus = useCallback(async () => {
     try {
@@ -57,14 +66,11 @@ export default function ProfileScreen() {
     getProfile().then((p) => { if (p.name) setProfileName(p.name); }).catch(() => {});
   }, []);
 
-  useEffect(() => { loadStatus(); }, []);
+  useFocusEffect(useCallback(() => { loadStatus(); }, [loadStatus]));
 
   const handleUpgrade = async () => {
     if (!RevenueCatUI) {
-      Alert.alert(
-        'Dev Build Required',
-        'Subscriptions require a native build. RevenueCat is not available in Expo Go.',
-      );
+      showAlert(t('profile.devBuildRequired'), t('profile.devBuildMsg'), 'info');
       return;
     }
     setPurchaseLoading(true);
@@ -79,12 +85,12 @@ export default function ProfileScreen() {
         result === PAYWALL_RESULT.PURCHASED ||
         result === PAYWALL_RESULT.RESTORED
       ) {
-        Alert.alert('🎉 You\'re Premium!', 'Enjoy unlimited outfit analyses.');
+        showAlert(t('profile.premiumSuccess'), t('profile.premiumSuccessMsg'), 'success');
         loadStatus();
       }
     } catch (e: any) {
       if (!e.userCancelled) {
-        Alert.alert('Purchase failed', e.message || 'Please try again.');
+        showAlert(t('profile.purchaseFailed'), e.message || t('common.tryAgain'), 'error');
       }
     } finally {
       setPurchaseLoading(false);
@@ -96,15 +102,14 @@ export default function ProfileScreen() {
     try {
       await Purchases.showManageSubscriptions();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      showAlert('Error', e.message, 'error');
     }
   };
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ]);
+    setCustomAlert({
+      visible: true, title: t('profile.signOutConfirmTitle'), message: t('profile.signOutConfirmMsg'), icon: 'warning',
+    });
   };
 
   const s = makeStyles(theme);
@@ -114,7 +119,7 @@ export default function ProfileScreen() {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.title}>Profile</Text>
+        <Text style={s.title}>{t('profile.title')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -143,12 +148,12 @@ export default function ProfileScreen() {
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.cardTitle, { color: theme.text }]}>
-                    {status?.isSubscribed ? 'Premium Member ✨' : 'Free Plan'}
+                    {status?.isSubscribed ? t('profile.premiumMember') : t('profile.freePlan')}
                   </Text>
                   <Text style={[s.cardSub, { color: theme.textSecondary }]}>
                     {status?.isSubscribed
-                      ? `${status?.monthlyUploadsUsed ?? 0}/${status?.monthlyUploadsLimit ?? 100} scans used this month`
-                      : `${status?.uploadsUsedThisWeek ?? 0}/${status?.uploadsLimitPerWeek ?? 2} free uploads used this week`
+                      ? t('profile.monthlyScans', { used: status?.monthlyUploadsUsed ?? 0, limit: status?.monthlyUploadsLimit ?? 100 })
+                      : t('profile.weeklyUploads', { used: status?.uploadsUsedThisWeek ?? 0, limit: status?.uploadsLimitPerWeek ?? 2 })
                     }
                   </Text>
                 </View>
@@ -171,30 +176,17 @@ export default function ProfileScreen() {
                   ]} />
                 </View>
               )}
-
-              {/* Progress bar for premium users */}
-              {status?.isSubscribed && (
-                <View style={[s.barBg, { backgroundColor: theme.border }]}>
-                  <View style={[
-                    s.barFill,
-                    {
-                      width: `${Math.min(((status?.monthlyUploadsUsed ?? 0) / (status?.monthlyUploadsLimit ?? 100)) * 100, 100)}%`,
-                      backgroundColor: (status?.remainingPremiumUploads ?? 1) === 0 ? theme.error : theme.primary,
-                    }
-                  ]} />
-                </View>
-              )}
             </View>
 
             {/* Upgrade section */}
             {!status?.isSubscribed && (
               <View style={[s.upgradeCard, { backgroundColor: `${theme.primary}10`, borderColor: `${theme.primary}30` }]}>
-                <Text style={[s.upgradeTitle, { color: theme.text }]}>Go Premium ✨</Text>
+                <Text style={[s.upgradeTitle, { color: theme.text }]}>{t('profile.goPremium')}</Text>
                 <Text style={[s.upgradeSub, { color: theme.textSecondary }]}>
-                  Get up to 100 outfit analyses per month with Premium.
+                  {t('profile.goPremiumSub')}
                 </Text>
                 <View style={s.perks}>
-                  {['100 analyses per month', 'Priority AI processing', 'Full history access'].map((perk) => (
+                  {[t('profile.perk1'), t('profile.perk2'), t('profile.perk3')].map((perk) => (
                     <View style={s.perkRow} key={perk}>
                       <Ionicons name="checkmark-circle" size={16} color={theme.primary} />
                       <Text style={[s.perkText, { color: theme.text }]}>{perk}</Text>
@@ -209,7 +201,7 @@ export default function ProfileScreen() {
                 >
                   {purchaseLoading
                     ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={s.upgradeBtnText}>Upgrade to Premium</Text>
+                    : <Text style={s.upgradeBtnText}>{t('profile.upgradeToPremium')}</Text>
                   }
                 </TouchableOpacity>
               </View>
@@ -222,7 +214,7 @@ export default function ProfileScreen() {
                 onPress={handleManage}
               >
                 <Ionicons name="card-outline" size={20} color={theme.textSecondary} />
-                <Text style={[s.rowText, { color: theme.text }]}>Manage Subscription</Text>
+                <Text style={[s.rowText, { color: theme.text }]}>{t('profile.manageSubscription')}</Text>
                 <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
               </TouchableOpacity>
             )}
@@ -236,7 +228,7 @@ export default function ProfileScreen() {
             onPress={toggleTheme}
           >
             <Ionicons name={isDark ? 'moon' : 'sunny-outline'} size={20} color={theme.textSecondary} />
-            <Text style={[s.rowText, { color: theme.text }]}>{isDark ? 'Dark Mode' : 'Light Mode'}</Text>
+            <Text style={[s.rowText, { color: theme.text }]}>{isDark ? t('profile.darkMode') : t('profile.lightMode')}</Text>
             <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
           </TouchableOpacity>
 
@@ -245,7 +237,7 @@ export default function ProfileScreen() {
             onPress={() => setSettingsVisible(true)}
           >
             <Ionicons name="settings-outline" size={20} color={theme.textSecondary} />
-            <Text style={[s.rowText, { color: theme.text }]}>Settings</Text>
+            <Text style={[s.rowText, { color: theme.text }]}>{t('profile.settings')}</Text>
             <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -256,11 +248,27 @@ export default function ProfileScreen() {
           onPress={handleSignOut}
         >
           <Ionicons name="log-out-outline" size={20} color={theme.error} />
-          <Text style={[s.rowText, { color: theme.error }]}>Sign Out</Text>
+          <Text style={[s.rowText, { color: theme.error }]}>{t('profile.signOut')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
       <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
+
+      <CustomAlert
+        visible={customAlert.visible}
+        title={customAlert.title}
+        message={customAlert.message}
+        icon={customAlert.icon}
+        buttons={
+          customAlert.title === t('profile.signOutConfirmTitle')
+            ? [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('profile.signOut'), style: 'destructive', onPress: signOut },
+              ]
+            : [{ text: t('common.ok') }]
+        }
+        onClose={() => setCustomAlert((a) => ({ ...a, visible: false }))}
+      />
     </View>
   );
 }

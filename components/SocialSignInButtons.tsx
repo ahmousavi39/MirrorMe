@@ -13,6 +13,7 @@ import { setPendingOnboarding } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@/constants/config';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onError: (msg: string) => void;
@@ -21,6 +22,7 @@ interface Props {
 
 export default function SocialSignInButtons({ onError, onLoadingChange }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
@@ -54,7 +56,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
     if (googleResponse.type === 'error') {
       setGoogleLoading(false);
       onLoadingChange?.(false);
-      onError('Google sign-in failed. Please try again.');
+      onError(t('social.googleFailed'));
       return;
     }
 
@@ -70,14 +72,14 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
                          ?? null;
 
         if (!idToken && !accessToken) {
-          onError('Google sign-in failed: no token received. Please try again.');
+          onError(t('social.googleNoToken'));
           return;
         }
         const credential = GoogleAuthProvider.credential(idToken, accessToken);
         await finishSocialAuth(credential as any);
       } catch (e: any) {
         console.error('[Google sign-in error]', e?.code, e?.message);
-        onError(socialErrorMessage(e) ?? 'Google sign-in failed. Please try again.');
+        onError(socialErrorMessage(e) ?? t('social.googleFailed'));
       } finally {
         setGoogleLoading(false);
         onLoadingChange?.(false);
@@ -88,14 +90,14 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
   const socialErrorMessage = (e: any): string => {
     switch (e?.code) {
       case 'auth/operation-not-allowed':
-        return 'This sign-in method is not enabled. Please contact support.';
+        return t('social.methodNotEnabled');
       case 'auth/invalid-credential':
       case 'auth/invalid-verification-token':
-        return 'Sign-in credential was invalid. Please try again.';
+        return t('social.invalidCredential');
       case 'auth/network-request-failed':
-        return 'Network error. Check your connection and try again.';
+        return t('social.networkError');
       case 'auth/too-many-requests':
-        return 'Too many attempts. Please try again later.';
+        return t('social.tooManyRequests');
       default:
         return null as any;
     }
@@ -120,7 +122,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
       // Token handling + loading reset are done in the googleResponse useEffect
     } catch (e: any) {
       console.error('[Google prompt error]', e?.code, e?.message);
-      onError('Google sign-in failed. Please try again.');
+      onError(t('social.googleFailed'));
       setGoogleLoading(false);
       onLoadingChange?.(false);
     }
@@ -147,7 +149,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
       });
       const { identityToken } = appleCredential;
       if (!identityToken) {
-        onError('Apple sign-in failed: no identity token received. Please try again.');
+        onError(t('social.appleNoToken'));
         return;
       }
       const provider = new OAuthProvider('apple.com');
@@ -157,7 +159,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
       // ERR_REQUEST_CANCELED / ERR_CANCELED = user dismissed the sheet
       if (e.code === 'ERR_REQUEST_CANCELED' || e.code === 'ERR_CANCELED') return;
       console.error('[Apple sign-in error]', e?.code, e?.message);
-      onError(socialErrorMessage(e) ?? 'Apple sign-in failed. Please try again.');
+      onError(socialErrorMessage(e) ?? t('social.appleFailed'));
     } finally {
       setAppleLoading(false);
       onLoadingChange?.(false);
@@ -171,7 +173,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
       {/* ── OR divider ─────────────────────────────────────────────────────── */}
       <View style={s.dividerRow}>
         <View style={s.dividerLine} />
-        <Text style={s.dividerText}>or continue with</Text>
+        <Text style={s.dividerText}>{t('social.orContinueWith')}</Text>
         <View style={s.dividerLine} />
       </View>
 
@@ -187,7 +189,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
         ) : (
           <>
             <Ionicons name="logo-google" size={20} color="#DB4437" />
-            <Text style={s.socialBtnText}>Continue with Google</Text>
+            <Text style={s.socialBtnText}>{t('social.continueWithGoogle')}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -205,7 +207,7 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
           ) : (
             <>
               <Ionicons name="logo-apple" size={20} color="#fff" />
-              <Text style={[s.socialBtnText, { color: '#fff' }]}>Continue with Apple</Text>
+              <Text style={[s.socialBtnText, { color: '#fff' }]}>{t('social.continueWithApple')}</Text>
             </>
           )}
         </TouchableOpacity>

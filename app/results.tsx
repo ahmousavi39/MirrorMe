@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Share, Platform, Image, Animated, Dimensions,
-  Modal, TextInput, KeyboardAvoidingView, ActivityIndicator, Alert,
+  Modal, TextInput, KeyboardAvoidingView, ActivityIndicator,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -13,17 +13,19 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { ClothingItem, Occasion } from '@/types/app';
 import { updateWardrobeItem, composeShareImage } from '@/services/api';
+import CustomAlert from '@/components/CustomAlert';
+import { useTranslation } from 'react-i18next';
 
-const OCCASION_META: Record<Occasion, { label: string; emoji: string }> = {
-  casual:    { label: 'Casual',    emoji: '🛍️' },
-  work:      { label: 'Work',      emoji: '💼' },
-  school:    { label: 'School',    emoji: '🎓' },
-  date:      { label: 'Date',      emoji: '💛' },
-  night_out: { label: 'Night Out', emoji: '🌙' },
-  interview: { label: 'Interview', emoji: '📋' },
-  formal:    { label: 'Formal',    emoji: '🧐' },
-  sport:     { label: 'Sport',     emoji: '🏋️' },
-  travel:    { label: 'Travel',    emoji: '✈️' },
+const OCCASION_EMOJIS: Record<Occasion, string> = {
+  casual:    '🛍️',
+  work:      '💼',
+  school:    '🎓',
+  date:      '💛',
+  night_out: '🌙',
+  interview: '📋',
+  formal:    '🧐',
+  sport:     '🏋️',
+  travel:    '✈️',
 };
 
 const OCCASION_ORDER: Occasion[] = [
@@ -37,15 +39,6 @@ function getScoreColor(score: number) {
   if (score >= 8) return '#30D158';
   if (score >= 6) return '#FF9F0A';
   return '#FF453A';
-}
-
-function getScoreLabel(score: number) {
-  if (score >= 9) return 'Style Icon ✨';
-  if (score >= 8) return 'Looking Great!';
-  if (score >= 7) return 'Solid Look 👍';
-  if (score >= 6) return 'Pretty Good';
-  if (score >= 5) return 'Needs Work';
-  return 'Major Makeover';
 }
 
 function ClothingChip({ item }: { item: ClothingItem }) {
@@ -92,10 +85,12 @@ interface EditSheetProps {
   originalKey: string;
   onSave: (updated: ClothingItem, newKey: string) => void;
   onClose: () => void;
+  onAlert: (title: string, message: string, icon?: 'info' | 'error' | 'success' | 'warning') => void;
 }
 
-function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProps) {
+function ClothingEditSheet({ item, originalKey, onSave, onClose, onAlert }: EditSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [category, setCategory] = useState(item.category ?? '');
   const [color, setColor]       = useState(item.color ?? '');
   const [fit, setFit]           = useState(item.fit ?? '');
@@ -135,7 +130,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
       style:    style.trim()    || null,
     };
     if (!trimmed.category) {
-      Alert.alert('Category required', 'Please enter a category for this item.');
+      onAlert(t('results.categoryRequired'), t('results.categoryRequiredMsg'), 'warning');
       return;
     }
 
@@ -155,7 +150,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
       const newKey = wardrobeKeyFor(trimmed.category, trimmed.color, trimmed.fit ?? null, trimmed.material ?? null, trimmed.pattern ?? null, trimmed.style ?? null);
       dismiss(() => onSave({ ...item, ...trimmed } as ClothingItem, newKey));
     } catch (e: any) {
-      Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');
+      onAlert(t('results.saveFailed'), e.message ?? t('results.saveFailedMsg'), 'error');
     } finally {
       setSaving(false);
     }
@@ -180,7 +175,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
 
           {/* Header */}
           <View style={es.sheetHeader}>
-            <Text style={[es.sheetTitle, { color: theme.text }]}>Edit Item</Text>
+            <Text style={[es.sheetTitle, { color: theme.text }]}>{t('results.editItem')}</Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="close" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -188,12 +183,12 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
 
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={es.fields}>
             {[
-              { label: 'Category *', value: category, set: setCategory, placeholder: 'e.g. T-Shirt, Jeans' },
-              { label: 'Color',      value: color,    set: setColor,    placeholder: 'e.g. Navy Blue' },
-              { label: 'Fit',        value: fit,      set: setFit,      placeholder: 'e.g. Slim, Regular, Oversized' },
-              { label: 'Material',   value: material, set: setMaterial, placeholder: 'e.g. Cotton, Linen' },
-              { label: 'Pattern',    value: pattern,  set: setPattern,  placeholder: 'e.g. Solid, Striped, Floral' },
-              { label: 'Style',      value: style,    set: setStyle,    placeholder: 'e.g. Casual, Formal' },
+              { label: t('wardrobe.fieldCategory'), value: category, set: setCategory, placeholder: t('wardrobe.phCategory') },
+              { label: t('wardrobe.fieldColor'),    value: color,    set: setColor,    placeholder: t('wardrobe.phColor') },
+              { label: t('wardrobe.fieldFit'),      value: fit,      set: setFit,      placeholder: t('wardrobe.phFit') },
+              { label: t('wardrobe.fieldMaterial'), value: material, set: setMaterial, placeholder: t('wardrobe.phMaterial') },
+              { label: t('wardrobe.fieldPattern'),  value: pattern,  set: setPattern,  placeholder: t('wardrobe.phPattern') },
+              { label: t('wardrobe.fieldStyle'),    value: style,    set: setStyle,    placeholder: t('wardrobe.phStyle') },
             ].map(({ label, value, set, placeholder }) => (
               <View key={label} style={es.fieldRow}>
                 <Text style={[es.fieldLabel, { color: theme.textSecondary }]}>{label}</Text>
@@ -217,7 +212,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose }: EditSheetProp
           >
             {saving
               ? <ActivityIndicator color="#fff" />
-              : <Text style={es.saveBtnText}>Save Changes</Text>
+              : <Text style={es.saveBtnText}>{t('common.saveChanges')}</Text>
             }
           </TouchableOpacity>
         </Animated.View>
@@ -245,11 +240,24 @@ export default function ResultsScreen() {
   const { theme } = useTheme();
   const { result, imageUri, setResult, clear } = useAnalysis();
   const router = useRouter();
+  const { t } = useTranslation();
   const s = makeStyles(theme);
+
+  const getScoreLabel = (score: number): string => {
+    if (score >= 9) return t('results.scoreLabels.styleIcon');
+    if (score >= 8) return t('results.scoreLabels.lookingGreat');
+    if (score >= 7) return t('results.scoreLabels.solidLook');
+    if (score >= 6) return t('results.scoreLabels.prettyGood');
+    if (score >= 5) return t('results.scoreLabels.needsWork');
+    return t('results.scoreLabels.majorMakeover');
+  };
 
   // Local editable copy of clothing items — stays in sync with context on edit
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [addToWardrobe, setAddToWardrobe] = useState(true);
+  const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
+  const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
+    setCustomAlert({ visible: true, title, message, icon });
 
   useEffect(() => {
     AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
@@ -328,9 +336,9 @@ export default function ResultsScreen() {
   if (!result) {
     return (
       <View style={[s.empty, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.text }}>No result to display.</Text>
+        <Text style={{ color: theme.text }}>{t('results.noResult')}</Text>
         <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={{ marginTop: 16 }}>
-          <Text style={{ color: theme.primary, fontWeight: '600' }}>Go back</Text>
+          <Text style={{ color: theme.primary, fontWeight: '600' }}>{t('results.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -399,15 +407,15 @@ export default function ResultsScreen() {
           </View>
           <View style={s.scoreMeta}>
             <Text style={[s.scoreLabel, { color: scoreColor }]}>{getScoreLabel(result.score)}</Text>
-            {result.occasion && OCCASION_META[result.occasion] ? (
+            {result.occasion && OCCASION_EMOJIS[result.occasion] ? (
               <View style={[s.occasionBadge, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}28` }]}>
-                <Text style={s.occasionEmoji}>{OCCASION_META[result.occasion].emoji}</Text>
+                <Text style={s.occasionEmoji}>{OCCASION_EMOJIS[result.occasion]}</Text>
                 <Text style={[s.occasionText, { color: theme.primary }]}>
-                  {OCCASION_META[result.occasion].label}
+                  {t(`occasions.${result.occasion}`)}
                 </Text>
               </View>
             ) : (
-              <Text style={[s.scoreSubLabel, { color: theme.textSecondary }]}>Style Report</Text>
+              <Text style={[s.scoreSubLabel, { color: theme.textSecondary }]}>{t('results.styleReport')}</Text>
             )}
           </View>
         </Animated.View>
@@ -422,7 +430,7 @@ export default function ResultsScreen() {
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
                   <Ionicons name="color-palette" size={16} color={theme.primary} />
                 </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>Color Palette</Text>
+                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.colorPalette')}</Text>
               </View>
               <View style={s.paletteRow}>
                 {result.colorPalette.map((hex, i) => (
@@ -441,7 +449,7 @@ export default function ResultsScreen() {
               <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
                 <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
               </View>
-              <Text style={[s.cardTitle, { color: theme.text }]}>AI Feedback</Text>
+                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.aiFeedback')}</Text>
             </View>
             <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
           </View>
@@ -453,19 +461,18 @@ export default function ResultsScreen() {
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
                   <Ionicons name="calendar" size={16} color={theme.primary} />
                 </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>Occasion Fit</Text>
+                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.occasionFit')}</Text>
               </View>
               <View style={s.occasionList}>
                 {OCCASION_ORDER.map((key) => {
-                  const meta = OCCASION_META[key];
                   const sc: number = (result.occasionScores as any)[key] ?? 0;
                   const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
                   const isSelected = result.occasion === key;
                   return (
                     <View key={key} style={s.occasionRow}>
-                      <Text style={s.occasionRowEmoji}>{meta.emoji}</Text>
+                      <Text style={s.occasionRowEmoji}>{OCCASION_EMOJIS[key]}</Text>
                       <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
-                        {meta.label}
+                        {t(`occasions.${key}`)}
                       </Text>
                       <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
                         <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
@@ -485,7 +492,7 @@ export default function ResultsScreen() {
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
                   <Ionicons name="color-palette" size={16} color={theme.primary} />
                 </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>Improve Your Style</Text>
+                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.improveStyle')}</Text>
               </View>
               <View style={s.tipsList}>
                 {(result.styleTips ?? []).map((tip, i) => {
@@ -517,7 +524,7 @@ export default function ResultsScreen() {
                   <Ionicons name="calendar" size={16} color={theme.secondary} />
                 </View>
                 <Text style={[s.cardTitle, { color: theme.text }]}>
-                  {result.occasion ? `Styling for ${OCCASION_META[result.occasion].emoji} ${OCCASION_META[result.occasion].label}` : 'Event Styling'}
+                  {result.occasion ? t('results.stylingFor', { emoji: OCCASION_EMOJIS[result.occasion], occasion: t(`occasions.${result.occasion}`) }) : t('results.eventStyling')}
                 </Text>
               </View>
               <View style={s.tipsList}>
@@ -542,29 +549,6 @@ export default function ResultsScreen() {
             </View>
           )}
 
-          {/* Usage note */}
-          {!result.isSubscribed && result.remainingFreeUploads !== null && (
-            <View style={[s.usageNote, { backgroundColor: `${theme.secondary}12`, borderColor: `${theme.secondary}25` }]}>
-              <Ionicons name="information-circle-outline" size={16} color={theme.secondary} />
-              <Text style={[s.usageNoteText, { color: theme.secondary }]}>
-                {result.remainingFreeUploads === 0
-                  ? 'You\'ve used all free uploads this week. Upgrade for unlimited access.'
-                  : `${result.remainingFreeUploads} free upload${result.remainingFreeUploads === 1 ? '' : 's'} remaining this week`}
-              </Text>
-            </View>
-          )}
-
-          {result.isSubscribed && result.remainingPremiumUploads !== null && (
-            <View style={[s.usageNote, { backgroundColor: `${theme.secondary}12`, borderColor: `${theme.secondary}25` }]}>
-              <Ionicons name="information-circle-outline" size={16} color={theme.secondary} />
-              <Text style={[s.usageNoteText, { color: theme.secondary }]}>
-                {result.remainingPremiumUploads === 0
-                  ? 'You\'ve used all 100 Premium scans this month. Resets on the 1st.'
-                  : `${result.remainingPremiumUploads} Premium scan${result.remainingPremiumUploads === 1 ? '' : 's'} remaining this month`}
-              </Text>
-            </View>
-          )}
-
           {/* Analyze again button */}
           <TouchableOpacity
             style={[s.analyzeBtn, { backgroundColor: theme.primary }]}
@@ -572,7 +556,7 @@ export default function ResultsScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="camera-outline" size={20} color="#fff" />
-            <Text style={s.analyzeBtnText}>Analyze Another Outfit</Text>
+            <Text style={s.analyzeBtnText}>{t('results.analyzeAnother')}</Text>
           </TouchableOpacity>
 
           <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
@@ -607,8 +591,17 @@ export default function ResultsScreen() {
             setEditingIndex(null);
           }}
           onClose={() => setEditingIndex(null)}
+          onAlert={showAlert}
         />
       )}
+
+      <CustomAlert
+        visible={customAlert.visible}
+        title={customAlert.title}
+        message={customAlert.message}
+        icon={customAlert.icon}
+        onClose={() => setCustomAlert((a) => ({ ...a, visible: false }))}
+      />
     </View>
   );
 }

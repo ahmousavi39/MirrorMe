@@ -9,6 +9,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { getHistory } from '@/services/api';
 import { HistoryItem } from '@/types/app';
+import { useTranslation } from 'react-i18next';
 
 function getScoreColor(score: number): string {
   if (score >= 8) return '#30D158';
@@ -18,11 +19,12 @@ function getScoreColor(score: number): string {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const color = getScoreColor(item.score);
   const s = cardStyles(theme);
 
@@ -46,7 +48,7 @@ function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void
             ))}
             {item.clothingItems.length > 3 && (
               <Text style={[s.tagMore, { color: theme.textSecondary }]}>
-                +{item.clothingItems.length - 3} more
+                {t('history.more_other', { count: item.clothingItems.length - 3 })}
               </Text>
             )}
           </View>
@@ -66,6 +68,7 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useTranslation();
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -74,7 +77,7 @@ export default function HistoryScreen() {
       const data = await getHistory();
       setUploads(data);
     } catch (e: any) {
-      setError(e.message || 'Failed to load history');
+      setError(e.message || t('history.failedToLoad'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -98,6 +101,7 @@ export default function HistoryScreen() {
       occasionTips: item.occasionTips ?? [],
       occasionTipItems: item.occasionTipItems ?? [],
       clothingItems: item.clothingItems ?? [],
+      clothingItemKeys: item.clothingItemKeys,
       occasion: item.occasion ?? null,
       occasionScores: item.occasionScores ?? {} as any,
       colorPalette: item.colorPalette ?? [],
@@ -124,24 +128,24 @@ export default function HistoryScreen() {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={s.title}>History</Text>
-        <Text style={s.subtitle}>{uploads.length} analysis result{uploads.length !== 1 ? 's' : ''}</Text>
+        <Text style={s.title}>{t('history.title')}</Text>
+        <Text style={s.subtitle}>{t('history.analysisCount_other', { count: uploads.length })}</Text>
       </View>
 
       {error ? (
         <View style={[s.center, { flex: 1 }]}>
           <Ionicons name="cloud-offline-outline" size={48} color={theme.textSecondary} />
-          <Text style={[s.emptyTitle, { color: theme.text }]}>Couldn't load history</Text>
+          <Text style={[s.emptyTitle, { color: theme.text }]}>{t('history.couldntLoad')}</Text>
           <TouchableOpacity style={[s.retryBtn, { backgroundColor: theme.primary }]} onPress={() => load()}>
-            <Text style={s.retryText}>Try Again</Text>
+            <Text style={s.retryText}>{t('common.tryAgain')}</Text>
           </TouchableOpacity>
         </View>
       ) : uploads.length === 0 ? (
         <View style={[s.center, { flex: 1 }]}>
           <Ionicons name="shirt-outline" size={56} color={theme.textSecondary} />
-          <Text style={[s.emptyTitle, { color: theme.text }]}>No analyses yet</Text>
+          <Text style={[s.emptyTitle, { color: theme.text }]}>{t('history.noAnalyses')}</Text>
           <Text style={[s.emptySub, { color: theme.textSecondary }]}>
-            Upload your first outfit to get started!
+            {t('history.noAnalysesSub')}
           </Text>
         </View>
       ) : (

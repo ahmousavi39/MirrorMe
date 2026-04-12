@@ -1,3 +1,4 @@
+import '@/services/i18n';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { AnalysisProvider } from '@/contexts/AnalysisContext';

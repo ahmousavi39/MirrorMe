@@ -10,9 +10,11 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { setPendingOnboarding } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import SocialSignInButtons from '@/components/SocialSignInButtons';
+import { useTranslation } from 'react-i18next';
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,15 +26,15 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!email.trim() || !password || !confirmPassword) {
-      setError('Please fill in all fields');
+      setError(t('register.fillAllFields'));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('register.passwordMinLength'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register.passwordMismatch'));
       return;
     }
     setError('');
@@ -45,10 +47,10 @@ export default function RegisterScreen() {
       setSent(true);
     } catch (e: any) {
       const msg =
-        e.code === 'auth/email-already-in-use' ? 'An account with this email already exists'
-        : e.code === 'auth/invalid-email' ? 'Please enter a valid email address'
-        : e.code === 'auth/weak-password' ? 'Password must be at least 6 characters'
-        : 'Registration failed. Please try again';
+        e.code === 'auth/email-already-in-use' ? t('register.emailInUse')
+        : e.code === 'auth/invalid-email' ? t('register.invalidEmail')
+        : e.code === 'auth/weak-password' ? t('register.passwordMinLength')
+        : t('register.registrationFailed');
       setError(msg);
     } finally {
       setLoading(false);
@@ -64,13 +66,12 @@ export default function RegisterScreen() {
         <View style={s.logoCircle}>
           <Ionicons name="mail-outline" size={44} color="#fff" />
         </View>
-        <Text style={[s.title, { marginTop: 24, textAlign: 'center' }]}>Check your inbox</Text>
+        <Text style={[s.title, { marginTop: 24, textAlign: 'center' }]}>{t('register.checkInbox')}</Text>
         <Text style={[s.subtitle, { textAlign: 'center', marginTop: 10, lineHeight: 22 }]}>
-          We sent a verification link to{`\n`}<Text style={{ color: theme.primary, fontWeight: '600' }}>{email.trim().toLowerCase()}</Text>.
-          {`\n`}Tap the link, then sign in.
+          {t('register.checkInboxMsg', { email: email.trim().toLowerCase() })}
         </Text>
         <TouchableOpacity style={[s.button, { marginTop: 40, width: '100%' }]} onPress={() => router.replace('/auth/login')}>
-          <Text style={s.buttonText}>Go to Sign In</Text>
+          <Text style={s.buttonText}>{t('register.goToSignIn')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -92,8 +93,8 @@ export default function RegisterScreen() {
           <View style={s.logoCircle}>
             <Ionicons name="shirt" size={44} color="#fff" />
           </View>
-          <Text style={s.title}>Create Account</Text>
-          <Text style={s.subtitle}>Join AI Stylist and elevate your look</Text>
+          <Text style={s.title}>{t('register.title')}</Text>
+          <Text style={s.subtitle}>{t('register.subtitle')}</Text>
         </View>
 
         {/* Form */}
@@ -109,7 +110,7 @@ export default function RegisterScreen() {
             <Ionicons name="mail-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
             <TextInput
               style={s.input}
-              placeholder="Email address"
+              placeholder={t('register.emailPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={email}
               onChangeText={setEmail}
@@ -123,7 +124,7 @@ export default function RegisterScreen() {
             <Ionicons name="lock-closed-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
             <TextInput
               style={[s.input, { flex: 1 }]}
-              placeholder="Password (min. 6 characters)"
+              placeholder={t('register.passwordPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={password}
               onChangeText={setPassword}
@@ -142,7 +143,7 @@ export default function RegisterScreen() {
             <Ionicons name="lock-closed-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
             <TextInput
               style={s.input}
-              placeholder="Confirm password"
+              placeholder={t('register.confirmPasswordPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -158,7 +159,7 @@ export default function RegisterScreen() {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={s.buttonText}>Create Account</Text>
+              : <Text style={s.buttonText}>{t('register.createAccount')}</Text>
             }
           </TouchableOpacity>
         </View>
@@ -168,10 +169,10 @@ export default function RegisterScreen() {
 
         {/* Footer */}
         <View style={s.footer}>
-          <Text style={s.footerText}>Already have an account? </Text>
+          <Text style={s.footerText}>{t('register.haveAccount')}</Text>
           <Link href="/auth/login" asChild>
             <TouchableOpacity>
-              <Text style={s.linkText}>Sign in</Text>
+              <Text style={s.linkText}>{t('register.signIn')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

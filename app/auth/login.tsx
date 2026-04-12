@@ -9,26 +9,28 @@ import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import SocialSignInButtons from '@/components/SocialSignInButtons';
+import { useTranslation } from 'react-i18next';
 
-function firebaseErrorMessage(code: string): string {
+function firebaseErrorMessage(code: string, t: (key: string) => string): string {
   switch (code) {
     case 'auth/invalid-credential':
     case 'auth/user-not-found':
     case 'auth/wrong-password':
-      return 'Invalid email or password';
+      return t('login.errorInvalidCredential');
     case 'auth/invalid-email':
-      return 'Please enter a valid email address';
+      return t('login.errorInvalidEmail');
     case 'auth/too-many-requests':
-      return 'Too many attempts. Please try again later';
+      return t('login.errorTooManyRequests');
     case 'auth/network-request-failed':
-      return 'Network error. Check your connection';
+      return t('login.errorNetwork');
     default:
-      return 'Login failed. Please try again';
+      return t('login.errorDefault');
   }
 }
 
 export default function LoginScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +42,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      setError('Please fill in all fields');
+      setError(t('login.fillAllFields'));
       return;
     }
     setError('');
@@ -51,13 +53,14 @@ export default function LoginScreen() {
         // Sign out immediately and prompt them to verify
         setUnverifiedUser(cred.user);
         await signOut(auth);
-        setError('Please verify your email before signing in.');
+        setError(t('login.verifyEmail'));
+        setLoading(false);
         return;
       }
       // Auth guard in _layout.tsx automatically redirects to (tabs)
+      // Keep loading=true until the component unmounts on navigation
     } catch (e: any) {
-      setError(firebaseErrorMessage(e.code));
-    } finally {
+      setError(firebaseErrorMessage(e.code, t));
       setLoading(false);
     }
   };
@@ -67,9 +70,9 @@ export default function LoginScreen() {
     setResending(true);
     try {
       await sendEmailVerification(unverifiedUser);
-      setError('Verification email resent. Check your inbox.');
+      setError(t('login.verificationResent'));
     } catch {
-      setError('Could not resend. Please try again later.');
+      setError(t('login.resendFailed'));
     } finally {
       setResending(false);
       setUnverifiedUser(null);
@@ -95,8 +98,8 @@ export default function LoginScreen() {
           <View style={s.logoCircle}>
             <Ionicons name="shirt" size={44} color="#fff" />
           </View>
-          <Text style={s.appName}>AI Stylist</Text>
-          <Text style={s.tagline}>Your personal fashion advisor</Text>
+          <Text style={s.appName}>{t('login.appName')}</Text>
+          <Text style={s.tagline}>{t('login.tagline')}</Text>
         </View>
 
         {/* Form */}
@@ -111,7 +114,7 @@ export default function LoginScreen() {
                 <TouchableOpacity style={s.resendBtn} onPress={handleResendVerification} disabled={resending}>
                   {resending
                     ? <ActivityIndicator size="small" color={theme.primary} />
-                    : <Text style={[s.resendText, { color: theme.primary }]}>Resend verification email</Text>
+                    : <Text style={[s.resendText, { color: theme.primary }]}>{t('login.resendVerification')}</Text>
                   }
                 </TouchableOpacity>
               )}
@@ -122,7 +125,7 @@ export default function LoginScreen() {
             <Ionicons name="mail-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
             <TextInput
               style={s.input}
-              placeholder="Email address"
+              placeholder={t('login.emailPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={email}
               onChangeText={setEmail}
@@ -136,7 +139,7 @@ export default function LoginScreen() {
             <Ionicons name="lock-closed-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
             <TextInput
               style={[s.input, { flex: 1 }]}
-              placeholder="Password"
+              placeholder={t('login.passwordPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={password}
               onChangeText={setPassword}
@@ -152,7 +155,7 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity style={s.forgotBtn} onPress={() => router.push('/auth/forgot-password')}>
-            <Text style={[s.forgotText, { color: theme.primary }]}>Forgot password?</Text>
+            <Text style={[s.forgotText, { color: theme.primary }]}>{t('login.forgotPassword')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -163,7 +166,7 @@ export default function LoginScreen() {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={s.buttonText}>Sign In</Text>
+              : <Text style={s.buttonText}>{t('login.signIn')}</Text>
             }
           </TouchableOpacity>
         </View>
@@ -173,10 +176,10 @@ export default function LoginScreen() {
 
         {/* Footer */}
         <View style={s.footer}>
-          <Text style={s.footerText}>Don't have an account? </Text>
+          <Text style={s.footerText}>{t('login.noAccount')}</Text>
           <Link href="/auth/register" asChild>
             <TouchableOpacity>
-              <Text style={s.linkText}>Create one</Text>
+              <Text style={s.linkText}>{t('login.createOne')}</Text>
             </TouchableOpacity>
           </Link>
         </View>

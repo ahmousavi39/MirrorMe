@@ -1,0 +1,115 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "info": {
+      "en-US": {
+        "title": "MirrorMe - AI Outfit Stylist",
+        "subtitle": "AI-Powered Fashion Advice",
+        "description": "MirrorMe uses advanced AI to analyze your outfit and give you an instant style score out of 10. Get personalized feedback, occasion-specific styling tips, and track your fashion journey over time.\n\nFeatures:\n• Instant AI outfit analysis with a score out of 10\n• Occasion-specific styling advice (casual, work, date night, and more)\n• Build and manage your wardrobe automatically\n• Full analysis history\n• Color palette detection\n• Style improvement tips",
+        "keywords": [
+          "fashion",
+          "outfit",
+          "AI stylist",
+          "style score",
+          "wardrobe",
+          "clothing",
+          "fashion advice",
+          "outfit rating",
+          "style tips",
+          "AI fashion"
+        ],
+        "releaseNotes": "Bug fixes and performance improvements."
+      },
+      "zh-Hans": {
+        "title": "MirrorMe - AI 穿搭造型师",
+        "subtitle": "AI 驱动的时尚建议",
+        "description": "MirrorMe 利用先进的 AI 技术分析你的穿搭，即时给出满分 10 分的风格评分。获取个性化反馈、特定场合的穿搭建议，并随时间追踪你的时尚进步。\n\n主要功能：\n• 即时 AI 穿搭分析，满分 10 分\n• 针对特定场合的穿搭建议（休闲、工作、约会等）\n• 自动建立并管理个人衣橱\n• 完整分析历史记录\n• 颜色搭配检测\n• 风格提升建议",
+        "keywords": [
+          "时尚",
+          "穿搭",
+          "AI造型师",
+          "风格评分",
+          "衣橱",
+          "服装",
+          "时尚建议",
+          "穿搭评分",
+          "穿搭技巧",
+          "AI时尚"
+        ],
+        "releaseNotes": "修复问题并提升性能。"
+      },
+      "ja": {
+        "title": "MirrorMe - AIファッションスタイリスト",
+        "subtitle": "AI が提案するファッションアドバイス",
+        "description": "MirrorMe は先進のAI技術でコーディネートを分析し、10点満点のスタイルスコアを即時に提供します。パーソナライズされたフィードバック、シーン別スタイリングアドバイス、ファッションの上達を記録しましょう。\n\n主な機能：\n• AIによる即時コーディネート分析（10点満点）\n• シーン別スタイリングアドバイス（カジュアル、仕事、デートなど）\n• ワードローブを自動構築・管理\n• 完全な分析履歴\n• カラーパレット検出\n• スタイル改善ヒント",
+        "keywords": [
+          "ファッション",
+          "コーディネート",
+          "AIスタイリスト",
+          "スタイルスコア",
+          "ワードローブ",
+          "服装",
+          "ファッションアドバイス",
+          "コーデ評価",
+          "スタイルアドバイス",
+          "AIファッション"
+        ],
+        "releaseNotes": "バグを修正しパフォーマンスを改善しました。"
+      },
+      "de-DE": {
+        "title": "MirrorMe - KI Outfit Stylist",
+        "subtitle": "KI-gestützte Modeberatung",
+        "description": "MirrorMe nutzt fortschrittliche KI, um dein Outfit zu analysieren und dir sofort einen Stil-Score von 10 zu geben. Erhalte personalisiertes Feedback, anlass-spezifische Styling-Tipps und verfolge deine modische Entwicklung.\n\nFunktionen:\n• Sofortige KI-Outfit-Analyse mit einem Score bis 10\n• Anlass-spezifische Styling-Ratschläge (casual, Arbeit, Date-Night und mehr)\n• Garderobe automatisch aufbauen und verwalten\n• Vollständiger Analyseverlauf\n• Farbpaletten-Erkennung\n• Stil-Verbesserungstipps",
+        "keywords": [
+          "Mode",
+          "Outfit",
+          "KI Stylist",
+          "Stil-Score",
+          "Garderobe",
+          "Kleidung",
+          "Modeberatung",
+          "Outfit-Bewertung",
+          "Stil-Tipps",
+          "KI Mode"
+        ],
+        "releaseNotes": "Fehlerbehebungen und Leistungsverbesserungen."
+      },
+      "fr-FR": {
+        "title": "MirrorMe - Styliste IA pour tes tenues",
+        "subtitle": "Conseils mode avec l'intelligence artificielle",
+        "description": "MirrorMe utilise une IA avancée pour analyser ta tenue et te donner instantanément un score de style sur 10. Obtiens des retours personnalisés, des conseils de style selon l'occasion et suis ta progression mode au fil du temps.\n\nFonctionnalités :\n• Analyse IA instantanée avec score sur 10\n• Conseils de style adaptés à chaque occasion (casual, travail, soirée, etc.)\n• Crée et gère ta garde-robe automatiquement\n• Historique complet des analyses\n• Détection de la palette de couleurs\n• Conseils pour améliorer ton style",
+        "keywords": [
+          "mode",
+          "tenue",
+          "styliste IA",
+          "score de style",
+          "garde-robe",
+          "vêtements",
+          "conseils mode",
+          "note de tenue",
+          "astuces style",
+          "IA mode"
+        ],
+        "releaseNotes": "Corrections de bugs et améliorations des performances."
+      },
+      "es-ES": {
+        "title": "MirrorMe - Estilista IA de outfits",
+        "subtitle": "Consejos de moda con inteligencia artificial",
+        "description": "MirrorMe utiliza IA avanzada para analizar tu outfit y darte una puntuación de estilo instantánea sobre 10. Obtén comentarios personalizados, consejos de estilo según la ocasión y sigue tu evolución en la moda a lo largo del tiempo.\n\nCaracterísticas:\n• Análisis IA instantáneo del outfit con puntuación sobre 10\n• Consejos de estilo según la ocasión (casual, trabajo, cita, y más)\n• Crea y gestiona tu armario automáticamente\n• Historial completo de análisis\n• Detección de paleta de colores\n• Consejos para mejorar tu estilo",
+        "keywords": [
+          "moda",
+          "outfit",
+          "estilista IA",
+          "puntuación de estilo",
+          "armario",
+          "ropa",
+          "consejos de moda",
+          "valoración de outfit",
+          "tips de estilo",
+          "IA moda"
+        ],
+        "releaseNotes": "Corrección de errores y mejoras de rendimiento."
+      }
+    }
+  }
+}

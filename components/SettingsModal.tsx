@@ -8,6 +8,8 @@ import { auth } from '@/services/firebase';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import ProfileEditModal from './ProfileEditModal';
 import { getSettings, saveSettings, deleteAccount } from '@/services/api';
+import { useTranslation } from 'react-i18next';
+import i18n, { changeLanguage, SUPPORTED_LANGUAGES } from '@/services/i18n';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -16,6 +18,13 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ visible, onClose }: SettingsModalProps) {
   const { theme, isDark, toggleTheme } = useTheme();
+  const { t } = useTranslation();
+  const [currentLang, setCurrentLang] = React.useState(i18n.language);
+
+  const handleChangeLanguage = async (code: string) => {
+    await changeLanguage(code);
+    setCurrentLang(code);
+  };
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     title: string;
@@ -100,20 +109,20 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
   const handleAbout = () => {
     setAlertConfig({
-      title: 'About This App',
-      message: 'Your app description goes here. Update this in SettingsModal.tsx',
+      title: t('settings.aboutTitle'),
+      message: 'MirrorMe is your AI-powered personal stylist.\n\nUpload any outfit photo to receive an instant style score out of 10, personalized feedback, and occasion-specific styling tips. Build your wardrobe automatically and track your fashion journey over time.\n\nVersion 1.0.0\n© 2026 Ahmad Mousavi',
       icon: 'info',
-      buttons: [{ text: 'OK' }],
+      buttons: [{ text: t('common.ok') }],
     });
     setAlertVisible(true);
   };
 
   const handlePrivacyPolicy = () => {
-    Linking.openURL('https://your-website.com/policy.html');
+    Linking.openURL('https://mirrorme.ahmousavi.com/policy');
   };
 
   const handleTerms = () => {
-    Linking.openURL('https://your-website.com/terms.html');
+    Linking.openURL('https://mirrorme.ahmousavi.com/terms');
   };
 
   const isEmailUser = auth.currentUser?.providerData?.some((p) => p.providerId === 'password');
@@ -143,7 +152,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
     } catch (e: any) {
       const code = e.code || '';
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        setDeleteError('Incorrect password. Please try again.');
+        setDeleteError(t('settings.incorrectPassword'));
       } else if (code === 'auth/requires-recent-login') {
         setDeleteError('Please sign out and sign in again before deleting your account.');
       } else {
@@ -177,7 +186,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
           ]}
         >
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>{t('settings.title')}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Ionicons name="close" size={28} color={theme.text} />
             </TouchableOpacity>
@@ -185,7 +194,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Profile</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionProfile')}</Text>
 
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: theme.card }]}
@@ -193,14 +202,14 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="person-circle-outline" size={24} color={theme.primary} />
-                  <Text style={[styles.settingText, { color: theme.text }]}>Edit Profile</Text>
+                  <Text style={[styles.settingText, { color: theme.text }]}>{t('settings.editProfile')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionAppearance')}</Text>
               
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: theme.card }]}
@@ -213,7 +222,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                     color={theme.primary} 
                   />
                   <Text style={[styles.settingText, { color: theme.text }]}>
-                    {isDark ? 'Dark Mode' : 'Light Mode'}
+                    {isDark ? t('settings.darkMode') : t('settings.lightMode')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
@@ -221,14 +230,35 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Wardrobe</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionLanguage')}</Text>
+
+              {SUPPORTED_LANGUAGES.map(({ code, labelKey }) => (
+                <TouchableOpacity
+                  key={code}
+                  style={[styles.settingItem, { backgroundColor: theme.card }]}
+                  onPress={() => handleChangeLanguage(code)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.settingLeft}>
+                    <Ionicons name="language-outline" size={24} color={theme.primary} />
+                    <Text style={[styles.settingText, { color: theme.text }]}>{t(labelKey)}</Text>
+                  </View>
+                  {currentLang === code && (
+                    <Ionicons name="checkmark" size={20} color={theme.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={[styles.section, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionWardrobe')}</Text>
 
               <View style={[styles.settingItem, { backgroundColor: theme.card }]}>
                 <View style={[styles.settingLeft, { flex: 1, marginRight: 12 }]}>
                   <Ionicons name="shirt-outline" size={24} color={theme.primary} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.settingText, { color: theme.text }]}>Share My Wardrobe</Text>
-                    <Text style={[styles.settingSubText, { color: theme.textSecondary }]}>Use wardrobe for better suggestions</Text>
+                    <Text style={[styles.settingText, { color: theme.text }]}>{t('settings.shareWardrobe')}</Text>
+                    <Text style={[styles.settingSubText, { color: theme.textSecondary }]}>{t('settings.shareWardrobeSub')}</Text>
                   </View>
                 </View>
                 <Switch
@@ -243,8 +273,8 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <View style={[styles.settingLeft, { flex: 1, marginRight: 12 }]}>
                   <Ionicons name="add-circle-outline" size={24} color={theme.primary} />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.settingText, { color: theme.text }]}>Add to Wardrobe</Text>
-                    <Text style={[styles.settingSubText, { color: theme.textSecondary }]}>Save detected items automatically</Text>
+                    <Text style={[styles.settingText, { color: theme.text }]}>{t('settings.addToWardrobe')}</Text>
+                    <Text style={[styles.settingSubText, { color: theme.textSecondary }]}>{t('settings.addToWardrobeSub')}</Text>
                   </View>
                 </View>
                 <Switch
@@ -257,7 +287,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Legal</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionLegal')}</Text>
               
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: theme.card }]}
@@ -266,7 +296,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <View style={styles.settingLeft}>
                   <Ionicons name="shield-checkmark" size={24} color={theme.primary} />
                   <Text style={[styles.settingText, { color: theme.text }]}>
-                    Privacy Policy
+                    {t('settings.privacyPolicy')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
@@ -279,7 +309,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <View style={styles.settingLeft}>
                   <Ionicons name="document-text" size={24} color={theme.primary} />
                   <Text style={[styles.settingText, { color: theme.text }]}>
-                    Terms of Use
+                    {t('settings.termsOfUse')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
@@ -287,7 +317,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>About</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionAbout')}</Text>
               
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: theme.card }]}
@@ -296,7 +326,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <View style={styles.settingLeft}>
                   <Ionicons name="information-circle" size={24} color={theme.primary} />
                   <Text style={[styles.settingText, { color: theme.text }]}>
-                    About
+                    {t('settings.aboutTitle')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
@@ -304,7 +334,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </View>
 
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionAccount')}</Text>
 
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: `${theme.error}12`, borderWidth: 1, borderColor: `${theme.error}30` }]}
@@ -312,7 +342,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="trash-outline" size={24} color={theme.error} />
-                  <Text style={[styles.settingText, { color: theme.error, fontWeight: '600' }]}>Delete Account</Text>
+                  <Text style={[styles.settingText, { color: theme.error, fontWeight: '600' }]}>{t('settings.deleteAccount')}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -343,25 +373,25 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <Ionicons name="warning-outline" size={36} color={theme.error} />
               </View>
             </View>
-            <Text style={[styles.dangerTitle, { color: theme.text }]}>Delete Account?</Text>
+            <Text style={[styles.dangerTitle, { color: theme.text }]}>{t('settings.deleteWarningTitle')}</Text>
             <Text style={[styles.dangerBody, { color: theme.textSecondary }]}>
-              This will permanently delete your account and all associated data including:
+              {t('settings.deleteWarningBody')}
             </Text>
             <View style={styles.dangerList}>
-              {['Your profile and preferences', 'All analysis history and photos', 'Your wardrobe items', 'Any active subscription (no refund)'].map((item, i) => (
+              {[t('settings.deleteItem1'), t('settings.deleteItem2'), t('settings.deleteItem3'), t('settings.deleteItem4')].map((item, i) => (
                 <View key={i} style={styles.dangerListRow}>
                   <Ionicons name="close-circle" size={16} color={theme.error} />
                   <Text style={[styles.dangerListText, { color: theme.textSecondary }]}>{item}</Text>
                 </View>
               ))}
             </View>
-            <Text style={[styles.dangerNote, { color: theme.error }]}>This action cannot be undone.</Text>
+            <Text style={[styles.dangerNote, { color: theme.error }]}>{t('settings.deleteNote')}</Text>
             <View style={styles.dangerBtns}>
               <TouchableOpacity style={[styles.dangerBtnSecondary, { borderColor: theme.border }]} onPress={() => setDeleteStep('idle')}>
-                <Text style={[styles.dangerBtnSecondaryText, { color: theme.text }]}>Cancel</Text>
+                <Text style={[styles.dangerBtnSecondaryText, { color: theme.text }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.dangerBtnPrimary, { backgroundColor: theme.error }]} onPress={() => setDeleteStep('confirm')}>
-                <Text style={styles.dangerBtnPrimaryText}>Continue</Text>
+                <Text style={styles.dangerBtnPrimaryText}>{t('common.continue')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -373,12 +403,12 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
         <View style={styles.dangerOverlay}>
           <View style={[styles.dangerSheet, { backgroundColor: theme.background }]}>
             <Text style={[styles.dangerTitle, { color: theme.text }]}>
-              {isEmailUser ? 'Confirm Your Password' : 'Final Confirmation'}
+              {isEmailUser ? t('settings.confirmPasswordTitle') : t('settings.finalConfirmTitle')}
             </Text>
             <Text style={[styles.dangerBody, { color: theme.textSecondary }]}>
               {isEmailUser
-                ? 'Enter your password to confirm account deletion.'
-                : 'Are you sure you want to permanently delete your account and all your data?'}
+                ? t('settings.confirmPasswordMsg')
+                : t('settings.finalConfirmMsg')}
             </Text>
 
             {isEmailUser && (
@@ -386,7 +416,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
                 <Ionicons name="lock-closed-outline" size={20} color={theme.placeholder} />
                 <TextInput
                   style={[styles.passwordInput, { color: theme.text }]}
-                  placeholder="Password"
+                  placeholder={t('settings.passwordPlaceholder')}
                   placeholderTextColor={theme.placeholder}
                   secureTextEntry={!showDeletePassword}
                   value={deletePassword}
@@ -408,7 +438,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
             <View style={styles.dangerBtns}>
               <TouchableOpacity style={[styles.dangerBtnSecondary, { borderColor: theme.border }]} onPress={() => setDeleteStep('idle')} disabled={deleteLoading}>
-                <Text style={[styles.dangerBtnSecondaryText, { color: theme.text }]}>Cancel</Text>
+                <Text style={[styles.dangerBtnSecondaryText, { color: theme.text }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.dangerBtnPrimary, { backgroundColor: theme.error, opacity: deleteLoading || (isEmailUser && !deletePassword) ? 0.6 : 1 }]}
@@ -417,7 +447,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
               >
                 {deleteLoading
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.dangerBtnPrimaryText}>Delete My Account</Text>
+                  : <Text style={styles.dangerBtnPrimaryText}>{t('settings.deleteAccountBtn')}</Text>
                 }
               </TouchableOpacity>
             </View>

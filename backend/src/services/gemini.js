@@ -11,7 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  * @param {string} mimeType — e.g. 'image/jpeg'
  * @returns {Promise<{ score: number, feedback: string, suggestions: string[] }>}
  */
-async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', occasion = null, userProfile = {}, wardrobeItems = []) {
+async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', occasion = null, userProfile = {}, wardrobeItems = [], locale = 'en') {
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
     generationConfig: {
@@ -79,8 +79,21 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
     .map(([key, desc]) => `  "${key}": /* score for ${desc} */`)
     .join('\n');
 
-  const prompt = `You are a professional fashion stylist with 10+ years of experience.
+  // Language instruction
+  const languageMap = {
+    'zh-Hans': 'Simplified Chinese (zh-Hans)',
+    'ja': 'Japanese',
+    'de': 'German',
+    'fr': 'French',
+    'es': 'Spanish',
+  };
+  const languageName = languageMap[locale] || null;
+  const languageInstruction = languageName
+    ? `IMPORTANT: Write all user-facing text (feedback, styleTips, occasionTips) in ${languageName}. All other JSON keys and structure must remain in English.`
+    : '';
 
+  const prompt = `You are a professional fashion stylist with 10+ years of experience.
+${languageInstruction ? `\n${languageInstruction}\n` : ''}
 ${profileSection}
 
 ${occasionLine}

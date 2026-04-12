@@ -2,24 +2,26 @@ import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Animated, Dimensions, Alert, Keyboard,
+  Animated, Dimensions, Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { saveProfile, getProfile, UserProfile } from '@/services/api';
+import CustomAlert from '@/components/CustomAlert';
+import { useTranslation } from 'react-i18next';
 
-const STYLE_CATEGORIES = [
-  { id: 'classic',      label: 'Classic',      icon: 'shirt-outline' },
-  { id: 'streetwear',   label: 'Streetwear',   icon: 'basketball-outline' },
-  { id: 'casual',       label: 'Casual',       icon: 'sunny-outline' },
-  { id: 'formal',       label: 'Formal',       icon: 'briefcase-outline' },
-  { id: 'sporty',       label: 'Sporty',       icon: 'fitness-outline' },
-  { id: 'bohemian',     label: 'Bohemian',     icon: 'leaf-outline' },
-  { id: 'minimalist',   label: 'Minimalist',   icon: 'remove-outline' },
-  { id: 'vintage',      label: 'Vintage',      icon: 'time-outline' },
-  { id: 'preppy',       label: 'Preppy',       icon: 'school-outline' },
+const STYLE_CATEGORY_KEYS = [
+  { id: 'classic',      icon: 'shirt-outline' },
+  { id: 'streetwear',   icon: 'basketball-outline' },
+  { id: 'casual',       icon: 'sunny-outline' },
+  { id: 'formal',       icon: 'briefcase-outline' },
+  { id: 'sporty',       icon: 'fitness-outline' },
+  { id: 'bohemian',     icon: 'leaf-outline' },
+  { id: 'minimalist',   icon: 'remove-outline' },
+  { id: 'vintage',      icon: 'time-outline' },
+  { id: 'preppy',       icon: 'school-outline' },
 ];
 
 const ALL_STEPS = 3;
@@ -29,6 +31,12 @@ export default function OnboardingScreen() {
   const { theme } = useTheme();
   const { completeOnboarding } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const STYLE_CATEGORIES = STYLE_CATEGORY_KEYS.map((c) => ({
+    ...c,
+    label: t(`onboarding.styleCategories.${c.id}`),
+  }));
 
   // Which step indices (0/1/2) actually need to be filled
   const [activeSteps, setActiveSteps] = useState<number[]>([0, 1, 2]);
@@ -36,6 +44,9 @@ export default function OnboardingScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
+  const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
+    setCustomAlert({ visible: true, title, message, icon });
 
   // Existing profile — used to merge fields that were skipped
   const [existingProfile, setExistingProfile] = useState<Partial<UserProfile>>({});
@@ -136,7 +147,7 @@ export default function OnboardingScreen() {
 
   const handleNext = () => {
     if (step === 0) {
-      if (!name.trim()) { Alert.alert('Please enter your name'); return; }
+      if (!name.trim()) { showAlert(t('onboarding.nameRequired'), t('onboarding.nameRequiredMsg'), 'warning'); return; }
     }
     animateTo(stepIndex + 1);
   };
@@ -161,7 +172,7 @@ export default function OnboardingScreen() {
       completeOnboarding();
       router.replace('/(tabs)');
     } catch {
-      Alert.alert('Error', 'Could not save your profile. Please try again.');
+      showAlert(t('onboarding.errorTitle'), t('onboarding.errorMsg'), 'error');
     } finally {
       setSaving(false);
     }
@@ -198,14 +209,14 @@ export default function OnboardingScreen() {
               <View style={s.iconCircle}>
                 <Ionicons name="person-outline" size={40} color="#fff" />
               </View>
-              <Text style={s.stepTitle}>What's your name?</Text>
-              <Text style={s.stepSubtitle}>We'll personalize your style experience</Text>
+              <Text style={s.stepTitle}>{t('onboarding.nameTitle')}</Text>
+              <Text style={s.stepSubtitle}>{t('onboarding.nameSub')}</Text>
 
               <View style={s.inputWrapper}>
                 <Ionicons name="person-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
-                  placeholder="Your first name"
+                  placeholder={t('onboarding.namePlaceholder')}
                   placeholderTextColor={theme.placeholder}
                   value={name}
                   onChangeText={setName}
@@ -224,11 +235,11 @@ export default function OnboardingScreen() {
               <View style={s.iconCircle}>
                 <Ionicons name="body-outline" size={40} color="#fff" />
               </View>
-              <Text style={s.stepTitle}>Tell us about yourself</Text>
-              <Text style={s.stepSubtitle}>Optional — helps us give more accurate advice</Text>
+              <Text style={s.stepTitle}>{t('onboarding.statsTitle')}</Text>
+              <Text style={s.stepSubtitle}>{t('onboarding.statsSub')}</Text>
 
               {/* Sex */}
-              <Text style={s.fieldLabel}>Sex</Text>
+              <Text style={s.fieldLabel}>{t('onboarding.sex')}</Text>
               <View style={s.sexRow}>
                 {(['male', 'female', 'other'] as const).map((opt) => (
                   <TouchableOpacity
@@ -237,19 +248,19 @@ export default function OnboardingScreen() {
                     onPress={() => setSex(opt)}
                   >
                     <Text style={[s.sexBtnText, sex === opt && s.sexBtnTextActive]}>
-                      {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                      {t(`onboarding.sex${opt.charAt(0).toUpperCase() + opt.slice(1)}`)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
               {/* Age */}
-              <Text style={s.fieldLabel}>Age</Text>
+              <Text style={s.fieldLabel}>{t('onboarding.age')}</Text>
               <View style={s.inputWrapper}>
                 <Ionicons name="calendar-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
-                  placeholder="e.g. 25"
+                  placeholder={t('onboarding.agePlaceholder')}
                   placeholderTextColor={theme.placeholder}
                   value={age}
                   onChangeText={setAge}
@@ -259,12 +270,12 @@ export default function OnboardingScreen() {
               </View>
 
               {/* Height */}
-              <Text style={s.fieldLabel}>Height (cm)</Text>
+              <Text style={s.fieldLabel}>{t('onboarding.heightLabel')}</Text>
               <View style={s.inputWrapper}>
                 <Ionicons name="resize-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
-                  placeholder="e.g. 178"
+                  placeholder={t('onboarding.heightPlaceholder')}
                   placeholderTextColor={theme.placeholder}
                   value={height}
                   onChangeText={setHeight}
@@ -274,12 +285,12 @@ export default function OnboardingScreen() {
               </View>
 
               {/* Weight */}
-              <Text style={s.fieldLabel}>Weight (kg)</Text>
+              <Text style={s.fieldLabel}>{t('onboarding.weightLabel')}</Text>
               <View style={s.inputWrapper}>
                 <Ionicons name="barbell-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
-                  placeholder="e.g. 75"
+                  placeholder={t('onboarding.weightPlaceholder')}
                   placeholderTextColor={theme.placeholder}
                   value={weight}
                   onChangeText={setWeight}
@@ -296,8 +307,8 @@ export default function OnboardingScreen() {
               <View style={s.iconCircle}>
                 <Ionicons name="color-palette-outline" size={40} color="#fff" />
               </View>
-              <Text style={s.stepTitle}>Your style vibe</Text>
-              <Text style={s.stepSubtitle}>Optional — pick all that apply</Text>
+              <Text style={s.stepTitle}>{t('onboarding.styleTitle')}</Text>
+              <Text style={s.stepSubtitle}>{t('onboarding.styleSub')}</Text>
 
               <View style={s.styleGrid}>
                 {STYLE_CATEGORIES.map((cat) => {
@@ -330,7 +341,7 @@ export default function OnboardingScreen() {
         {stepIndex > 0 ? (
           <TouchableOpacity style={s.backBtn} onPress={handleBack}>
             <Ionicons name="arrow-back" size={20} color={theme.text} />
-            <Text style={s.backBtnText}>Back</Text>
+            <Text style={s.backBtnText}>{t('common.back')}</Text>
           </TouchableOpacity>
         ) : (
           <View style={s.backBtn} />
@@ -338,7 +349,7 @@ export default function OnboardingScreen() {
 
         {stepIndex < activeSteps.length - 1 ? (
           <TouchableOpacity style={s.nextBtn} onPress={handleNext}>
-            <Text style={s.nextBtnText}>Next</Text>
+            <Text style={s.nextBtnText}>{t('onboarding.nextBtn')}</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>
         ) : (
@@ -347,13 +358,21 @@ export default function OnboardingScreen() {
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <>
-                <Text style={s.nextBtnText}>Let's go!</Text>
+                <Text style={s.nextBtnText}>{t('onboarding.finishBtn')}</Text>
                 <Ionicons name="checkmark" size={20} color="#fff" />
               </>
             )}
           </TouchableOpacity>
         )}
       </Animated.View>
+
+      <CustomAlert
+        visible={customAlert.visible}
+        title={customAlert.title}
+        message={customAlert.message}
+        icon={customAlert.icon}
+        onClose={() => setCustomAlert((a) => ({ ...a, visible: false }))}
+      />
     </View>
   );
 }

@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 interface UsageBannerProps {
   used: number;
@@ -13,6 +14,7 @@ interface UsageBannerProps {
 
 export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, monthlyLimit }: UsageBannerProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
 
   if (isSubscribed) {
@@ -20,7 +22,6 @@ export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, mo
     const mLimit = monthlyLimit ?? 100;
     const mRemaining = mLimit - mUsed;
     const isAtMonthlyLimit = mRemaining <= 0;
-    const barColor = isAtMonthlyLimit ? theme.error : mRemaining <= 10 ? '#FF9F0A' : theme.success;
 
     return (
       <View style={[styles.container, { backgroundColor: isAtMonthlyLimit ? `${theme.error}12` : `${theme.success}15`, borderColor: isAtMonthlyLimit ? `${theme.error}40` : `${theme.success}30` }]}>
@@ -31,14 +32,11 @@ export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, mo
             color={isAtMonthlyLimit ? theme.error : theme.success}
           />
           <Text style={[styles.text, { color: isAtMonthlyLimit ? theme.error : theme.success }]}>
-            {isAtMonthlyLimit ? 'Monthly Premium limit reached' : `Premium — ${mRemaining} scan${mRemaining === 1 ? '' : 's'} left this month`}
+            {isAtMonthlyLimit ? t('usage.premiumMonthlyLimit') : t('usage.premiumScansLeft', { count: mRemaining })}
           </Text>
         </View>
-        <View style={[styles.barBg, { backgroundColor: theme.border }]}>
-          <View style={[styles.barFill, { width: `${Math.min((mUsed / mLimit) * 100, 100)}%`, backgroundColor: barColor }]} />
-        </View>
         <Text style={[styles.sub, { color: theme.textSecondary }]}>
-          {mUsed}/{mLimit} scans used this month
+        {t('usage.premiumUsage', { used: mUsed, limit: mLimit })}
         </Text>
       </View>
     );
@@ -62,8 +60,8 @@ export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, mo
           />
           <Text style={[styles.text, { color: isAtLimit ? theme.error : theme.text }]}>
             {isAtLimit
-              ? 'Weekly free limit reached'
-              : `${remaining} free upload${remaining === 1 ? '' : 's'} left this week`
+              ? t('usage.weeklyLimitReached')
+              : t('usage.weeklyUploadsLeft', { count: remaining })
             }
           </Text>
         </View>
@@ -77,7 +75,7 @@ export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, mo
         </View>
 
         <Text style={[styles.sub, { color: theme.textSecondary }]}>
-          {used}/{limit} uploads used this week
+          {t('usage.weeklyUsage', { used, limit })}
         </Text>
       </View>
 
@@ -88,7 +86,7 @@ export default function UsageBanner({ used, limit, isSubscribed, monthlyUsed, mo
           activeOpacity={0.85}
         >
           <Ionicons name="star" size={16} color="#fff" />
-          <Text style={styles.upgradeText}>Upgrade to Premium</Text>
+          <Text style={styles.upgradeText}>{t('usage.upgradeToPremium')}</Text>
         </TouchableOpacity>
       )}
     </View>

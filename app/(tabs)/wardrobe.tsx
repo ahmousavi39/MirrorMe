@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity,
-  StyleSheet, Alert, ActivityIndicator, RefreshControl,
+  StyleSheet, ActivityIndicator, RefreshControl,
   Modal, StatusBar, Platform, Animated, KeyboardAvoidingView, TextInput, ScrollView,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -11,16 +11,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getWardrobe, deleteWardrobeItem, addWardrobeItem, getSubscriptionStatus, updateWardrobeItem } from '@/services/api';
 import { WardrobeItem } from '@/types/app';
+import CustomAlert from '@/components/CustomAlert';
+import PremiumGateModal from '@/components/PremiumGateModal';
+import { useTranslation } from 'react-i18next';
 
 // ── Wardrobe item edit sheet ──────────────────────────────────────────────────
 interface WardrobeEditSheetProps {
   item: WardrobeItem;
   onSave: (updated: WardrobeItem) => void;
   onClose: () => void;
+  onAlert: (title: string, message: string, icon?: 'info' | 'error' | 'success' | 'warning') => void;
 }
 
-function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
+function WardrobeEditSheet({ item, onSave, onClose, onAlert }: WardrobeEditSheetProps) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [category, setCategory] = useState(item.category ?? '');
   const [color, setColor]       = useState(item.color ?? '');
   const [fit, setFit]           = useState(item.fit ?? '');
@@ -49,7 +54,7 @@ function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
       style:    style.trim()    || null,
     };
     if (!trimmed.category) {
-      Alert.alert('Category required', 'Please enter a category for this item.');
+      onAlert(t('wardrobe.categoryRequired'), t('wardrobe.categoryRequiredMsg'), 'warning');
       return;
     }
     const unchanged =
@@ -66,7 +71,7 @@ function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
       const updated = await updateWardrobeItem(item.id, { ...trimmed, source: 'wardrobe' });
       dismiss(() => onSave(updated));
     } catch (e: any) {
-      Alert.alert('Save failed', e.message ?? 'Could not update this item. Please try again.');
+      onAlert(t('wardrobe.saveFailed'), e.message ?? t('wardrobe.saveFailedMsg'), 'error');
     } finally {
       setSaving(false);
     }
@@ -82,19 +87,19 @@ function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
         <Animated.View style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }] }]}>
           <View style={[es.handle, { backgroundColor: theme.border }]} />
           <View style={es.sheetHeader}>
-            <Text style={[es.sheetTitle, { color: theme.text }]}>Edit Item</Text>
+            <Text style={[es.sheetTitle, { color: theme.text }]}>{t('wardrobe.editItem')}</Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="close" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={es.fields}>
             {([
-              { label: 'Category *', value: category, set: setCategory, placeholder: 'e.g. T-Shirt, Jeans' },
-              { label: 'Color',      value: color,    set: setColor,    placeholder: 'e.g. Navy Blue' },
-              { label: 'Fit',        value: fit,      set: setFit,      placeholder: 'e.g. Slim, Regular, Oversized' },
-              { label: 'Material',   value: material, set: setMaterial, placeholder: 'e.g. Cotton, Linen' },
-              { label: 'Pattern',    value: pattern,  set: setPattern,  placeholder: 'e.g. Solid, Striped, Floral' },
-              { label: 'Style',      value: style,    set: setStyle,    placeholder: 'e.g. Casual, Formal' },
+              { label: t('wardrobe.fieldCategory'), value: category, set: setCategory, placeholder: t('wardrobe.phCategory') },
+              { label: t('wardrobe.fieldColor'),    value: color,    set: setColor,    placeholder: t('wardrobe.phColor') },
+              { label: t('wardrobe.fieldFit'),      value: fit,      set: setFit,      placeholder: t('wardrobe.phFit') },
+              { label: t('wardrobe.fieldMaterial'), value: material, set: setMaterial, placeholder: t('wardrobe.phMaterial') },
+              { label: t('wardrobe.fieldPattern'),  value: pattern,  set: setPattern,  placeholder: t('wardrobe.phPattern') },
+              { label: t('wardrobe.fieldStyle'),    value: style,    set: setStyle,    placeholder: t('wardrobe.phStyle') },
             ] as const).map(({ label, value, set, placeholder }) => (
               <View key={label} style={es.fieldRow}>
                 <Text style={[es.fieldLabel, { color: theme.textSecondary }]}>{label}</Text>
@@ -115,7 +120,7 @@ function WardrobeEditSheet({ item, onSave, onClose }: WardrobeEditSheetProps) {
             disabled={saving}
             activeOpacity={0.85}
           >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text style={es.saveBtnText}>Save Changes</Text>}
+            {saving ? <ActivityIndicator color="#fff" /> : <Text style={es.saveBtnText}>{t('common.saveChanges')}</Text>}
           </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -134,6 +139,13 @@ export default function WardrobeScreen() {
   const [adding, setAdding] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
+  const [premiumGateVisible, setPremiumGateVisible] = useState(false);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<WardrobeItem | null>(null);
+  const [sourcePickerVisible, setSourcePickerVisible] = useState(false);
+  const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
+  const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
+    setCustomAlert({ visible: true, title, message, icon });
+  const { t } = useTranslation();
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -153,20 +165,10 @@ export default function WardrobeScreen() {
 
   const handleAddItem = async () => {
     if (!isSubscribed) {
-      Alert.alert(
-        'Premium Feature',
-        'Manually adding wardrobe items is available for premium subscribers. Upgrade to unlock this feature!',
-        [{ text: 'OK' }]
-      );
+      setPremiumGateVisible(true);
       return;
     }
-
-    // Let user choose source
-    Alert.alert('Add Wardrobe Item', 'Choose a photo source', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Camera', onPress: () => pickImage('camera') },
-      { text: 'Photo Library', onPress: () => pickImage('library') },
-    ]);
+    setSourcePickerVisible(true);
   };
 
   const pickImage = async (source: 'camera' | 'library') => {
@@ -174,7 +176,7 @@ export default function WardrobeScreen() {
     if (source === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow camera access.');
+        showAlert(t('common.permissionNeeded'), t('wardrobe.cameraPermissionMsg'), 'warning');
         return;
       }
       pickerResult = await ImagePicker.launchCameraAsync({
@@ -184,7 +186,7 @@ export default function WardrobeScreen() {
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow photo library access.');
+        showAlert(t('common.permissionNeeded'), t('wardrobe.libraryPermissionMsg'), 'warning');
         return;
       }
       pickerResult = await ImagePicker.launchImageLibraryAsync({
@@ -206,11 +208,11 @@ export default function WardrobeScreen() {
       setItems((prev) => [newItem, ...prev.filter((i) => i.id !== newItem.id)]);
     } catch (e: any) {
       if (e.code === 'NO_ITEM') {
-        Alert.alert('No item detected', 'Could not detect a clothing item in this photo. Try a clearer photo of a single piece.');
+        showAlert(t('wardrobe.noItemDetected'), t('wardrobe.noItemDetectedMsg'), 'warning');
       } else if (e.code === 'PREMIUM_REQUIRED') {
-        Alert.alert('Premium Required', e.message);
+        setPremiumGateVisible(true);
       } else {
-        Alert.alert('Error', e.message || 'Failed to add item. Please try again.');
+        showAlert(t('common.error'), e.message || t('common.tryAgain'), 'error');
       }
     } finally {
       setAdding(false);
@@ -218,25 +220,7 @@ export default function WardrobeScreen() {
   };
 
   const handleDelete = (item: WardrobeItem) => {
-    Alert.alert(
-      'Remove from wardrobe?',
-      `Remove "${item.category}${item.color ? ` · ${item.color}` : ''}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteWardrobeItem(item.id);
-              setItems((prev) => prev.filter((i) => i.id !== item.id));
-            } catch {
-              Alert.alert('Error', 'Could not remove item. Please try again.');
-            }
-          },
-        },
-      ]
-    );
+    setPendingDeleteItem(item);
   };
 
   const renderItem = ({ item }: { item: WardrobeItem }) => {
@@ -307,9 +291,9 @@ export default function WardrobeScreen() {
       {/* Header */}
       <View style={[s.header, { borderBottomColor: theme.border }]}>
         <View>
-          <Text style={[s.title, { color: theme.text }]}>My Wardrobe</Text>
+          <Text style={[s.title, { color: theme.text }]}>{t('wardrobe.title')}</Text>
           <Text style={[s.subtitle, { color: theme.textSecondary }]}>
-            {items.length} piece{items.length !== 1 ? 's' : ''}
+            {t('wardrobe.pieces_other', { count: items.length })}
           </Text>
         </View>
         <TouchableOpacity
@@ -332,8 +316,64 @@ export default function WardrobeScreen() {
             setEditingItem(null);
           }}
           onClose={() => setEditingItem(null)}
+          onAlert={showAlert}
         />
       )}
+
+      {/* Source picker modal */}
+      <CustomAlert
+        visible={sourcePickerVisible}
+        title={t('wardrobe.addItemTitle')}
+        message={t('wardrobe.addItemMsg')}
+        icon="info"
+        buttons={[
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('analyze.camera'), onPress: () => pickImage('camera') },
+          { text: t('wardrobe.photoLibrary'), onPress: () => pickImage('library') },
+        ]}
+        onClose={() => setSourcePickerVisible(false)}
+      />
+
+      {/* Delete confirmation modal */}
+      <CustomAlert
+        visible={!!pendingDeleteItem}
+        title={t('wardrobe.removeTitle')}
+        message={pendingDeleteItem ? `${t('common.remove')} "${pendingDeleteItem.category}${pendingDeleteItem.color ? ` · ${pendingDeleteItem.color}` : ''}"?` : ''}
+        icon="warning"
+        buttons={[
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.remove'),
+            style: 'destructive',
+            onPress: async () => {
+              if (!pendingDeleteItem) return;
+              const toDelete = pendingDeleteItem;
+              setPendingDeleteItem(null);
+              try {
+                await deleteWardrobeItem(toDelete.id);
+                setItems((prev) => prev.filter((i) => i.id !== toDelete.id));
+              } catch {
+                showAlert(t('common.error'), t('wardrobe.removeError'), 'error');
+              }
+            },
+          },
+        ]}
+        onClose={() => setPendingDeleteItem(null)}
+      />
+
+      <PremiumGateModal
+        visible={premiumGateVisible}
+        onClose={() => setPremiumGateVisible(false)}
+        onUpgraded={() => { load(); }}
+      />
+
+      <CustomAlert
+        visible={customAlert.visible}
+        title={customAlert.title}
+        message={customAlert.message}
+        icon={customAlert.icon}
+        onClose={() => setCustomAlert((a) => ({ ...a, visible: false }))}
+      />
 
       {loading ? (
         <View style={s.center}>
@@ -342,9 +382,9 @@ export default function WardrobeScreen() {
       ) : items.length === 0 ? (
         <View style={s.center}>
           <Ionicons name="shirt-outline" size={56} color={`${theme.primary}40`} />
-          <Text style={[s.emptyTitle, { color: theme.text }]}>No pieces yet</Text>
+          <Text style={[s.emptyTitle, { color: theme.text }]}>{t('wardrobe.noItems')}</Text>
           <Text style={[s.emptySub, { color: theme.textSecondary }]}>
-            Analyze an outfit and your clothing pieces will appear here automatically.
+            {t('wardrobe.noItemsSub')}
           </Text>
         </View>
       ) : (

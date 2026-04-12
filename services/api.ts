@@ -22,7 +22,8 @@ export async function analyzePhoto(
   occasion: string | null = null,
   options: { shareWardrobe?: boolean; addToWardrobe?: boolean } = {},
   signal?: AbortSignal,
-  cancelToken?: string
+  cancelToken?: string,
+  locale?: string
 ): Promise<AnalysisResult> {
   const headers = await authHeaders();
 
@@ -36,6 +37,7 @@ export async function analyzePhoto(
   formData.append('shareWardrobe', String(options.shareWardrobe ?? true));
   formData.append('addToWardrobe', String(options.addToWardrobe ?? true));
   if (cancelToken) formData.append('cancelToken', cancelToken);
+  if (locale) formData.append('locale', locale);
 
   const response = await fetch(`${BACKEND_URL}/api/analyze`, {
     method: 'POST',

@@ -9,9 +9,11 @@ import { auth } from '@/services/firebase';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { BACKEND_URL } from '@/constants/config';
+import { useTranslation } from 'react-i18next';
 
 export default function ForgotPasswordScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export default function ForgotPasswordScreen() {
 
   const handleReset = async () => {
     if (!email.trim()) {
-      setError('Please enter your email address');
+      setError(t('forgotPassword.fillEmail'));
       return;
     }
     setError('');
@@ -33,20 +35,20 @@ export default function ForgotPasswordScreen() {
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       if (res.status === 404) {
-        setError('No account found with this email address');
+        setError(t('forgotPassword.noAccount'));
         return;
       }
       if (!res.ok) {
-        setError('Something went wrong. Please try again');
+        setError(t('forgotPassword.wentWrong'));
         return;
       }
       await sendPasswordResetEmail(auth, email.trim().toLowerCase());
       setSent(true);
     } catch (e: any) {
       const msg =
-        e.code === 'auth/invalid-email' ? 'Please enter a valid email address'
-        : e.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later'
-        : 'Something went wrong. Please try again';
+        e.code === 'auth/invalid-email' ? t('forgotPassword.invalidEmail')
+        : e.code === 'auth/too-many-requests' ? t('forgotPassword.tooManyRequests')
+        : t('forgotPassword.wentWrong');
       setError(msg);
     } finally {
       setLoading(false);
@@ -61,17 +63,15 @@ export default function ForgotPasswordScreen() {
         <View style={s.logoCircle}>
           <Ionicons name="mail-outline" size={44} color="#fff" />
         </View>
-        <Text style={[s.title, { marginTop: 24, textAlign: 'center' }]}>Check your inbox</Text>
+        <Text style={[s.title, { marginTop: 24, textAlign: 'center' }]}>{t('forgotPassword.checkInbox')}</Text>
         <Text style={[s.subtitle, { textAlign: 'center', marginTop: 10, lineHeight: 22 }]}>
-          We sent a password reset link to{'\n'}
-          <Text style={{ color: theme.primary, fontWeight: '600' }}>{email.trim().toLowerCase()}</Text>.
-          {'\n'}Follow the link to reset your password.
+          {t('forgotPassword.checkInboxMsg', { email: email.trim().toLowerCase() })}
         </Text>
         <TouchableOpacity
           style={[s.button, { marginTop: 40, width: '100%' }]}
           onPress={() => router.replace('/auth/login')}
         >
-          <Text style={s.buttonText}>Back to Sign In</Text>
+          <Text style={s.buttonText}>{t('forgotPassword.backToSignIn')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -88,8 +88,8 @@ export default function ForgotPasswordScreen() {
           <View style={s.logoCircle}>
             <Ionicons name="lock-open-outline" size={44} color="#fff" />
           </View>
-          <Text style={s.appName}>Reset Password</Text>
-          <Text style={s.tagline}>Enter your email to receive a reset link</Text>
+          <Text style={s.appName}>{t('forgotPassword.title')}</Text>
+          <Text style={s.tagline}>{t('forgotPassword.tagline')}</Text>
         </View>
 
         {/* Form */}
@@ -105,7 +105,7 @@ export default function ForgotPasswordScreen() {
             <Ionicons name="mail-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
             <TextInput
               style={s.input}
-              placeholder="Email address"
+              placeholder={t('forgotPassword.emailPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={email}
               onChangeText={setEmail}
@@ -123,16 +123,16 @@ export default function ForgotPasswordScreen() {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={s.buttonText}>Send Reset Link</Text>
+              : <Text style={s.buttonText}>{t('forgotPassword.sendResetLink')}</Text>
             }
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={s.footer}>
-          <Text style={s.footerText}>Remember your password? </Text>
+          <Text style={s.footerText}>{t('forgotPassword.rememberPassword')}</Text>
           <TouchableOpacity onPress={() => router.replace('/auth/login')}>
-            <Text style={s.linkText}>Sign in</Text>
+            <Text style={s.linkText}>{t('forgotPassword.signIn')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

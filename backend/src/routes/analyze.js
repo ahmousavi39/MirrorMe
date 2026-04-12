@@ -12,6 +12,7 @@ const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
 const FREE_UPLOADS_PER_WEEK = 2;
 const PREMIUM_UPLOADS_PER_MONTH = 100;
+const MAX_UPLOADS_PER_DAY = 20;
 
 // ── Cancel-token map ──────────────────────────────────────────────────────────────
 // Tracks in-flight requests by client-supplied UUID.
@@ -59,6 +60,12 @@ function getMonthKey() {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+/** Returns the day key for the current date, e.g. "2026-04-11" */
+function getDayKey() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+}
+
 /** Wardrobe document key — includes all 6 identifying fields so items that differ
  *  on even a single field (e.g. fit) are stored as separate wardrobe entries. */
 function wardrobeKey(category, color, fit, material, pattern, style) {
@@ -87,20 +94,29 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // ── 1. Check upload limits ────────────────────────────────────────────────
     const weekKey = getWeekKey();
     const monthKey = getMonthKey();
+    const dayKey = getDayKey();
     const userRef = db.collection('users').doc(uid);
     const weeklyRef = userRef.collection('weeklyUploads').doc(weekKey);
     const monthlyRef = userRef.collection('monthlyUploads').doc(monthKey);
+    const dailyRef = userRef.collection('dailyUploads').doc(dayKey);
 
-    const [userSnap, weeklySnap, monthlySnap] = await Promise.all([
+    const [userSnap, weeklySnap, monthlySnap, dailySnap] = await Promise.all([
       userRef.get(),
       weeklyRef.get(),
       monthlyRef.get(),
+      dailyRef.get(),
     ]);
 
     const userData = userSnap.data() || {};
     const isSubscribed = userData.isSubscribed === true;
     const weeklyCount = weeklySnap.exists ? (weeklySnap.data().count || 0) : 0;
     const monthlyCount = monthlySnap.exists ? (monthlySnap.data().count || 0) : 0;
+    const dailyCount = dailySnap.exists ? (dailySnap.data().count || 0) : 0;
+
+    // Hard daily cap (silent — returned as generic error to avoid leaking info)
+    if (dailyCount >= MAX_UPLOADS_PER_DAY) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
 
     // Pull profile fields already stored on the user doc (set during onboarding)
     const userProfile = {
@@ -140,6 +156,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     const occasion = req.body?.occasion || null;
     const shareWardrobe = req.body?.shareWardrobe !== 'false';
     const addToWardrobe = req.body?.addToWardrobe !== 'false';
+    const locale = req.body?.locale || 'en';
     cancelToken = req.body?.cancelToken || null;
     if (cancelToken) activeRequests.set(cancelToken, 'active');
 
@@ -212,7 +229,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // ── 4. Gemini — rate the outfit ───────────────────────────────────────────
     let geminiResult;
     try {
-      geminiResult = await rateOutfit(base64Image, clothingItems, mimeType, occasion, userProfile, wardrobeItems);
+      geminiResult = await rateOutfit(base64Image, clothingItems, mimeType, occasion, userProfile, wardrobeItems, locale);
     } catch (geminiErr) {
       console.error('Gemini error:', geminiErr.message);
       if (geminiErr.code === 'NO_PERSON') {
@@ -374,6 +391,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // Increment weekly counter (free users) and monthly counter (all users)
     batch.set(weeklyRef, { count: weeklyCount + 1 }, { merge: true });
     batch.set(monthlyRef, { count: monthlyCount + 1 }, { merge: true });
+    batch.set(dailyRef, { count: dailyCount + 1 }, { merge: true });
 
     // Create user document on first upload
     if (!userSnap.exists) {

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ahmad Mousavi - iOS Apps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 40px 20px;
+        }
+
+        .app-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: slideUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .app-card:nth-child(1) { animation-delay: 0.1s; }
+        .app-card:nth-child(2) { animation-delay: 0.2s; }
+        .app-card:nth-child(3) { animation-delay: 0.3s; }
+        .app-card:nth-child(4) { animation-delay: 0.4s; }
+        .app-card:nth-child(5) { animation-delay: 0.5s; }
+        .app-card:nth-child(6) { animation-delay: 0.6s; }
+
+        .app-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .app-name {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2d3748;
+        }
+
+        .app-description {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1em;
+        }
+
+        .app-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .app-link:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px 20px;
+            opacity: 0.9;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Amir Hossain Mousavi</h1>
+            <p class="subtitle">iOS Developer & App Creator</p>
+        </header>
+
+        <div class="apps-grid">
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="Transintel.png" alt="TransIntel Icon">
+                </div>
+                <h2 class="app-name">TransIntel</h2>
+                <p class="app-description">
+                    Intelligent translation app that helps you communicate seamlessly across languages with advanced AI-powered translation features.
+                </p>
+                <a href="https://transintel.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="Offline Focus.png" alt="Offline Focus Icon">
+                </div>
+                <h2 class="app-name">Offline Focus</h2>
+                <p class="app-description">
+                    Boost your productivity by staying focused. Block distractions and manage your time effectively with powerful focus tools.
+                </p>
+                <a href="https://offlinefocus.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="Knowly.png" alt="Knowly Icon">
+                </div>
+                <h2 class="app-name">Knowly</h2>
+                <p class="app-description">
+                    Interactive quiz app designed to test and expand your knowledge across various topics. Learn while having fun!
+                </p>
+                <a href="https://knowly.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="Knowly German.png" alt="Knowly DE Icon">
+                </div>
+                <h2 class="app-name">Knowly DE</h2>
+                <p class="app-description">
+                    German version of Knowly - Interactive quiz app to test and expand your knowledge. Perfect for German speakers!
+                </p>
+                <a href="https://knowlyde.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="4faelle.png" alt="4 Fälle Icon">
+                </div>
+                <h2 class="app-name">4 Fälle</h2>
+                <p class="app-description">
+                    Master German grammar cases (Nominativ, Akkusativ, Dativ, Genitiv) with interactive exercises and practice sessions.
+                </p>
+                <a href="https://4faelle.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="Learnintel.png" alt="LearnIntel Icon">
+                </div>
+                <h2 class="app-name">LearnIntel</h2>
+                <p class="app-description">
+                    Intelligent learning platform that adapts to your pace. Explore new subjects and enhance your skills with personalized content.
+                </p>
+                <a href="https://learnintel.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="Mirrorme.png" alt="MirrorMe Icon">
+                </div>
+                <h2 class="app-name">MirrorMe</h2>
+                <p class="app-description">
+                    Your AI-powered personal stylist. Upload any outfit photo to get an instant style score, personalized feedback, and occasion-specific styling tips.
+                </p>
+                <a href="https://mirrorme.ahmousavi.com" class="app-link" target="_blank">Learn More</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Amir Hossain Mousavi. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
