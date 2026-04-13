@@ -189,10 +189,10 @@
     "categoryRequiredMsg": "Veuillez entrer une catégorie pour cet article.",
     "scoreLabels": {
       "styleIcon": "Icône de style",
-      "lookingGreat": "Super look !",
+      "lookingGreat": "Vraiment bien !",
       "solidLook": "Look solide",
       "prettyGood": "Plutôt bien",
-      "needsWork": "À améliorer",
+      "needsWork": "À retravailler",
       "majorMakeover": "Grand relooking nécessaire"
     }
   },

@@ -12,9 +12,9 @@ function getScoreColor(score: number): string {
 }
 
 function getScoreLabel(score: number): string {
-  if (score >= 9) return 'Style Icon ✨';
+  if (score >= 9) return 'Style Icon';
   if (score >= 8) return 'Looking Great!';
-  if (score >= 7) return 'Solid Look 👍';
+  if (score >= 7) return 'Solid Look';
   if (score >= 6) return 'Pretty Good';
   if (score >= 5) return 'Needs Work';
   return 'Major Makeover';

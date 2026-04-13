@@ -236,6 +236,135 @@ const editStyles = (theme: any) => StyleSheet.create({
   saveBtnText:{ color: '#fff', fontSize: 16, fontWeight: '700' },
 });
 
+// ── Photo slide-up modal ──────────────────────────────────────────────────────
+interface PhotoSlideModalProps {
+  visible: boolean;
+  imageUri: string | null;
+  onClose: () => void;
+}
+
+function PhotoSlideModal({ visible, imageUri, onClose }: PhotoSlideModalProps) {
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  // Keep modal mounted until the closing animation finishes
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setMounted(true);
+      // Give one frame for the Modal to render before animating
+      requestAnimationFrame(() => {
+        Animated.spring(slideAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 9,
+          useNativeDriver: true,
+        }).start();
+      });
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 240,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) setMounted(false);
+      });
+    }
+  }, [visible]);
+
+  if (!mounted) return null;
+
+  return (
+    <Modal visible={mounted} animationType="none" transparent onRequestClose={onClose}>
+      <Animated.View style={[photoModalStyles.overlay, { opacity: slideAnim }]}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+      </Animated.View>
+      <Animated.View
+        style={[
+          photoModalStyles.sheet,
+          {
+            transform: [
+              {
+                translateY: slideAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [Dimensions.get('window').height, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        {/* Handle */}
+        <View style={photoModalStyles.handle} />
+
+        {/* Close button */}
+        <TouchableOpacity style={photoModalStyles.closeBtn} onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="close" size={20} color="#fff" />
+        </TouchableOpacity>
+
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={photoModalStyles.image}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={photoModalStyles.placeholder}>
+            <Ionicons name="shirt-outline" size={64} color="rgba(255,255,255,0.4)" />
+          </View>
+        )}
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const photoModalStyles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  sheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '88%',
+    backgroundColor: '#111',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  image: {
+    width: '100%',
+    flex: 1,
+  },
+  placeholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
+
 export default function ResultsScreen() {
   const { theme } = useTheme();
   const { result, imageUri, setResult, clear } = useAnalysis();
@@ -255,6 +384,7 @@ export default function ResultsScreen() {
   // Local editable copy of clothing items — stays in sync with context on edit
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [addToWardrobe, setAddToWardrobe] = useState(true);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
@@ -503,10 +633,15 @@ export default function ResultsScreen() {
                       <View style={{ flex: 1 }}>
                         <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
                         {itemLabel ? (
-                          <View style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}>
+                          <TouchableOpacity
+                            style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}
+                            onPress={() => setShowPhotoModal(true)}
+                            activeOpacity={0.7}
+                          >
                             <Ionicons name="shirt-outline" size={11} color={theme.primary} />
                             <Text style={[s.tipItemChipText, { color: theme.primary }]}>{itemLabel}</Text>
-                          </View>
+                            <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
+                          </TouchableOpacity>
                         ) : null}
                       </View>
                     </View>
@@ -536,10 +671,15 @@ export default function ResultsScreen() {
                       <View style={{ flex: 1 }}>
                         <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
                         {itemLabel ? (
-                          <View style={[s.tipItemChip, { backgroundColor: `${theme.secondary}14`, borderColor: `${theme.secondary}35` }]}>
+                          <TouchableOpacity
+                            style={[s.tipItemChip, { backgroundColor: `${theme.secondary}14`, borderColor: `${theme.secondary}35` }]}
+                            onPress={() => setShowPhotoModal(true)}
+                            activeOpacity={0.7}
+                          >
                             <Ionicons name="shirt-outline" size={11} color={theme.secondary} />
                             <Text style={[s.tipItemChipText, { color: theme.secondary }]}>{itemLabel}</Text>
-                          </View>
+                            <Ionicons name="image-outline" size={11} color={theme.secondary} style={{ marginLeft: 2 }} />
+                          </TouchableOpacity>
                         ) : null}
                       </View>
                     </View>
@@ -594,6 +734,13 @@ export default function ResultsScreen() {
           onAlert={showAlert}
         />
       )}
+
+      {/* ── Photo slide-up modal ──────────────────────────────────── */}
+      <PhotoSlideModal
+        visible={showPhotoModal}
+        imageUri={imageUri || result.imageUrl || null}
+        onClose={() => setShowPhotoModal(false)}
+      />
 
       <CustomAlert
         visible={customAlert.visible}

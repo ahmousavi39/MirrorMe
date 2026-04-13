@@ -247,43 +247,67 @@ async function translateClothingItems(items, languageName) {
 
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
-    generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 1024,
+      responseMimeType: 'application/json',
+    },
   });
 
-  const itemsList = items
-    .map((item, i) => {
-      const fields = {
-        category: item.category || null,
-        color: item.color || null,
-        fit: item.fit || null,
-        material: item.material || null,
-        pattern: item.pattern || null,
-        style: item.style || null,
-      };
-      return `${i}: ${JSON.stringify(fields)}`;
-    })
-    .join('\n');
+  // Build a clean JSON array as input so Gemini knows exactly what to return
+  const inputArray = items.map((item) => ({
+    category: item.category || null,
+    color: item.color || null,
+    fit: item.fit || null,
+    material: item.material || null,
+    pattern: item.pattern || null,
+    style: item.style || null,
+  }));
 
-  const prompt = `Translate the string field values of these clothing items from English into ${languageName}.
+  const prompt = `You are a translator. Translate the string field VALUES of each object in the JSON array below from English into ${languageName}.
+
 Rules:
 - Keep null values as null.
-- Do NOT translate color hex codes (e.g. #1a1a2e).
-- ALL JSON keys must stay in English exactly as-is.
-- Return ONLY a valid JSON array with exactly ${items.length} objects in the same order.
-- No markdown, no explanation.
+- Do NOT translate color hex codes (e.g. "#1a1a2e" stays as "#1a1a2e").
+- ALL JSON keys must stay exactly in English (category, color, fit, material, pattern, style).
+- Return a JSON array with the same number of objects in the same order.
 
-Items:
-${itemsList}
-
-Output:`;
+Input:
+${JSON.stringify(inputArray)}`;
 
   try {
     const result = await model.generateContent(prompt);
     const raw = result.response.text().trim();
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) return null;
-    const parsed = JSON.parse(match[0]);
-    if (!Array.isArray(parsed) || parsed.length !== items.length) return null;
+
+    // responseMimeType=application/json means the response should be clean JSON,
+    // but still try to extract an array in case Gemini wraps it
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (!match) {
+        console.warn('translateClothingItems: no JSON array in response:', raw.slice(0, 200));
+        return null;
+      }
+      parsed = JSON.parse(match[0]);
+    }
+
+    // Gemini sometimes wraps in { "items": [...] } or similar
+    if (!Array.isArray(parsed)) {
+      const nested = parsed?.items || parsed?.clothing || parsed?.result || parsed?.data;
+      if (Array.isArray(nested)) parsed = nested;
+      else {
+        console.warn('translateClothingItems: response is not an array:', JSON.stringify(parsed).slice(0, 200));
+        return null;
+      }
+    }
+
+    if (parsed.length !== items.length) {
+      console.warn(`translateClothingItems: length mismatch (got ${parsed.length}, expected ${items.length})`);
+      return null;
+    }
+
     return parsed.map((item) => ({
       category: typeof item.category === 'string' ? item.category : null,
       color: typeof item.color === 'string' ? item.color : null,
