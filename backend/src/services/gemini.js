@@ -216,8 +216,11 @@ Rules:
     .filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c))
     .slice(0, 5);
 
-  // Parse clothingItemsLocalized — no longer embedded in analysis response
-  // Translation is handled by a separate translateClothingItems() call in analyze.js
+  // Translate clothing items into the user's language via a dedicated focused call
+  let clothingItemsLocalized = null;
+  if (languageName && clothingItems && clothingItems.length > 0) {
+    clothingItemsLocalized = await translateClothingItems(clothingItems, languageName);
+  }
 
   return {
     score: finalScore,
@@ -228,7 +231,73 @@ Rules:
     occasionTipRefs,
     occasionScores,
     colorPalette,
+    clothingItemsLocalized,
   };
+}
+
+/**
+ * Translates the string fields of detected clothing items into a target language.
+ * Runs as a separate, focused Gemini call after the main analysis.
+ *
+ * @param {Array}  items        — clothingItems array (English)
+ * @param {string} languageName — e.g. "Simplified Chinese (zh-Hans)"
+ * @returns {Promise<Array|null>}
+ */
+async function translateClothingItems(items, languageName) {
+  if (!items || items.length === 0 || !languageName) return null;
+
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3-flash-preview',
+    generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
+  });
+
+  const itemsList = items
+    .map((item, i) => {
+      const fields = {
+        category: item.category || null,
+        color: item.color || null,
+        fit: item.fit || null,
+        material: item.material || null,
+        pattern: item.pattern || null,
+        style: item.style || null,
+      };
+      return `${i}: ${JSON.stringify(fields)}`;
+    })
+    .join('\n');
+
+  const prompt = `Translate the string field values of these clothing items from English into ${languageName}.
+Rules:
+- Keep null values as null.
+- Do NOT translate color hex codes (e.g. #1a1a2e).
+- ALL JSON keys must stay in English exactly as-is.
+- Return ONLY a valid JSON array with exactly ${items.length} objects in the same order.
+- No markdown, no explanation.
+
+Items:
+${itemsList}
+
+Output:`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const raw = result.response.text().trim();
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) return null;
+    const parsed = JSON.parse(match[0]);
+    if (!Array.isArray(parsed) || parsed.length !== items.length) return null;
+    return parsed.map((item) => ({
+      category: typeof item.category === 'string' ? item.category : null,
+      color: typeof item.color === 'string' ? item.color : null,
+      fit: typeof item.fit === 'string' ? item.fit : null,
+      material: typeof item.material === 'string' ? item.material : null,
+      pattern: typeof item.pattern === 'string' ? item.pattern : null,
+      style: typeof item.style === 'string' ? item.style : null,
+      tags: [],
+    }));
+  } catch (e) {
+    console.warn('translateClothingItems failed:', e.message);
+    return null;
+  }
 }
 
 /**
