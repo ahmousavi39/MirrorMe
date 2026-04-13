@@ -31,6 +31,7 @@ export interface AnalysisResult {
   occasionTips: string[];
   occasionTipItems?: (string | null)[];
   clothingItems: ClothingItem[];
+  clothingItemsLocalized?: ClothingItem[] | null;
   clothingItemKeys?: (string | null)[];
   occasion: Occasion | null;
   occasionScores: Record<Occasion, number>;
@@ -55,6 +56,7 @@ export interface HistoryItem {
   occasionTips?: string[];
   occasionTipItems?: (string | null)[];
   clothingItems: ClothingItem[];
+  clothingItemsLocalized?: ClothingItem[] | null;
   clothingItemKeys?: (string | null)[];
   occasion: Occasion | null;
   occasionScores?: Record<Occasion, number>;

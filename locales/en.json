@@ -188,9 +188,9 @@
     "categoryRequired": "Category Required",
     "categoryRequiredMsg": "Please enter a category for this item.",
     "scoreLabels": {
-      "styleIcon": "Style Icon ✨",
+      "styleIcon": "Style Icon",
       "lookingGreat": "Looking Great!",
-      "solidLook": "Solid Look 👍",
+      "solidLook": "Solid Look",
       "prettyGood": "Pretty Good",
       "needsWork": "Needs Work",
       "majorMakeover": "Major Makeover"

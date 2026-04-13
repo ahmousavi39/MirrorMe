@@ -89,7 +89,7 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
   };
   const languageName = languageMap[locale] || null;
   const languageInstruction = languageName
-    ? `IMPORTANT: Write all user-facing text (feedback, styleTips, occasionTips) in ${languageName}. All other JSON keys and structure must remain in English.`
+    ? `IMPORTANT: Write all user-facing text in ${languageName}, including: feedback, styleTips, and occasionTips. ALL JSON keys must remain in English.`
     : '';
 
   const prompt = `You are a professional fashion stylist with 10+ years of experience.
@@ -215,6 +215,9 @@ Rules:
   const colorPalette = rawPalette
     .filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c))
     .slice(0, 5);
+
+  // Parse clothingItemsLocalized — no longer embedded in analysis response
+  // Translation is handled by a separate translateClothingItems() call in analyze.js
 
   return {
     score: finalScore,

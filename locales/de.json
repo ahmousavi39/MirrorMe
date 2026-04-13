@@ -188,9 +188,9 @@
     "categoryRequired": "Kategorie erforderlich",
     "categoryRequiredMsg": "Bitte gib eine Kategorie für dieses Teil ein.",
     "scoreLabels": {
-      "styleIcon": "Stil-Ikone ✨",
+      "styleIcon": "Stil-Ikone",
       "lookingGreat": "Super ausgesehen!",
-      "solidLook": "Solider Look 👍",
+      "solidLook": "Solider Look",
       "prettyGood": "Ganz gut",
       "needsWork": "Verbesserungsbedarf",
       "majorMakeover": "Großes Makeover nötig"

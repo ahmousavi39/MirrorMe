@@ -41,7 +41,7 @@ function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void
         </Text>
         {item.clothingItems.length > 0 && (
           <View style={s.tags}>
-            {item.clothingItems.slice(0, 3).map((c, i) => (
+            {(item.clothingItemsLocalized ?? item.clothingItems).slice(0, 3).map((c, i) => (
               <View key={i} style={[s.tag, { backgroundColor: `${theme.primary}18` }]}>
                 <Text style={[s.tagText, { color: theme.primary }]}>{c.category}</Text>
               </View>

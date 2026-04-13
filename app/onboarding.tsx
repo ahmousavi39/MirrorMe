@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
+  ScrollView, Platform, ActivityIndicator,
   Animated, Dimensions, Keyboard,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -63,32 +63,51 @@ export default function OnboardingScreen() {
   // Step 2 — Style categories
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const bottomBarPad = useRef(new Animated.Value(0)).current;
+  const slideAnim    = useRef(new Animated.Value(0)).current;
+  const keyboardPad   = useRef(new Animated.Value(0)).current;
+  const scrollRef     = useRef<ScrollView>(null);
+
+  // Y-positions of each body-stat input, set via onLayout — Fabric-compatible
+  const ageY      = useRef(0);
+  const heightY   = useRef(0);
+  const weightY   = useRef(0);
+  // Y of the currently focused input (0 = none / not a scrollable input)
+  const focusedY  = useRef<number | null>(null);
 
   useEffect(() => {
-    const show = Keyboard.addListener(
+    const onShow = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (e) => {
-        Animated.timing(bottomBarPad, {
+        Animated.timing(keyboardPad, {
           toValue: e.endCoordinates.height,
-          duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
+          duration: Platform.OS === 'ios' ? (e.duration || 250) : 220,
           useNativeDriver: false,
-        }).start();
-      }
+        }).start(() => {
+          // Scroll only after the layout animation finishes
+          if (focusedY.current !== null) {
+            const target = Math.max(0, focusedY.current - 160);
+            scrollRef.current?.scrollTo({ y: target, animated: true });
+          }
+        });
+      },
     );
-    const hide = Keyboard.addListener(
+    const onHide = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       (e) => {
-        Animated.timing(bottomBarPad, {
+        Animated.timing(keyboardPad, {
           toValue: 0,
-          duration: Platform.OS === 'ios' ? e.duration || 250 : 200,
+          duration: Platform.OS === 'ios' ? (e.duration || 250) : 220,
           useNativeDriver: false,
         }).start();
-      }
+      },
     );
-    return () => { show.remove(); hide.remove(); };
+    return () => { onShow.remove(); onHide.remove(); };
   }, []);
+
+  // Refs for tab-order focus between body-stat inputs
+  const ageRef    = useRef<TextInput>(null);
+  const heightRef = useRef<TextInput>(null);
+  const weightRef = useRef<TextInput>(null);
 
   // Load existing profile on mount → pre-fill fields, compute which steps to show
   useEffect(() => {
@@ -189,7 +208,7 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <View style={s.container}>
+    <Animated.View style={[s.container, { paddingBottom: keyboardPad }]}>
       {/* Progress bar */}
       <View style={s.progressRow}>
         {Array.from({ length: activeSteps.length }).map((_, i) => (
@@ -199,6 +218,7 @@ export default function OnboardingScreen() {
 
       <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: slideAnim }] }]}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={s.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -256,9 +276,13 @@ export default function OnboardingScreen() {
 
               {/* Age */}
               <Text style={s.fieldLabel}>{t('onboarding.age')}</Text>
-              <View style={s.inputWrapper}>
+              <View
+                style={s.inputWrapper}
+                onLayout={(e) => { ageY.current = e.nativeEvent.layout.y; }}
+              >
                 <Ionicons name="calendar-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
+                  ref={ageRef}
                   style={s.input}
                   placeholder={t('onboarding.agePlaceholder')}
                   placeholderTextColor={theme.placeholder}
@@ -266,14 +290,22 @@ export default function OnboardingScreen() {
                   onChangeText={setAge}
                   keyboardType="numeric"
                   returnKeyType="next"
+                  onFocus={() => { focusedY.current = ageY.current; }}
+                  onBlur={() => { focusedY.current = null; }}
+                  onSubmitEditing={() => heightRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               </View>
 
               {/* Height */}
               <Text style={s.fieldLabel}>{t('onboarding.heightLabel')}</Text>
-              <View style={s.inputWrapper}>
+              <View
+                style={s.inputWrapper}
+                onLayout={(e) => { heightY.current = e.nativeEvent.layout.y; }}
+              >
                 <Ionicons name="resize-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
+                  ref={heightRef}
                   style={s.input}
                   placeholder={t('onboarding.heightPlaceholder')}
                   placeholderTextColor={theme.placeholder}
@@ -281,14 +313,22 @@ export default function OnboardingScreen() {
                   onChangeText={setHeight}
                   keyboardType="numeric"
                   returnKeyType="next"
+                  onFocus={() => { focusedY.current = heightY.current; }}
+                  onBlur={() => { focusedY.current = null; }}
+                  onSubmitEditing={() => weightRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               </View>
 
               {/* Weight */}
               <Text style={s.fieldLabel}>{t('onboarding.weightLabel')}</Text>
-              <View style={s.inputWrapper}>
+              <View
+                style={s.inputWrapper}
+                onLayout={(e) => { weightY.current = e.nativeEvent.layout.y; }}
+              >
                 <Ionicons name="barbell-outline" size={20} color={theme.placeholder} style={s.inputIcon} />
                 <TextInput
+                  ref={weightRef}
                   style={s.input}
                   placeholder={t('onboarding.weightPlaceholder')}
                   placeholderTextColor={theme.placeholder}
@@ -296,6 +336,8 @@ export default function OnboardingScreen() {
                   onChangeText={setWeight}
                   keyboardType="numeric"
                   returnKeyType="done"
+                  onFocus={() => { focusedY.current = weightY.current; }}
+                  onBlur={() => { focusedY.current = null; }}
                 />
               </View>
             </View>
@@ -337,7 +379,7 @@ export default function OnboardingScreen() {
       </Animated.View>
 
       {/* Bottom navigation */}
-      <Animated.View style={[s.bottomBar, { marginBottom: bottomBarPad }]}>
+      <Animated.View style={s.bottomBar}>
         {stepIndex > 0 ? (
           <TouchableOpacity style={s.backBtn} onPress={handleBack}>
             <Ionicons name="arrow-back" size={20} color={theme.text} />
@@ -373,7 +415,7 @@ export default function OnboardingScreen() {
         icon={customAlert.icon}
         onClose={() => setCustomAlert((a) => ({ ...a, visible: false }))}
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -401,7 +443,7 @@ function makeStyles(theme: any) {
     },
     scrollContent: {
       paddingHorizontal: 24,
-      paddingBottom: 24,
+      paddingBottom: Platform.OS === 'ios' ? 108 : 88,
       flexGrow: 1,
     },
     stepContainer: {

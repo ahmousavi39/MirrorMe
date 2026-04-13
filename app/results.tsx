@@ -363,7 +363,7 @@ export default function ResultsScreen() {
           {(result.clothingItems?.length ?? 0) > 0 && (
             <View style={s.photoTagsContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
-                {result.clothingItems.map((item, i) => (
+                {(result.clothingItemsLocalized ?? result.clothingItems).map((item, i) => (
                   addToWardrobe ? (
                     <TouchableOpacity
                       key={i}

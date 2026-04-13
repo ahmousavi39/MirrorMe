@@ -188,9 +188,9 @@
     "categoryRequired": "需要填写分类",
     "categoryRequiredMsg": "请为该物品输入分类。",
     "scoreLabels": {
-      "styleIcon": "造型达人 ✨",
+      "styleIcon": "造型达人",
       "lookingGreat": "非常好看！",
-      "solidLook": "造型不错 👍",
+      "solidLook": "造型不错",
       "prettyGood": "相当不错",
       "needsWork": "还需改进",
       "majorMakeover": "需要大改造"

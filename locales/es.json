@@ -188,9 +188,9 @@
     "categoryRequired": "Categoría requerida",
     "categoryRequiredMsg": "Por favor, introduce una categoría para esta prenda.",
     "scoreLabels": {
-      "styleIcon": "Ícono de estilo ✨",
+      "styleIcon": "Ícono de estilo",
       "lookingGreat": "¡Te ves genial!",
-      "solidLook": "Look sólido 👍",
+      "solidLook": "Look sólido",
       "prettyGood": "Bastante bien",
       "needsWork": "Hay que mejorar",
       "majorMakeover": "Necesita un gran cambio"
