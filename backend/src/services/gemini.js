@@ -35,7 +35,6 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
 
   // Build user profile context
   const profileLines = [];
-  if (userProfile.name)   profileLines.push(`Name: ${userProfile.name}`);
   if (userProfile.sex)    profileLines.push(`Sex: ${userProfile.sex}`);
   if (userProfile.age)    profileLines.push(`Age: ${userProfile.age}`);
   if (userProfile.heightCm) profileLines.push(`Height: ${userProfile.heightCm} cm`);
