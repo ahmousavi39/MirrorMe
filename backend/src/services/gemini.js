@@ -308,14 +308,26 @@ Output:`;
  * @param {string} mimeType — e.g. 'image/jpeg'
  * @returns {Promise<Array>} clothingItems
  */
-async function extractClothingFromImage(base64Image, mimeType = 'image/jpeg') {
+async function extractClothingFromImage(base64Image, mimeType = 'image/jpeg', locale = 'en') {
   const imagePart = { inlineData: { data: base64Image, mimeType } };
+
+  const languageMap = {
+    'zh-Hans': 'Simplified Chinese (zh-Hans)',
+    'ja': 'Japanese',
+    'de': 'German',
+    'fr': 'French',
+    'es': 'Spanish',
+  };
+  const languageName = languageMap[locale] || null;
+  const langInstruction = languageName
+    ? `Write all string values (category, color, material, pattern, fit, style) in ${languageName}. ALL JSON keys must stay in English.`
+    : '';
 
   const attempts = [
     {
       temperature: 0.1,
       prompt: `You are a fashion item detector. Identify every clothing item visible in this photo.
-
+${langInstruction ? `\n${langInstruction}\n` : ''}
 Output ONLY a raw JSON object. No markdown. No code fences. No comments. No extra text.
 
 Schema — each item has exactly these 6 keys:
@@ -326,7 +338,7 @@ Schema — each item has exactly these 6 keys:
   "fit":      string or null  (e.g. "slim", "regular", "oversized", "baggy", "fitted")
   "style":    string or null  (e.g. "casual", "formal", "streetwear", "sporty", "preppy")
 
-All values must be plain ASCII strings or null. No arrays. No nested objects. No special characters.
+All values must be plain strings or null. No arrays. No nested objects.
 
 Example output:
 {"items":[{"category":"White T-Shirt","color":"white","material":"cotton","pattern":"solid","fit":"regular","style":"casual"},{"category":"Blue Jeans","color":"blue","material":"denim","pattern":"solid","fit":"slim","style":"casual"}]}
@@ -335,7 +347,7 @@ If no clothing is visible: {"items":[]}`,
     },
     {
       temperature: 0.0,
-      prompt: `List clothing items in this photo as JSON. Output only the JSON, nothing else.
+      prompt: `List clothing items in this photo as JSON. Output only the JSON, nothing else.${langInstruction ? ` ${langInstruction}` : ''}
 Format: {"items":[{"category":"name","color":"color or null","material":"material or null","pattern":"pattern or null","fit":"fit or null","style":"style or null"}]}
 One object per garment. All values are strings or the word null. No arrays inside objects.
 If no clothing: {"items":[]}`,
