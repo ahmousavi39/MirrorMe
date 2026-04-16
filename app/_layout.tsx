@@ -19,13 +19,18 @@ function RootNavigator() {
     if (loading) return;
     const inAuthGroup = segments[0] === 'auth';
     const inOnboarding = segments[0] === 'onboarding';
+    const inTabs = segments[0] === '(tabs)';
+    const inResults = segments[0] === 'results';
     if (!user && !inAuthGroup) {
       router.replace('/auth/login');
     } else if (user && inAuthGroup) {
       router.replace(isNewUser ? '/onboarding' : '/(tabs)');
-    } else if (user && !inOnboarding && isNewUser) {
+    } else if (user && isNewUser && !inOnboarding) {
       // Came back to app mid-onboarding (e.g. app killed)
       router.replace('/onboarding');
+    } else if (user && !isNewUser && !inTabs && !inResults) {
+      // Reopened app as a returning user — land on index, redirect to tabs
+      router.replace('/(tabs)');
     }
   }, [user, loading, isNewUser, segments]);
 

@@ -73,14 +73,17 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
 
         if (!idToken && !accessToken) {
           onError(t('social.googleNoToken'));
+          setGoogleLoading(false);
+          onLoadingChange?.(false);
           return;
         }
         const credential = GoogleAuthProvider.credential(idToken, accessToken);
         await finishSocialAuth(credential as any);
+        // Keep loading=true — AuthContext is still fetching backend data.
+        // The component will unmount on navigation, clearing state naturally.
       } catch (e: any) {
         console.error('[Google sign-in error]', e?.code, e?.message);
         onError(socialErrorMessage(e) ?? t('social.googleFailed'));
-      } finally {
         setGoogleLoading(false);
         onLoadingChange?.(false);
       }
@@ -155,12 +158,17 @@ export default function SocialSignInButtons({ onError, onLoadingChange }: Props)
       const provider = new OAuthProvider('apple.com');
       const firebaseCredential = provider.credential({ idToken: identityToken, rawNonce });
       await finishSocialAuth(firebaseCredential as any);
+      // Keep loading=true — AuthContext is still fetching backend data.
+      // The component will unmount on navigation, clearing state naturally.
     } catch (e: any) {
       // ERR_REQUEST_CANCELED / ERR_CANCELED = user dismissed the sheet
-      if (e.code === 'ERR_REQUEST_CANCELED' || e.code === 'ERR_CANCELED') return;
+      if (e.code === 'ERR_REQUEST_CANCELED' || e.code === 'ERR_CANCELED') {
+        setAppleLoading(false);
+        onLoadingChange?.(false);
+        return;
+      }
       console.error('[Apple sign-in error]', e?.code, e?.message);
       onError(socialErrorMessage(e) ?? t('social.appleFailed'));
-    } finally {
       setAppleLoading(false);
       onLoadingChange?.(false);
     }

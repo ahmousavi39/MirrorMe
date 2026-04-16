@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { signInWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
@@ -95,9 +95,7 @@ export default function LoginScreen() {
       >
         {/* Logo */}
         <View style={s.logoContainer}>
-          <View style={s.logoCircle}>
-            <Ionicons name="shirt" size={44} color="#fff" />
-          </View>
+          <Image source={require('@/assets/signin.png')} style={{ width: 120, height: 120, resizeMode: 'contain' }} />
           <Text style={s.appName}>{t('login.appName')}</Text>
           <Text style={s.tagline}>{t('login.tagline')}</Text>
         </View>
