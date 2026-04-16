@@ -8,6 +8,7 @@
     "continue": "Continuar",
     "error": "Error",
     "remove": "Eliminar",
+    "delete": "Eliminar",
     "permissionNeeded": "Permiso necesario"
   },
 
@@ -71,7 +72,10 @@
     "couldntLoad": "No se pudo cargar el historial",
     "noAnalyses": "Aún no hay análisis",
     "noAnalysesSub": "¡Sube tu primer outfit para empezar!",
-    "failedToLoad": "Error al cargar el historial"
+    "failedToLoad": "Error al cargar el historial",
+    "deleteTitle": "Eliminar análisis",
+    "deleteConfirm": "¿Estás seguro/a de que quieres eliminar este análisis? Esta acción no se puede deshacer.",
+    "deleteFailed": "No se pudo eliminar el análisis"
   },
 
   "profile": {

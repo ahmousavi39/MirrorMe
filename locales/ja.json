@@ -8,6 +8,7 @@
     "continue": "続ける",
     "error": "エラー",
     "remove": "削除",
+    "delete": "削除",
     "permissionNeeded": "権限が必要です"
   },
 
@@ -71,7 +72,10 @@
     "couldntLoad": "履歴を読み込めませんでした",
     "noAnalyses": "まだ分析がありません",
     "noAnalysesSub": "最初のコーディネートをアップロードして始めましょう！",
-    "failedToLoad": "履歴の読み込みに失敗しました"
+    "failedToLoad": "履歴の読み込みに失敗しました",
+    "deleteTitle": "分析を削除",
+    "deleteConfirm": "この分析を削除してもよろしいですか？この操作は元に戻せません。",
+    "deleteFailed": "分析の削除に失敗しました"
   },
 
   "profile": {

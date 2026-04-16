@@ -88,6 +88,19 @@ export async function getHistory(): Promise<HistoryItem[]> {
   return (data.uploads || []) as HistoryItem[];
 }
 
+// ── DELETE /api/user/history/:uploadId ───────────────────────────────────────────
+export async function deleteHistoryItem(id: string): Promise<void> {
+  const headers = await authHeaders();
+  const response = await fetch(`${BACKEND_URL}/api/user/history/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to delete history item');
+  }
+}
+
 // ── POST /api/user/init ───────────────────────────────────────────────────────────
 // Called on first login to create the Firestore user document.
 export async function initUser(): Promise<{ isNewUser: boolean }> {

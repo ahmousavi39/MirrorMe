@@ -97,6 +97,29 @@ router.get('/history', verifyToken, async (req, res) => {
   }
 });
 
+// ── DELETE /api/user/history/:uploadId ───────────────────────────────────────────
+// Deletes a single upload result for the authenticated user
+router.delete('/history/:uploadId', verifyToken, async (req, res) => {
+  try {
+    const docRef = db
+      .collection('users')
+      .doc(req.uid)
+      .collection('uploads')
+      .doc(req.params.uploadId);
+
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: 'Upload not found' });
+    }
+
+    await docRef.delete();
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Delete upload error:', error);
+    return res.status(500).json({ error: 'Failed to delete upload' });
+  }
+});
+
 // ── GET /api/user/history/:uploadId ──────────────────────────────────────────────
 // Returns a single upload result by ID
 router.get('/history/:uploadId', verifyToken, async (req, res) => {

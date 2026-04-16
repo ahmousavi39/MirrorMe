@@ -8,6 +8,7 @@
     "continue": "Continuer",
     "error": "Erreur",
     "remove": "Supprimer",
+    "delete": "Supprimer",
     "permissionNeeded": "Permission requise"
   },
 
@@ -71,7 +72,10 @@
     "couldntLoad": "Impossible de charger l'historique",
     "noAnalyses": "Aucune analyse pour l'instant",
     "noAnalysesSub": "Télécharge ta première tenue pour commencer !",
-    "failedToLoad": "Échec du chargement de l'historique"
+    "failedToLoad": "Échec du chargement de l'historique",
+    "deleteTitle": "Supprimer l'analyse",
+    "deleteConfirm": "Es-tu sûr(e) de vouloir supprimer cette analyse ? Cette action est irréversible.",
+    "deleteFailed": "Échec de la suppression de l'analyse"
   },
 
   "profile": {

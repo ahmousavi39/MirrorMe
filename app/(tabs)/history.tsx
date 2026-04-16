@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Platform, RefreshControl,
+  ActivityIndicator, Platform, RefreshControl, Image, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
-import { getHistory } from '@/services/api';
+import { getHistory, deleteHistoryItem } from '@/services/api';
 import { HistoryItem } from '@/types/app';
 import { useTranslation } from 'react-i18next';
 
@@ -22,7 +22,7 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void }) {
+function HistoryCard({ item, onPress, onDelete }: { item: HistoryItem; onPress: () => void; onDelete: () => void }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const color = getScoreColor(item.score);
@@ -30,10 +30,24 @@ function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void
 
   return (
     <TouchableOpacity style={s.card} onPress={onPress} activeOpacity={0.75}>
-      <View style={[s.scoreBadge, { backgroundColor: `${color}18`, borderColor: `${color}40` }]}>
-        <Text style={[s.scoreNum, { color }]}>{item.score.toFixed(1)}</Text>
-        <Text style={[s.scoreDenom, { color }]}>/10</Text>
+      {/* Thumbnail / score badge */}
+      <View style={s.photoWrap}>
+        {item.imageUrl ? (
+          <>
+            <Image source={{ uri: item.imageUrl }} style={s.photo} resizeMode="cover" />
+            <View style={[s.scoreOverlay, { backgroundColor: `${color}D9` }]}>
+              <Text style={s.scoreOverlayText}>{item.score.toFixed(1)}</Text>
+            </View>
+          </>
+        ) : (
+          <View style={[s.scoreBadge, { backgroundColor: `${color}18`, borderColor: `${color}40` }]}>
+            <Text style={[s.scoreNum, { color }]}>{item.score.toFixed(1)}</Text>
+            <Text style={[s.scoreDenom, { color }]}>/10</Text>
+          </View>
+        )}
       </View>
+
+      {/* Info */}
       <View style={s.info}>
         <Text style={[s.date, { color: theme.textSecondary }]}>{formatDate(item.createdAt)}</Text>
         <Text style={[s.feedback, { color: theme.text }]} numberOfLines={2}>
@@ -54,7 +68,14 @@ function HistoryCard({ item, onPress }: { item: HistoryItem; onPress: () => void
           </View>
         )}
       </View>
-      <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+
+      {/* Actions */}
+      <View style={s.actions}>
+        <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} style={{ marginBottom: 8 }} />
+        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="trash-outline" size={18} color={theme.error} />
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -89,6 +110,28 @@ export default function HistoryScreen() {
   const handleRefresh = () => {
     setRefreshing(true);
     load(true);
+  };
+
+  const handleDelete = (item: HistoryItem) => {
+    Alert.alert(
+      t('history.deleteTitle'),
+      t('history.deleteConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteHistoryItem(item.id);
+              setUploads((prev) => prev.filter((u) => u.id !== item.id));
+            } catch {
+              Alert.alert(t('history.deleteFailed'));
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handlePress = (item: HistoryItem) => {
@@ -152,7 +195,13 @@ export default function HistoryScreen() {
         <FlatList
           data={uploads}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <HistoryCard item={item} onPress={() => handlePress(item)} />}
+          renderItem={({ item }) => (
+            <HistoryCard
+              item={item}
+              onPress={() => handlePress(item)}
+              onDelete={() => handleDelete(item)}
+            />
+          )}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -170,11 +219,23 @@ export default function HistoryScreen() {
 
 const cardStyles = (theme: any) => StyleSheet.create({
   card: {
-    backgroundColor: theme.card, borderRadius: 14, padding: 14,
+    backgroundColor: theme.card, borderRadius: 14, padding: 12,
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
+  photoWrap: {
+    width: 72, height: 72, borderRadius: 10, overflow: 'hidden',
+    backgroundColor: `${theme.primary}14`,
+    justifyContent: 'center', alignItems: 'center',
+    flexShrink: 0,
+  },
+  photo: { width: 72, height: 72 },
+  scoreOverlay: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    paddingVertical: 3, alignItems: 'center',
+  },
+  scoreOverlayText: { color: '#fff', fontSize: 12, fontWeight: '800' },
   scoreBadge: {
-    width: 60, height: 60, borderRadius: 30,
+    width: 72, height: 72, borderRadius: 36,
     borderWidth: 2, justifyContent: 'center', alignItems: 'center',
   },
   scoreNum: { fontSize: 20, fontWeight: '800', lineHeight: 22 },
@@ -186,6 +247,7 @@ const cardStyles = (theme: any) => StyleSheet.create({
   tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   tagText: { fontSize: 11, fontWeight: '600' },
   tagMore: { fontSize: 11, alignSelf: 'center' },
+  actions: { alignItems: 'center', justifyContent: 'center', gap: 6 },
 });
 
 const makeStyles = (theme: any) => StyleSheet.create({

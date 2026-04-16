@@ -8,6 +8,7 @@
     "continue": "Weiter",
     "error": "Fehler",
     "remove": "Entfernen",
+    "delete": "Löschen",
     "permissionNeeded": "Berechtigung erforderlich"
   },
 
@@ -71,7 +72,10 @@
     "couldntLoad": "Verlauf konnte nicht geladen werden",
     "noAnalyses": "Noch keine Analysen",
     "noAnalysesSub": "Lade dein erstes Outfit hoch, um loszulegen!",
-    "failedToLoad": "Verlauf konnte nicht geladen werden"
+    "failedToLoad": "Verlauf konnte nicht geladen werden",
+    "deleteTitle": "Analyse löschen",
+    "deleteConfirm": "Bist du sicher, dass du diese Analyse löschen möchtest? Dies kann nicht rückgängig gemacht werden.",
+    "deleteFailed": "Analyse konnte nicht gelöscht werden"
   },
 
   "profile": {

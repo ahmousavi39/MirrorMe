@@ -8,6 +8,7 @@
     "continue": "Continue",
     "error": "Error",
     "remove": "Remove",
+    "delete": "Delete",
     "permissionNeeded": "Permission Needed"
   },
 
@@ -71,7 +72,10 @@
     "couldntLoad": "Couldn't load history",
     "noAnalyses": "No analyses yet",
     "noAnalysesSub": "Upload your first outfit to get started!",
-    "failedToLoad": "Failed to load history"
+    "failedToLoad": "Failed to load history",
+    "deleteTitle": "Delete Analysis",
+    "deleteConfirm": "Are you sure you want to delete this analysis? This cannot be undone.",
+    "deleteFailed": "Failed to delete analysis"
   },
 
   "profile": {
