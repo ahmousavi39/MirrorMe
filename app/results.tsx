@@ -563,6 +563,178 @@ export default function ResultsScreen() {
       ? result.clothingItemsLocalized
       : result.clothingItems;
 
+  // Build pages as a guaranteed-real-element array — PagerView crashes on false/null children
+  const pagerPages = [
+    <ScrollView key="0" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+      <View style={[s.card, { backgroundColor: theme.card }]}>
+        <View style={s.scoreRow}>
+          <View style={[s.scoreBadge, { borderColor: scoreColor, shadowColor: scoreColor }]}>
+            <Text style={[s.scoreNumber, { color: scoreColor }]}>{result.score.toFixed(1)}</Text>
+            <Text style={[s.scoreOutOf, { color: theme.textSecondary }]}>/10</Text>
+          </View>
+          <View style={s.scoreMeta}>
+            <Text style={[s.scoreLabel, { color: scoreColor }]}>{getScoreLabel(result.score)}</Text>
+            {result.occasion && OCCASION_ICONS[result.occasion] ? (
+              <View style={[s.occasionBadge, { backgroundColor: `${OCCASION_COLORS[result.occasion]}1A`, borderColor: `${OCCASION_COLORS[result.occasion]}40` }]}>
+                <Ionicons name={OCCASION_ICONS[result.occasion] as any} size={15} color={OCCASION_COLORS[result.occasion]} />
+                <Text style={[s.occasionText, { color: OCCASION_COLORS[result.occasion] }]}>
+                  {t(`occasions.${result.occasion}`)}
+                </Text>
+              </View>
+            ) : (
+              <Text style={[s.scoreSubLabel, { color: theme.textSecondary }]}>{t('results.styleReport')}</Text>
+            )}
+          </View>
+        </View>
+      </View>
+      {result.colorPalette && result.colorPalette.length > 0 && (
+        <View style={[s.card, { backgroundColor: theme.card }]}>
+          <View style={s.cardHeader}>
+            <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
+              <Ionicons name="color-palette" size={16} color={theme.primary} />
+            </View>
+            <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.colorPalette')}</Text>
+          </View>
+          <View style={s.paletteRow}>
+            {result.colorPalette.map((hex, i) => (
+              <View key={i} style={s.paletteItem}>
+                <View style={[s.paletteSwatch, { backgroundColor: hex }]} />
+                <Text style={[s.paletteHex, { color: theme.textSecondary }]}>{hex.toUpperCase()}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+      <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+    </ScrollView>,
+
+    <ScrollView key="1" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+      <View style={[s.card, { backgroundColor: theme.card }]}>
+        <View style={s.cardHeader}>
+          <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
+            <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
+          </View>
+          <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.aiFeedback')}</Text>
+        </View>
+        <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
+      </View>
+      <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+    </ScrollView>,
+
+    <ScrollView key="2" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+      {result.occasionScores && (
+        <View style={[s.card, { backgroundColor: theme.card }]}>
+          <View style={s.cardHeader}>
+            <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
+              <Ionicons name="calendar-outline" size={16} color={theme.primary} />
+            </View>
+            <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.occasionFit')}</Text>
+          </View>
+          <View style={s.occasionList}>
+            {OCCASION_ORDER.map((key) => {
+              const sc: number = (result.occasionScores as any)?.[key] ?? 0;
+              const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
+              const isSelected = result.occasion === key;
+              return (
+                <View key={key} style={s.occasionRow}>
+                  <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
+                  <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
+                    {t(`occasions.${key}`)}
+                  </Text>
+                  <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
+                    <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
+                  </View>
+                  <Text style={[s.occasionRowScore, { color }]}>{sc.toFixed(1)}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+      <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+    </ScrollView>,
+
+    <ScrollView key="3" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+      {(result.styleTips?.length ?? 0) > 0 && (
+        <View style={[s.card, { backgroundColor: theme.card }]}>
+          <View style={s.cardHeader}>
+            <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
+              <Ionicons name="bulb-outline" size={16} color={theme.primary} />
+            </View>
+            <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.improveStyle')}</Text>
+          </View>
+          <View style={s.tipsList}>
+            {(result.styleTips ?? []).map((tip, i) => {
+              const itemLabel = result.styleTipItems?.[i];
+              return (
+                <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                  <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                    {itemLabel ? (
+                      <TouchableOpacity
+                        style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}
+                        onPress={() => setShowPhotoModal(true)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="shirt-outline" size={11} color={theme.primary} />
+                        <Text style={[s.tipItemChipText, { color: theme.primary }]}>{itemLabel}</Text>
+                        <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+      <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+    </ScrollView>,
+
+    ...(hasOccasionTips ? [
+      <ScrollView key="4" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+        <View style={[s.card, { backgroundColor: theme.card }]}>
+          <View style={s.cardHeader}>
+            <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
+              <Ionicons name={occasionIcon} size={16} color={theme.secondary} />
+            </View>
+            <Text style={[s.cardTitle, { color: theme.text }]}>
+              {result.occasion
+                ? t('results.stylingFor', { occasion: t(`occasions.${result.occasion}`) })
+                : t('results.eventStyling')}
+            </Text>
+          </View>
+          <View style={s.tipsList}>
+            {(result.occasionTips ?? []).map((tip, i) => {
+              const itemLabel = result.occasionTipItems?.[i];
+              return (
+                <View key={i} style={[s.tipRow, i < (result.occasionTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                  <Text style={[s.tipIndex, { color: theme.secondary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                    {itemLabel ? (
+                      <TouchableOpacity
+                        style={[s.tipItemChip, { backgroundColor: `${theme.secondary}14`, borderColor: `${theme.secondary}35` }]}
+                        onPress={() => setShowPhotoModal(true)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="shirt-outline" size={11} color={theme.secondary} />
+                        <Text style={[s.tipItemChipText, { color: theme.secondary }]}>{itemLabel}</Text>
+                        <Ionicons name="image-outline" size={11} color={theme.secondary} style={{ marginLeft: 2 }} />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+        <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+      </ScrollView>,
+    ] : []),
+  ];
+
   return (
     <SafeAreaView style={[s.container, { backgroundColor: theme.background }]} edges={['bottom']}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
@@ -663,185 +835,7 @@ export default function ResultsScreen() {
           scrollPos.setValue(e.nativeEvent.position);
         }}
       >
-
-        {/* ── PAGE 0: Score + Color Palette ──────────────────────── */}
-        <ScrollView key="0" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
-          {/* Score card */}
-          <View style={[s.card, { backgroundColor: theme.card }]}>
-            <View style={s.scoreRow}>
-              <View style={[s.scoreBadge, { borderColor: scoreColor, shadowColor: scoreColor }]}>
-                <Text style={[s.scoreNumber, { color: scoreColor }]}>{result.score.toFixed(1)}</Text>
-                <Text style={[s.scoreOutOf, { color: theme.textSecondary }]}>/10</Text>
-              </View>
-              <View style={s.scoreMeta}>
-                <Text style={[s.scoreLabel, { color: scoreColor }]}>{getScoreLabel(result.score)}</Text>
-                {result.occasion && OCCASION_ICONS[result.occasion] ? (
-                  <View style={[s.occasionBadge, { backgroundColor: `${OCCASION_COLORS[result.occasion]}1A`, borderColor: `${OCCASION_COLORS[result.occasion]}40` }]}>
-                    <Ionicons name={OCCASION_ICONS[result.occasion] as any} size={15} color={OCCASION_COLORS[result.occasion]} />
-                    <Text style={[s.occasionText, { color: OCCASION_COLORS[result.occasion] }]}>
-                      {t(`occasions.${result.occasion}`)}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={[s.scoreSubLabel, { color: theme.textSecondary }]}>{t('results.styleReport')}</Text>
-                )}
-              </View>
-            </View>
-          </View>
-
-          {/* Color palette */}
-          {result.colorPalette && result.colorPalette.length > 0 && (
-            <View style={[s.card, { backgroundColor: theme.card }]}>
-              <View style={s.cardHeader}>
-                <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="color-palette" size={16} color={theme.primary} />
-                </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.colorPalette')}</Text>
-              </View>
-              <View style={s.paletteRow}>
-                {result.colorPalette.map((hex, i) => (
-                  <View key={i} style={s.paletteItem}>
-                    <View style={[s.paletteSwatch, { backgroundColor: hex }]} />
-                    <Text style={[s.paletteHex, { color: theme.textSecondary }]}>{hex.toUpperCase()}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
-        </ScrollView>
-
-        {/* ── PAGE 1: AI Feedback ────────────────────────────────── */}
-        <ScrollView key="1" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
-          <View style={[s.card, { backgroundColor: theme.card }]}>
-            <View style={s.cardHeader}>
-              <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
-              </View>
-              <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.aiFeedback')}</Text>
-            </View>
-            <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
-          </View>
-          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
-        </ScrollView>
-
-        {/* ── PAGE 2: Occasions ──────────────────────────────────── */}
-        <ScrollView key="2" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
-          {result.occasionScores && (
-            <View style={[s.card, { backgroundColor: theme.card }]}>
-              <View style={s.cardHeader}>
-                <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="calendar-outline" size={16} color={theme.primary} />
-                </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.occasionFit')}</Text>
-              </View>
-              <View style={s.occasionList}>
-                {OCCASION_ORDER.map((key) => {
-                  const sc: number = (result.occasionScores as any)?.[key] ?? 0;
-                  const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
-                  const isSelected = result.occasion === key;
-                  return (
-                    <View key={key} style={s.occasionRow}>
-                      <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
-                      <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
-                        {t(`occasions.${key}`)}
-                      </Text>
-                      <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
-                        <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
-                      </View>
-                      <Text style={[s.occasionRowScore, { color }]}>{sc.toFixed(1)}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
-        </ScrollView>
-
-        {/* ── PAGE 3: Style Tips ─────────────────────────────────── */}
-        <ScrollView key="3" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
-          {(result.styleTips?.length ?? 0) > 0 && (
-            <View style={[s.card, { backgroundColor: theme.card }]}>
-              <View style={s.cardHeader}>
-                <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="bulb-outline" size={16} color={theme.primary} />
-                </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.improveStyle')}</Text>
-              </View>
-              <View style={s.tipsList}>
-                {(result.styleTips ?? []).map((tip, i) => {
-                  const itemLabel = result.styleTipItems?.[i];
-                  return (
-                    <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-                      <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-                        {itemLabel ? (
-                          <TouchableOpacity
-                            style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}
-                            onPress={() => setShowPhotoModal(true)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="shirt-outline" size={11} color={theme.primary} />
-                            <Text style={[s.tipItemChipText, { color: theme.primary }]}>{itemLabel}</Text>
-                            <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
-                          </TouchableOpacity>
-                        ) : null}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
-        </ScrollView>
-
-        {/* ── PAGE 4 (conditional): Styling for Occasion ─────────── */}
-        {hasOccasionTips && (
-        <ScrollView key="4" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
-          <View style={[s.card, { backgroundColor: theme.card }]}>
-              <View style={s.cardHeader}>
-                <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
-                  <Ionicons name={occasionIcon} size={16} color={theme.secondary} />
-                </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>
-                  {result.occasion
-                    ? t('results.stylingFor', { occasion: t(`occasions.${result.occasion}`) })
-                    : t('results.eventStyling')}
-                </Text>
-              </View>
-              <View style={s.tipsList}>
-                {(result.occasionTips ?? []).map((tip, i) => {
-                  const itemLabel = result.occasionTipItems?.[i];
-                  return (
-                    <View key={i} style={[s.tipRow, i < (result.occasionTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-                      <Text style={[s.tipIndex, { color: theme.secondary }]}>{String(i + 1).padStart(2, '0')}</Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-                        {itemLabel ? (
-                          <TouchableOpacity
-                            style={[s.tipItemChip, { backgroundColor: `${theme.secondary}14`, borderColor: `${theme.secondary}35` }]}
-                            onPress={() => setShowPhotoModal(true)}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="shirt-outline" size={11} color={theme.secondary} />
-                            <Text style={[s.tipItemChipText, { color: theme.secondary }]}>{itemLabel}</Text>
-                            <Ionicons name="image-outline" size={11} color={theme.secondary} style={{ marginLeft: 2 }} />
-                          </TouchableOpacity>
-                        ) : null}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
-        </ScrollView>
-        )}
-
+        {pagerPages}
       </PagerView>
 
       {/* ── Bottom fade overlay ────────────────────────────────────── */}

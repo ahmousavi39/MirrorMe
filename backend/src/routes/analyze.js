@@ -242,10 +242,6 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     }
 
     // ── 5. Save result to Firestore (Firestore only — no Storage needed) ───────
-    // Strip any [key:...] labels Gemini may have embedded inline in tip text —
-    // they are internal references, not user-visible content.
-    const stripKeys = (s) => (typeof s === 'string' ? s.replace(/\[key:[^\]]+\]/g, '').replace(/\s{2,}/g, ' ').trim() : s);
-
     // Resolve each styleTipRef key to a human-readable item label (or null)
     const wardrobeByKey = {};
     wardrobeItems.forEach((w) => {
@@ -253,6 +249,22 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       const key = `${clean(w.category)}_${clean(w.color)}`;
       wardrobeByKey[key] = w;
     });
+
+    // Replace [key:xxx] markers in tip text with the readable item name so the
+    // sentence stays intact. Falls back to stripping if no matching item found.
+    const resolveKeys = (s) => {
+      if (typeof s !== 'string') return s;
+      return s
+        .replace(/\[key:([^\]]+)\]/g, (match, key) => {
+          const item = wardrobeByKey[key];
+          if (!item) return '';
+          return item.color && item.category
+            ? `${item.color} ${item.category}`
+            : item.category || '';
+        })
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    };
     const styleTipItems = (geminiResult.styleTipRefs || []).map((ref) => {
       if (!ref) return null;
       const item = wardrobeByKey[ref];
@@ -268,8 +280,8 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       return details ? `${item.category} · ${details}` : item.category;
     });
 
-    const cleanStyleTips   = (geminiResult.styleTips   || []).map(stripKeys);
-    const cleanOccasionTips = (geminiResult.occasionTips || []).map(stripKeys);
+    const cleanStyleTips   = (geminiResult.styleTips   || []).map(resolveKeys);
+    const cleanOccasionTips = (geminiResult.occasionTips || []).map(resolveKeys);
 
     const uploadRef = userRef.collection('uploads').doc();
     const batch = db.batch();
