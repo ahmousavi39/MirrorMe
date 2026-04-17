@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Modal, ScrollView, ActivityIndicator, Alert, Platform,
-  Animated, KeyboardAvoidingView,
+  Animated, KeyboardAvoidingView, PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -40,9 +40,11 @@ export default function ProfileEditModal({ visible, onClose }: Props) {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
 
   const slideAnim = React.useRef(new Animated.Value(0)).current;
+  const dragY = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
+      dragY.setValue(0);
       slideAnim.setValue(600);
       Animated.spring(slideAnim, {
         toValue: 0,
@@ -78,6 +80,23 @@ export default function ProfileEditModal({ visible, onClose }: Props) {
       useNativeDriver: true,
     }).start(() => onClose());
   };
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => dragY.setValue(0),
+      onPanResponderMove: (_, gs) => { if (gs.dy > 0) dragY.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 80 || gs.vy > 0.5) {
+          handleClose();
+        } else {
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
+        }
+      },
+      onPanResponderTerminate: () =>
+        Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start(),
+    })
+  ).current;
 
   const toggleStyle = (id: string) => {
     setSelectedStyles((prev) =>
@@ -119,7 +138,11 @@ export default function ProfileEditModal({ visible, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="none" transparent onRequestClose={handleClose}>
       <View style={s.overlay}>
-        <Animated.View style={[s.sheet, { transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[s.sheet, { transform: [{ translateY: slideAnim }, { translateY: dragY }] }]}>
+          {/* Drag handle */}
+          <View style={s.dragHandleContainer} {...panResponder.panHandlers}>
+            <View style={[s.dragHandle, { backgroundColor: theme.border }]} />
+          </View>
           {/* Header */}
           <View style={s.header}>
             <Text style={s.headerTitle}>Edit Profile</Text>
@@ -268,6 +291,15 @@ function makeStyles(theme: any) {
       borderTopRightRadius: 20,
       maxHeight: '92%',
       minHeight: '60%',
+    },
+    dragHandleContainer: {
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    dragHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
     },
     header: {
       flexDirection: 'row',

@@ -3,8 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Share, Platform, Image, Animated, Dimensions,
-  Modal, TextInput, KeyboardAvoidingView, ActivityIndicator,
+  Modal, TextInput, KeyboardAvoidingView, ActivityIndicator, PanResponder,
 } from 'react-native';
+import PagerView from 'react-native-pager-view';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
@@ -15,17 +16,32 @@ import { ClothingItem, Occasion } from '@/types/app';
 import { updateWardrobeItem, composeShareImage } from '@/services/api';
 import CustomAlert from '@/components/CustomAlert';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const OCCASION_EMOJIS: Record<Occasion, string> = {
-  casual:    '🛍️',
-  work:      '💼',
-  school:    '🎓',
-  date:      '💛',
-  night_out: '🌙',
-  interview: '📋',
-  formal:    '🧐',
-  sport:     '🏋️',
-  travel:    '✈️',
+const OCCASION_ICONS: Record<Occasion, string> = {
+  casual:    'bag-handle-outline',
+  work:      'briefcase-outline',
+  school:    'school-outline',
+  date:      'heart-outline',
+  night_out: 'moon-outline',
+  interview: 'document-text-outline',
+  formal:    'ribbon-outline',
+  sport:     'barbell-outline',
+  travel:    'airplane-outline',
+};
+
+const OCCASION_COLORS: Record<Occasion, string> = {
+  casual:    '#FF9F0A',
+  work:      '#42b1ed',
+  school:    '#30D158',
+  date:      '#FF2D55',
+  night_out: '#7B61FF',
+  interview: '#00C7BE',
+  formal:    '#FFD60A',
+  sport:     '#FF6B35',
+  travel:    '#5AC8FA',
 };
 
 const OCCASION_ORDER: Occasion[] = [
@@ -100,6 +116,7 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose, onAlert }: Edit
   const [saving, setSaving]     = useState(false);
 
   const anim = useRef(new Animated.Value(0)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(anim, {
@@ -119,6 +136,23 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose, onAlert }: Edit
   };
 
   const handleClose = () => dismiss(onClose);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => dragY.setValue(0),
+      onPanResponderMove: (_, gs) => { if (gs.dy > 0) dragY.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 80 || gs.vy > 0.5) {
+          dismiss(onClose);
+        } else {
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
+        }
+      },
+      onPanResponderTerminate: () =>
+        Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start(),
+    })
+  ).current;
 
   const handleSave = async () => {
     const trimmed = {
@@ -168,10 +202,12 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose, onAlert }: Edit
           <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleClose} />
         </Animated.View>
         <Animated.View
-          style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }] }]}
+          style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }, { translateY: dragY }] }]}
         >
           {/* Handle */}
-          <View style={[es.handle, { backgroundColor: theme.border }]} />
+          <View style={es.handleContainer} {...panResponder.panHandlers}>
+            <View style={[es.handle, { backgroundColor: theme.border }]} />
+          </View>
 
           {/* Header */}
           <View style={es.sheetHeader}>
@@ -222,14 +258,15 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose, onAlert }: Edit
 }
 
 const editStyles = (theme: any) => StyleSheet.create({
-  overlay:    { flex: 1, justifyContent: 'flex-end' },
-  backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet:      { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
-  handle:     { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
-  sheetHeader:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
-  sheetTitle: { fontSize: 17, fontWeight: '700' },
-  fields:     { paddingHorizontal: 20, gap: 14, paddingBottom: 6 },
-  fieldRow:   { gap: 6 },
+  overlay:         { flex: 1, justifyContent: 'flex-end' },
+  backdrop:        { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet:           { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
+  handleContainer: { alignItems: 'center', paddingTop: 10, paddingBottom: 6, paddingHorizontal: 40 },
+  handle:          { width: 40, height: 4, borderRadius: 2 },
+  sheetHeader:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
+  sheetTitle:      { fontSize: 17, fontWeight: '700' },
+  fields:          { paddingHorizontal: 20, gap: 14, paddingBottom: 6 },
+  fieldRow:        { gap: 6 },
   fieldLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   fieldInput: { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15 },
   saveBtn:    { marginHorizontal: 20, marginTop: 18, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
@@ -245,11 +282,13 @@ interface PhotoSlideModalProps {
 
 function PhotoSlideModal({ visible, imageUri, onClose }: PhotoSlideModalProps) {
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
   // Keep modal mounted until the closing animation finishes
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     if (visible) {
+      dragY.setValue(0);
       setMounted(true);
       // Give one frame for the Modal to render before animating
       requestAnimationFrame(() => {
@@ -271,6 +310,33 @@ function PhotoSlideModal({ visible, imageUri, onClose }: PhotoSlideModalProps) {
     }
   }, [visible]);
 
+  const dismiss = () => {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 240,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) { setMounted(false); onClose(); }
+    });
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => dragY.setValue(0),
+      onPanResponderMove: (_, gs) => { if (gs.dy > 0) dragY.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 80 || gs.vy > 0.5) {
+          dismiss();
+        } else {
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
+        }
+      },
+      onPanResponderTerminate: () =>
+        Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start(),
+    })
+  ).current;
+
   if (!mounted) return null;
 
   return (
@@ -289,12 +355,15 @@ function PhotoSlideModal({ visible, imageUri, onClose }: PhotoSlideModalProps) {
                   outputRange: [Dimensions.get('window').height, 0],
                 }),
               },
+              { translateY: dragY },
             ],
           },
         ]}
       >
         {/* Handle */}
-        <View style={photoModalStyles.handle} />
+        <View style={photoModalStyles.handleContainer} {...panResponder.panHandlers}>
+          <View style={photoModalStyles.handle} />
+        </View>
 
         {/* Close button */}
         <TouchableOpacity style={photoModalStyles.closeBtn} onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
@@ -339,8 +408,11 @@ const photoModalStyles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: 'rgba(255,255,255,0.3)',
-    marginTop: 10,
-    marginBottom: 6,
+  },
+  handleContainer: {
+    paddingVertical: 12,
+    alignSelf: 'stretch',
+    alignItems: 'center',
   },
   closeBtn: {
     position: 'absolute',
@@ -371,6 +443,7 @@ export default function ResultsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const s = makeStyles(theme);
+  const insets = useSafeAreaInsets();
 
   const getScoreLabel = (score: number): string => {
     if (score >= 9) return t('results.scoreLabels.styleIcon');
@@ -389,11 +462,14 @@ export default function ResultsScreen() {
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
 
+  const [activeTab, setActiveTab] = useState(0);
+  const pagerRef = useRef<PagerView>(null);
+
   useEffect(() => {
     AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
   }, []);
 
-  // Fade-in animation for the content card
+  // Fade-in animation for the whole page
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -475,83 +551,119 @@ export default function ResultsScreen() {
   }
 
   const scoreColor = getScoreColor(result.score);
+  const hasOccasionTips = !!(result.occasion && (result.occasionTips?.length ?? 0) > 0);
+  const occasionIcon = (result.occasion ? OCCASION_ICONS[result.occasion] : 'calendar') as any;
+  const TAB_COUNT = hasOccasionTips ? 5 : 4;
 
   return (
-    <View style={s.container}>
-      <ScrollView showsVerticalScrollIndicator={false} bounces>
+    <SafeAreaView style={[s.container, { backgroundColor: theme.background }]} edges={['bottom']}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
 
-        {/* ── Hero photo ─────────────────────────────────────────────── */}
-        <View style={s.heroContainer}>
-          {(imageUri || result.imageUrl) ? (
-            <Image source={{ uri: (imageUri || result.imageUrl)! }} style={s.heroImage} resizeMode="cover" />
-          ) : (
-            <View style={[s.heroPlaceholder, { backgroundColor: theme.card }]}>
-              <Ionicons name="shirt-outline" size={64} color={theme.primary} />
-            </View>
-          )}
-          {/* Detected clothing items — overlaid at the bottom of the photo */}
-          {(result.clothingItems?.length ?? 0) > 0 && (
-            <View style={s.photoTagsContainer}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
-                {(result.clothingItemsLocalized ?? result.clothingItems).map((item, i) => (
-                  addToWardrobe ? (
-                    <TouchableOpacity
-                      key={i}
-                      style={s.photoTag}
-                      onPress={() => setEditingIndex(i)}
-                      activeOpacity={0.75}
-                    >
-                      <Text style={s.photoTagText}>
-                        {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
-                      </Text>
-                      <Ionicons name="pencil" size={10} color="rgba(255,255,255,0.8)" style={{ marginLeft: 5 }} />
-                    </TouchableOpacity>
-                  ) : (
-                    <View key={i} style={s.photoTag}>
-                      <Text style={s.photoTagText}>
-                        {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
-                      </Text>
-                    </View>
-                  )
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Floating header buttons */}
-          <View style={s.floatingHeader}>
-            <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleBack}>
-              <Ionicons name="chevron-back" size={22} color={theme.text} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleShare}>
-              <Ionicons name="share-outline" size={20} color={theme.text} />
-            </TouchableOpacity>
+      {/* ── Hero photo ──────────────────────────────────────────────── */}
+      <View style={s.heroContainer}>
+        {(imageUri || result.imageUrl) ? (
+          <Image source={{ uri: (imageUri || result.imageUrl)! }} style={s.heroImage} resizeMode="cover" />
+        ) : (
+          <View style={[s.heroPlaceholder, { backgroundColor: theme.card }]}>
+            <Ionicons name="shirt-outline" size={64} color={theme.primary} />
           </View>
+        )}
+
+        {/* Detected clothing items overlaid at the bottom of the photo */}
+        {(result.clothingItems?.length ?? 0) > 0 && (
+          <View style={s.photoTagsContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
+              {(result.clothingItemsLocalized ?? result.clothingItems).map((item, i) => (
+                addToWardrobe ? (
+                  <TouchableOpacity
+                    key={i}
+                    style={s.photoTag}
+                    onPress={() => setEditingIndex(i)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={s.photoTagText}>
+                      {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
+                    </Text>
+                    <Ionicons name="pencil" size={10} color="rgba(255,255,255,0.8)" style={{ marginLeft: 5 }} />
+                  </TouchableOpacity>
+                ) : (
+                  <View key={i} style={s.photoTag}>
+                    <Text style={s.photoTagText}>
+                      {item.category}{item.color ? ` · ${item.color}` : ''}{item.fit ? ` · ${item.fit}` : ''}
+                    </Text>
+                  </View>
+                )
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Floating header buttons */}
+        <View style={s.floatingHeader}>
+          <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleBack}>
+            <Ionicons name="chevron-back" size={22} color={theme.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleShare}>
+            <Ionicons name="share-outline" size={20} color={theme.text} />
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* ── Score card — overlaps photo ────────────────────────────── */}
-        <Animated.View style={[s.scoreCard, { backgroundColor: theme.card, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <View style={[s.scoreBadge, { borderColor: scoreColor, shadowColor: scoreColor }]}>
-            <Text style={[s.scoreNumber, { color: scoreColor }]}>{result.score.toFixed(1)}</Text>
-            <Text style={[s.scoreOutOf, { color: theme.textSecondary }]}>/10</Text>
-          </View>
-          <View style={s.scoreMeta}>
-            <Text style={[s.scoreLabel, { color: scoreColor }]}>{getScoreLabel(result.score)}</Text>
-            {result.occasion && OCCASION_EMOJIS[result.occasion] ? (
-              <View style={[s.occasionBadge, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}28` }]}>
-                <Text style={s.occasionEmoji}>{OCCASION_EMOJIS[result.occasion]}</Text>
-                <Text style={[s.occasionText, { color: theme.primary }]}>
-                  {t(`occasions.${result.occasion}`)}
-                </Text>
+      {/* ── Dot indicator bar ──────────────────────────────────────── */}
+      <View style={[s.dotBar, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
+        {Array.from({ length: TAB_COUNT }).map((_, i) => (
+          <TouchableOpacity
+            key={i}
+            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+            onPress={() => {
+              pagerRef.current?.setPage(i);
+              setActiveTab(i);
+            }}
+          >
+            <Animated.View
+              style={[
+                s.dot,
+                activeTab === i
+                  ? { backgroundColor: theme.primary, width: 22, borderRadius: 4 }
+                  : { backgroundColor: theme.border, width: 6, borderRadius: 3 },
+              ]}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* ── Swipeable pages ────────────────────────────────────────── */}
+      <PagerView
+        ref={pagerRef}
+        style={s.pager}
+        initialPage={0}
+        onPageSelected={(e) => setActiveTab(e.nativeEvent.position)}
+      >
+
+        {/* ── PAGE 0: Score + Color Palette ──────────────────────── */}
+        <ScrollView key="0" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+          {/* Score card */}
+          <View style={[s.card, { backgroundColor: theme.card }]}>
+            <View style={s.scoreRow}>
+              <View style={[s.scoreBadge, { borderColor: scoreColor, shadowColor: scoreColor }]}>
+                <Text style={[s.scoreNumber, { color: scoreColor }]}>{result.score.toFixed(1)}</Text>
+                <Text style={[s.scoreOutOf, { color: theme.textSecondary }]}>/10</Text>
               </View>
-            ) : (
-              <Text style={[s.scoreSubLabel, { color: theme.textSecondary }]}>{t('results.styleReport')}</Text>
-            )}
+              <View style={s.scoreMeta}>
+                <Text style={[s.scoreLabel, { color: scoreColor }]}>{getScoreLabel(result.score)}</Text>
+                {result.occasion && OCCASION_ICONS[result.occasion] ? (
+                  <View style={[s.occasionBadge, { backgroundColor: `${OCCASION_COLORS[result.occasion]}1A`, borderColor: `${OCCASION_COLORS[result.occasion]}40` }]}>
+                    <Ionicons name={OCCASION_ICONS[result.occasion] as any} size={15} color={OCCASION_COLORS[result.occasion]} />
+                    <Text style={[s.occasionText, { color: OCCASION_COLORS[result.occasion] }]}>
+                      {t(`occasions.${result.occasion}`)}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[s.scoreSubLabel, { color: theme.textSecondary }]}>{t('results.styleReport')}</Text>
+                )}
+              </View>
+            </View>
           </View>
-        </Animated.View>
-
-        {/* ── Sections ───────────────────────────────────────────────── */}
-        <Animated.View style={[s.sections, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
           {/* Color palette */}
           {result.colorPalette && result.colorPalette.length > 0 && (
@@ -573,23 +685,30 @@ export default function ResultsScreen() {
             </View>
           )}
 
-          {/* Feedback */}
+          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+        </ScrollView>
+
+        {/* ── PAGE 1: AI Feedback ────────────────────────────────── */}
+        <ScrollView key="1" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
           <View style={[s.card, { backgroundColor: theme.card }]}>
             <View style={s.cardHeader}>
               <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
                 <Ionicons name="chatbubble-ellipses" size={16} color={theme.primary} />
               </View>
-                <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.aiFeedback')}</Text>
+              <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.aiFeedback')}</Text>
             </View>
             <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
           </View>
+          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+        </ScrollView>
 
-          {/* Occasion scores breakdown */}
+        {/* ── PAGE 2: Occasions ──────────────────────────────────── */}
+        <ScrollView key="2" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
           {result.occasionScores && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="calendar" size={16} color={theme.primary} />
+                  <Ionicons name="calendar-outline" size={16} color={theme.primary} />
                 </View>
                 <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.occasionFit')}</Text>
               </View>
@@ -600,7 +719,7 @@ export default function ResultsScreen() {
                   const isSelected = result.occasion === key;
                   return (
                     <View key={key} style={s.occasionRow}>
-                      <Text style={s.occasionRowEmoji}>{OCCASION_EMOJIS[key]}</Text>
+                      <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
                       <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
                         {t(`occasions.${key}`)}
                       </Text>
@@ -614,13 +733,16 @@ export default function ResultsScreen() {
               </View>
             </View>
           )}
+          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+        </ScrollView>
 
-          {/* Style improvement tips */}
+        {/* ── PAGE 3: Style Tips ─────────────────────────────────── */}
+        <ScrollView key="3" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
           {(result.styleTips?.length ?? 0) > 0 && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.primary}18` }]}>
-                  <Ionicons name="color-palette" size={16} color={theme.primary} />
+                  <Ionicons name="bulb-outline" size={16} color={theme.primary} />
                 </View>
                 <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.improveStyle')}</Text>
               </View>
@@ -650,16 +772,21 @@ export default function ResultsScreen() {
               </View>
             </View>
           )}
+          <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
+        </ScrollView>
 
-          {/* Occasion tips */}
-          {result.occasion && (result.occasionTips?.length ?? 0) > 0 && (
+        {/* ── PAGE 4 (conditional): Styling for Occasion ─────────── */}
+        <ScrollView key="4" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+          {hasOccasionTips && (
             <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
-                  <Ionicons name="calendar" size={16} color={theme.secondary} />
+                  <Ionicons name={occasionIcon} size={16} color={theme.secondary} />
                 </View>
                 <Text style={[s.cardTitle, { color: theme.text }]}>
-                  {result.occasion ? t('results.stylingFor', { emoji: OCCASION_EMOJIS[result.occasion], occasion: t(`occasions.${result.occasion}`) }) : t('results.eventStyling')}
+                  {result.occasion
+                    ? t('results.stylingFor', { occasion: t(`occasions.${result.occasion}`) })
+                    : t('results.eventStyling')}
                 </Text>
               </View>
               <View style={s.tipsList}>
@@ -688,28 +815,23 @@ export default function ResultsScreen() {
               </View>
             </View>
           )}
-
-          {/* Analyze again button */}
-          <TouchableOpacity
-            style={[s.analyzeBtn, { backgroundColor: theme.primary }]}
-            onPress={handleAnalyzeAgain}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="camera-outline" size={20} color="#fff" />
-            <Text style={s.analyzeBtnText}>{t('results.analyzeAnother')}</Text>
-          </TouchableOpacity>
-
           <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
-        </Animated.View>
-      </ScrollView>
+        </ScrollView>
 
-      {/* ── Clothing item edit sheet ────────────────────────────────── */}
+      </PagerView>
+
+      {/* ── Bottom fade overlay ────────────────────────────────────── */}
+      <LinearGradient
+        colors={[`${theme.background}00`, theme.background]}
+        style={s.bottomFade}
+        pointerEvents="none"
+      />
+
+      {/* ── Clothing item edit sheet ──────────────────────────────── */}
       {editingIndex !== null && result.clothingItems?.[editingIndex] && (
         <ClothingEditSheet
           item={result.clothingItems[editingIndex]}
           originalKey={
-            // Use the actual Firestore doc key returned by the backend (avoids any
-            // key-formula mismatch). Fall back to computing it locally for history items.
             result.clothingItemKeys?.[editingIndex]
             ?? wardrobeKeyFor(
               result.clothingItems[editingIndex].category,
@@ -749,7 +871,8 @@ export default function ResultsScreen() {
         icon={customAlert.icon}
         onClose={() => setCustomAlert((a) => ({ ...a, visible: false }))}
       />
-    </View>
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
@@ -761,12 +884,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   heroContainer: { width: SCREEN_WIDTH, height: PHOTO_HEIGHT, position: 'relative' },
   heroImage: { width: '100%', height: '100%' },
   heroPlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  photoTagsContainer: {
-    position: 'absolute', bottom: 42, left: 0, right: 0,
-  },
-  photoTagsScroll: {
-    paddingHorizontal: 14, gap: 6,
-  },
+  photoTagsContainer: { position: 'absolute', bottom: 14, left: 0, right: 0 },
+  photoTagsScroll: { paddingHorizontal: 14, gap: 6 },
   photoTag: {
     flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap',
     backgroundColor: 'rgba(0,0,0,0.58)',
@@ -774,9 +893,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
   },
-  photoTagText: {
-    color: '#fff', fontSize: 12, fontWeight: '600', flexShrink: 1,
-  },
+  photoTagText: { color: '#fff', fontSize: 12, fontWeight: '600', flexShrink: 1 },
   floatingHeader: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 56 : 36,
@@ -790,21 +907,33 @@ const makeStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
 
-  // Score card
-  scoreCard: {
-    marginHorizontal: 20,
-    marginTop: -28,
-    borderRadius: 20,
-    padding: 20,
+  // Dot indicator
+  dotBar: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 8,
+    gap: 6,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  dot: {
+    height: 6,
+  },
+
+  // Pager
+  pager: { flex: 1 },
+  bottomFade: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 64,
+    pointerEvents: 'none',
+  },
+  pageContent: { padding: 14, paddingBottom: 8, gap: 10 },
+
+  // Score
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   scoreBadge: {
     width: 80, height: 80, borderRadius: 40,
     borderWidth: 4,
@@ -818,25 +947,23 @@ const makeStyles = (theme: any) => StyleSheet.create({
   scoreLabel: { fontSize: 20, fontWeight: '800' },
   scoreSubLabel: { fontSize: 13 },
   occasionBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 10, borderWidth: 1,
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 20, borderWidth: 1.5,
   },
-  occasionEmoji: { fontSize: 13 },
-  occasionText: { fontSize: 13, fontWeight: '600' },
+  occasionText: { fontSize: 14, fontWeight: '600' },
 
   // Occasion scores list
   occasionList: { gap: 10 },
   occasionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  occasionRowEmoji: { fontSize: 15, width: 22, textAlign: 'center' },
+  occasionRowEmoji: { width: 22, textAlign: 'center' },
   occasionRowLabel: { fontSize: 13, width: 76 },
   occasionBarBg: { flex: 1, height: 8, borderRadius: 4, overflow: 'hidden' },
   occasionBarFill: { height: '100%', borderRadius: 4 },
   occasionRowScore: { fontSize: 13, fontWeight: '700', width: 34, textAlign: 'right' },
 
-  // Sections
-  sections: { padding: 20, gap: 14 },
+  // Cards
   card: {
     borderRadius: 18,
     padding: 18,
@@ -850,10 +977,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   cardIcon: { width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   cardTitle: { flex: 1, fontSize: 15, fontWeight: '700' },
-  countBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  countText: { fontSize: 12, fontWeight: '700' },
   feedbackText: { fontSize: 15, lineHeight: 24 },
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
   // Color palette
   paletteRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
@@ -870,27 +994,9 @@ const makeStyles = (theme: any) => StyleSheet.create({
   tipRow: { flexDirection: 'row', gap: 14, paddingVertical: 12, alignItems: 'flex-start' },
   tipIndex: { fontSize: 13, fontWeight: '800', width: 24 },
   tipText: { flex: 1, fontSize: 14, lineHeight: 22 },
-  tipThumbWrapper: { marginTop: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, alignSelf: 'flex-start' },
-  tipThumb: { width: 56, height: 72, borderRadius: 10 },
   tipItemChip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   tipItemChipText: { fontSize: 11, fontWeight: '600' },
 
-  // Usage
-  usageNote: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    borderRadius: 12, padding: 12, borderWidth: 1,
-  },
-  usageNoteText: { flex: 1, fontSize: 13, lineHeight: 20 },
 
-  // Button
-  analyzeBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, borderRadius: 16, paddingVertical: 16,
-    shadowColor: theme.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  analyzeBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+

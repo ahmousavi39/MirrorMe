@@ -21,16 +21,16 @@ import { Occasion, SubscriptionStatus } from '@/types/app';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/services/i18n';
 
-const OCCASION_KEYS: { key: Occasion; emoji: string }[] = [
-  { key: 'casual',    emoji: '🛍️' },
-  { key: 'work',      emoji: '💼' },
-  { key: 'school',    emoji: '🎓' },
-  { key: 'date',      emoji: '💛' },
-  { key: 'night_out', emoji: '🌙' },
-  { key: 'interview', emoji: '📋' },
-  { key: 'formal',    emoji: '🧐' },
-  { key: 'sport',     emoji: '🏋️' },
-  { key: 'travel',    emoji: '✈️' },
+const OCCASION_KEYS: { key: Occasion; icon: string; color: string }[] = [
+  { key: 'casual',    icon: 'bag-handle-outline',     color: '#FF9F0A' },
+  { key: 'work',      icon: 'briefcase-outline',      color: '#42b1ed' },
+  { key: 'school',    icon: 'school-outline',         color: '#30D158' },
+  { key: 'date',      icon: 'heart-outline',          color: '#FF2D55' },
+  { key: 'night_out', icon: 'moon-outline',           color: '#7B61FF' },
+  { key: 'interview', icon: 'document-text-outline',  color: '#00C7BE' },
+  { key: 'formal',    icon: 'ribbon-outline',         color: '#FFD60A' },
+  { key: 'sport',     icon: 'barbell-outline',        color: '#FF6B35' },
+  { key: 'travel',    icon: 'airplane-outline',       color: '#5AC8FA' },
 ];
 
 export default function AnalyzeScreen() {
@@ -232,14 +232,14 @@ export default function AnalyzeScreen() {
                   key={o.key}
                   style={[
                     s.occasionChip,
-                    { borderColor: selected ? theme.primary : theme.border,
-                      backgroundColor: selected ? `${theme.primary}18` : theme.card },
+                    { borderColor: selected ? o.color : theme.border,
+                      backgroundColor: selected ? `${o.color}1A` : theme.card },
                   ]}
                   onPress={() => setOccasion(selected ? null : o.key)}
                   activeOpacity={0.75}
                 >
-                  <Text style={s.occasionEmoji}>{o.emoji}</Text>
-                  <Text style={[s.occasionLabel, { color: selected ? theme.primary : theme.text }]}>
+                  <Ionicons name={o.icon as any} size={17} color={selected ? o.color : theme.textSecondary} />
+                  <Text style={[s.occasionLabel, { color: selected ? o.color : theme.text }]}>
                     {o.label}
                   </Text>
                 </TouchableOpacity>
@@ -422,7 +422,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 9,
     borderRadius: 20, borderWidth: 1.5,
   },
-  occasionEmoji: { fontSize: 16 },
+  occasionIcon: {},
   occasionLabel: { fontSize: 14, fontWeight: '600' },
   overlay: {
     ...StyleSheet.absoluteFillObject,

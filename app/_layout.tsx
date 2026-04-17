@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // ── Auth guard — redirects based on login state ───────────────────────────────────
 function RootNavigator() {
@@ -54,6 +55,7 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <ThemeProvider>
       <AuthProvider>
         <AnalysisProvider>
@@ -62,5 +64,6 @@ export default function RootLayout() {
         </AnalysisProvider>
       </AuthProvider>
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

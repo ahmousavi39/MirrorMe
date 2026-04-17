@@ -223,19 +223,19 @@ const cardStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   photoWrap: {
-    width: 72, height: 72, borderRadius: 10, overflow: 'hidden',
+    width: 70, height: 90, borderRadius: 10, overflow: 'hidden',
     backgroundColor: `${theme.primary}14`,
     justifyContent: 'center', alignItems: 'center',
     flexShrink: 0,
   },
-  photo: { width: 72, height: 72 },
+  photo: { width: 70, height: 90 },
   scoreOverlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingVertical: 3, alignItems: 'center',
   },
   scoreOverlayText: { color: '#fff', fontSize: 12, fontWeight: '800' },
   scoreBadge: {
-    width: 72, height: 72, borderRadius: 36,
+    width: 70, height: 70, borderRadius: 35,
     borderWidth: 2, justifyContent: 'center', alignItems: 'center',
   },
   scoreNum: { fontSize: 20, fontWeight: '800', lineHeight: 22 },

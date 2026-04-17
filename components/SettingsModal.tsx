@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { ActivityIndicator, Animated, Linking, Modal, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Linking, Modal, Platform, PanResponder, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { EmailAuthProvider, reauthenticateWithCredential, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import CustomAlert, { AlertButton } from './CustomAlert';
@@ -42,6 +42,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   const [shareWardrobe, setShareWardrobe] = useState(true);
   const [addToWardrobe, setAddToWardrobe] = useState(true);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const dragY = React.useRef(new Animated.Value(0)).current;
 
   // Load wardrobe preferences: AsyncStorage first (instant), then API (source of truth)
   React.useEffect(() => {
@@ -78,6 +79,7 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
 
   React.useEffect(() => {
     if (visible) {
+      dragY.setValue(0);
       setModalVisible(true);
       fadeAnim.setValue(0);
       Animated.spring(fadeAnim, {
@@ -106,6 +108,23 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
       onClose();
     });
   };
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => dragY.setValue(0),
+      onPanResponderMove: (_, gs) => { if (gs.dy > 0) dragY.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 80 || gs.vy > 0.5) {
+          handleClose();
+        } else {
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
+        }
+      },
+      onPanResponderTerminate: () =>
+        Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start(),
+    })
+  ).current;
 
   const handleAbout = () => {
     setAlertConfig({
@@ -176,15 +195,17 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             styles.modalContent, 
             { 
               backgroundColor: theme.background,
-              transform: [{
-                translateY: fadeAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [600, 0],
-                })
-              }]
+              transform: [
+                { translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) },
+                { translateY: dragY }
+              ]
             }
           ]}
         >
+          {/* Drag handle */}
+          <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
+            <View style={[styles.dragHandle, { backgroundColor: theme.border }]} />
+          </View>
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
             <Text style={[styles.headerTitle, { color: theme.text }]}>{t('settings.title')}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -192,7 +213,10 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={[styles.section, { borderBottomColor: theme.border }]}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('settings.sectionProfile')}</Text>
 
@@ -468,6 +492,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '90%',
+  },
+  dragHandleContainer: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
   },
   header: {
     flexDirection: 'row',

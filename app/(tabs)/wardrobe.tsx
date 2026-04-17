@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, RefreshControl,
-  Modal, StatusBar, Platform, Animated, KeyboardAvoidingView, TextInput, ScrollView,
+  Modal, StatusBar, Platform, Animated, KeyboardAvoidingView, TextInput, ScrollView, PanResponder,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +34,7 @@ function WardrobeEditSheet({ item, onSave, onClose, onAlert }: WardrobeEditSheet
   const [style, setStyle]       = useState(item.style ?? '');
   const [saving, setSaving]     = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
+  const dragY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(anim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }).start();
@@ -43,6 +44,23 @@ function WardrobeEditSheet({ item, onSave, onClose, onAlert }: WardrobeEditSheet
     Animated.timing(anim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => cb?.());
 
   const handleClose = () => dismiss(onClose);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => dragY.setValue(0),
+      onPanResponderMove: (_, gs) => { if (gs.dy > 0) dragY.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 80 || gs.vy > 0.5) {
+          dismiss(onClose);
+        } else {
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
+        }
+      },
+      onPanResponderTerminate: () =>
+        Animated.spring(dragY, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start(),
+    })
+  ).current;
 
   const handleSave = async () => {
     const trimmed = {
@@ -84,8 +102,10 @@ function WardrobeEditSheet({ item, onSave, onClose, onAlert }: WardrobeEditSheet
         <Animated.View style={[es.backdrop, { opacity: anim }]}>
           <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={handleClose} />
         </Animated.View>
-        <Animated.View style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }] }]}>
-          <View style={[es.handle, { backgroundColor: theme.border }]} />
+        <Animated.View style={[es.sheet, { backgroundColor: theme.card, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }, { translateY: dragY }] }]}>
+          <View style={es.handleContainer} {...panResponder.panHandlers}>
+            <View style={[es.handle, { backgroundColor: theme.border }]} />
+          </View>
           <View style={es.sheetHeader}>
             <Text style={[es.sheetTitle, { color: theme.text }]}>{t('wardrobe.editItem')}</Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
@@ -260,7 +280,7 @@ export default function WardrobeScreen() {
             <Ionicons name="pencil-outline" size={18} color={theme.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDelete(item)} hitSlop={8}>
-            <Ionicons name="trash-outline" size={18} color={theme.textSecondary} />
+            <Ionicons name="trash-outline" size={18} color={theme.error} />
           </TouchableOpacity>
         </View>
       </View>
@@ -464,16 +484,17 @@ const makeStyles = (theme: any) => StyleSheet.create({
 });
 
 const wardrobeEditStyles = (theme: any) => StyleSheet.create({
-  overlay:    { flex: 1, justifyContent: 'flex-end' },
-  backdrop:   { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet:      { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
-  handle:     { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
-  sheetHeader:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
-  sheetTitle: { fontSize: 17, fontWeight: '700' },
-  fields:     { paddingHorizontal: 20, gap: 14, paddingBottom: 6 },
-  fieldRow:   { gap: 6 },
-  fieldLabel: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  fieldInput: { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15 },
-  saveBtn:    { marginHorizontal: 20, marginTop: 18, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  saveBtnText:{ color: '#fff', fontSize: 16, fontWeight: '700' },
+  overlay:       { flex: 1, justifyContent: 'flex-end' },
+  backdrop:      { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet:         { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24, maxHeight: '85%' },
+  handleContainer: { alignItems: 'center', paddingTop: 10, paddingBottom: 6, paddingHorizontal: 40 },
+  handle:        { width: 40, height: 4, borderRadius: 2 },
+  sheetHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
+  sheetTitle:    { fontSize: 17, fontWeight: '700' },
+  fields:        { paddingHorizontal: 20, gap: 14, paddingBottom: 6 },
+  fieldRow:      { gap: 6 },
+  fieldLabel:    { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldInput:    { height: 46, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, fontSize: 15 },
+  saveBtn:       { marginHorizontal: 20, marginTop: 18, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  saveBtnText:   { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
