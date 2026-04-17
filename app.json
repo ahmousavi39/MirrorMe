@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#b93ec7"
+      "backgroundColor": "#C122BB"
     },
     "ios": {
       "supportsTablet": false,
@@ -38,7 +38,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#b93ec7"
+        "backgroundColor": "#C122BB"
       },
       "package": "com.ahmousavi.MirrorMe",
       "googleServicesFile": "./credits/google-services.json",

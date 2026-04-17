@@ -462,8 +462,8 @@ export default function ResultsScreen() {
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
 
-  const [activeTab, setActiveTab] = useState(0);
   const pagerRef = useRef<PagerView>(null);
+  const scrollPos = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     AsyncStorage.getItem('@addToWardrobe').then((val) => setAddToWardrobe(val !== 'false'));
@@ -611,25 +611,35 @@ export default function ResultsScreen() {
 
       {/* ── Dot indicator bar ──────────────────────────────────────── */}
       <View style={[s.dotBar, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
-        {Array.from({ length: TAB_COUNT }).map((_, i) => (
-          <TouchableOpacity
-            key={i}
-            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-            onPress={() => {
-              pagerRef.current?.setPage(i);
-              setActiveTab(i);
-            }}
-          >
-            <Animated.View
-              style={[
-                s.dot,
-                activeTab === i
-                  ? { backgroundColor: theme.primary, width: 22, borderRadius: 4 }
-                  : { backgroundColor: theme.border, width: 6, borderRadius: 3 },
-              ]}
-            />
-          </TouchableOpacity>
-        ))}
+        {Array.from({ length: TAB_COUNT }).map((_, i) => {
+          const inputRange = Array.from({ length: TAB_COUNT }, (__, j) => j);
+          const dotWidth = scrollPos.interpolate({
+            inputRange,
+            outputRange: inputRange.map(j => (j === i ? 22 : 6)),
+            extrapolate: 'clamp',
+          });
+          const dotColor = scrollPos.interpolate({
+            inputRange,
+            outputRange: inputRange.map(j => (j === i ? theme.primary : theme.border)),
+            extrapolate: 'clamp',
+          });
+          const dotRadius = scrollPos.interpolate({
+            inputRange,
+            outputRange: inputRange.map(j => (j === i ? 4 : 3)),
+            extrapolate: 'clamp',
+          });
+          return (
+            <TouchableOpacity
+              key={i}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              onPress={() => pagerRef.current?.setPage(i)}
+            >
+              <Animated.View
+                style={[s.dot, { width: dotWidth, backgroundColor: dotColor, borderRadius: dotRadius }]}
+              />
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* ── Swipeable pages ────────────────────────────────────────── */}
@@ -637,7 +647,13 @@ export default function ResultsScreen() {
         ref={pagerRef}
         style={s.pager}
         initialPage={0}
-        onPageSelected={(e) => setActiveTab(e.nativeEvent.position)}
+        onPageScroll={(e) => {
+          const { position, offset } = e.nativeEvent;
+          scrollPos.setValue(position + offset);
+        }}
+        onPageSelected={(e) => {
+          scrollPos.setValue(e.nativeEvent.position);
+        }}
       >
 
         {/* ── PAGE 0: Score + Color Palette ──────────────────────── */}
@@ -776,9 +792,9 @@ export default function ResultsScreen() {
         </ScrollView>
 
         {/* ── PAGE 4 (conditional): Styling for Occasion ─────────── */}
+        {hasOccasionTips && (
         <ScrollView key="4" contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
-          {hasOccasionTips && (
-            <View style={[s.card, { backgroundColor: theme.card }]}>
+          <View style={[s.card, { backgroundColor: theme.card }]}>
               <View style={s.cardHeader}>
                 <View style={[s.cardIcon, { backgroundColor: `${theme.secondary}18` }]}>
                   <Ionicons name={occasionIcon} size={16} color={theme.secondary} />
@@ -814,9 +830,9 @@ export default function ResultsScreen() {
                 })}
               </View>
             </View>
-          )}
           <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
         </ScrollView>
+        )}
 
       </PagerView>
 
@@ -913,7 +929,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   dot: {

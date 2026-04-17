@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, Platform } from 'react-native';
+import { useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity, Platform, Animated } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -17,11 +17,13 @@ const TABS = [
   { key: 'profile',  icon: 'person-circle', iconOutline: 'person-circle-outline' },
 ] as const;
 
+const INPUT_RANGE = TABS.map((_, i) => i); // [0, 1, 2, 3]
+
 export default function TabLayout() {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const [page, setPage] = useState(0);
   const pagerRef = useRef<PagerView>(null);
+  const scrollPos = useRef(new Animated.Value(0)).current;
 
   function goToPage(index: number) {
     pagerRef.current?.setPage(index);
@@ -34,7 +36,14 @@ export default function TabLayout() {
         style={s.pager}
         initialPage={0}
         overdrag
-        onPageSelected={(e) => setPage(e.nativeEvent.position)}
+        onPageScroll={(e) => {
+          const { position, offset } = e.nativeEvent;
+          scrollPos.setValue(position + offset);
+        }}
+        onPageSelected={(e) => {
+          // Snap to exact integer to prevent float drift
+          scrollPos.setValue(e.nativeEvent.position);
+        }}
       >
         <View key="0"><AnalyzeScreen /></View>
         <View key="1"><HistoryScreen /></View>
@@ -44,8 +53,22 @@ export default function TabLayout() {
 
       <View style={[s.tabBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
         {TABS.map((tab, i) => {
-          const active = i === page;
-          const color = active ? theme.primary : theme.textSecondary;
+          const activeFraction = scrollPos.interpolate({
+            inputRange: INPUT_RANGE,
+            outputRange: INPUT_RANGE.map(j => (j === i ? 1 : 0)),
+            extrapolate: 'clamp',
+          });
+
+          const color = scrollPos.interpolate({
+            inputRange: INPUT_RANGE,
+            outputRange: INPUT_RANGE.map(j =>
+              j === i ? theme.primary : theme.textSecondary
+            ),
+            extrapolate: 'clamp',
+          });
+
+          const outlineOpacity = Animated.subtract(1, activeFraction);
+
           return (
             <TouchableOpacity
               key={tab.key}
@@ -53,14 +76,17 @@ export default function TabLayout() {
               onPress={() => goToPage(i)}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={(active ? tab.icon : tab.iconOutline) as any}
-                size={26}
-                color={color}
-              />
-              <Text style={[s.tabLabel, { color }]}>
+              <View style={s.iconWrap}>
+                <Animated.View style={[StyleSheet.absoluteFill, s.iconCenter, { opacity: outlineOpacity }]}>
+                  <Ionicons name={tab.iconOutline as any} size={26} color={theme.textSecondary} />
+                </Animated.View>
+                <Animated.View style={[s.iconCenter, { opacity: activeFraction }]}>
+                  <Ionicons name={tab.icon as any} size={26} color={theme.primary} />
+                </Animated.View>
+              </View>
+              <Animated.Text style={[s.tabLabel, { color }]}>
                 {t(`tabs.${tab.key}`)}
-              </Text>
+              </Animated.Text>
             </TouchableOpacity>
           );
         })}
@@ -84,6 +110,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 2,
+  },
+  iconWrap: {
+    width: 26,
+    height: 26,
+  },
+  iconCenter: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabLabel: {
     fontSize: 11,
