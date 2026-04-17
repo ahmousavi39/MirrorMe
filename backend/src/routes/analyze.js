@@ -212,9 +212,6 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
 
     // ── 3. Ximilar — identify clothing items ──────────────────────────────────
     let clothingItems = [];
-    // When Gemini fallback is used with a non-English locale, items are already
-    // in the target language — no translateClothingItems call needed afterward.
-    let clothingFromGeminiLocalized = false;
     try {
       clothingItems = await analyzeClothing(base64Image);
     } catch (ximilarErr) {
@@ -223,7 +220,6 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       try {
         clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
         console.log(`Gemini extracted ${clothingItems.length} clothing item(s) as fallback`);
-        if (locale && locale !== 'en') clothingFromGeminiLocalized = true;
       } catch (fallbackErr) {
         // Still non-fatal — Gemini can rate the outfit from the image alone
         console.warn('Gemini clothing fallback also failed:', fallbackErr.message);
@@ -243,12 +239,6 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
         return res.status(422).json({ error: geminiErr.message, code: 'NO_OUTFIT' });
       }
       return res.status(502).json({ error: 'AI rating service unavailable. Please try again.' });
-    }
-
-    // If Gemini fallback detected items directly in the target language,
-    // use those as clothingItemsLocalized (avoids a redundant translation call).
-    if (clothingFromGeminiLocalized && !geminiResult.clothingItemsLocalized && clothingItems.length > 0) {
-      geminiResult.clothingItemsLocalized = clothingItems;
     }
 
     // ── 5. Save result to Firestore (Firestore only — no Storage needed) ───────

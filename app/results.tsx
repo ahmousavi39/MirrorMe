@@ -555,6 +555,14 @@ export default function ResultsScreen() {
   const occasionIcon = (result.occasion ? OCCASION_ICONS[result.occasion] : 'calendar') as any;
   const TAB_COUNT = hasOccasionTips ? 5 : 4;
 
+  // Only use localized items when the array length matches clothingItems — prevents
+  // index mismatches when loading from history where translation may have failed.
+  const displayClothingItems =
+    Array.isArray(result.clothingItemsLocalized) &&
+    result.clothingItemsLocalized.length === result.clothingItems.length
+      ? result.clothingItemsLocalized
+      : result.clothingItems;
+
   return (
     <SafeAreaView style={[s.container, { backgroundColor: theme.background }]} edges={['bottom']}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
@@ -573,7 +581,7 @@ export default function ResultsScreen() {
         {(result.clothingItems?.length ?? 0) > 0 && (
           <View style={s.photoTagsContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoTagsScroll}>
-              {(result.clothingItemsLocalized ?? result.clothingItems).map((item, i) => (
+              {displayClothingItems.map((item, i) => (
                 addToWardrobe ? (
                   <TouchableOpacity
                     key={i}
@@ -730,7 +738,7 @@ export default function ResultsScreen() {
               </View>
               <View style={s.occasionList}>
                 {OCCASION_ORDER.map((key) => {
-                  const sc: number = (result.occasionScores as any)[key] ?? 0;
+                  const sc: number = (result.occasionScores as any)?.[key] ?? 0;
                   const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
                   const isSelected = result.occasion === key;
                   return (

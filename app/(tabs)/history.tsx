@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Platform, RefreshControl, Image, Alert,
+  ActivityIndicator, Platform, RefreshControl, Image, Alert, ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
@@ -105,7 +105,7 @@ export default function HistoryScreen() {
     }
   }, []);
 
-  useEffect(() => { load(); }, []);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -144,6 +144,7 @@ export default function HistoryScreen() {
       occasionTips: item.occasionTips ?? [],
       occasionTipItems: item.occasionTipItems ?? [],
       clothingItems: item.clothingItems ?? [],
+      clothingItemsLocalized: item.clothingItemsLocalized ?? null,
       clothingItemKeys: item.clothingItemKeys,
       occasion: item.occasion ?? null,
       occasionScores: item.occasionScores ?? {} as any,
@@ -170,27 +171,37 @@ export default function HistoryScreen() {
 
   return (
     <View style={s.container}>
-      <View style={s.header}>
+      <View style={[s.header, { borderBottomColor: theme.border }]}>
         <Text style={s.title}>{t('history.title')}</Text>
         <Text style={s.subtitle}>{t('history.analysisCount_other', { count: uploads.length })}</Text>
       </View>
 
       {error ? (
-        <View style={[s.center, { flex: 1 }]}>
+        <ScrollView
+          contentContainerStyle={[s.center, { flex: 1 }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+          }
+        >
           <Ionicons name="cloud-offline-outline" size={48} color={theme.textSecondary} />
           <Text style={[s.emptyTitle, { color: theme.text }]}>{t('history.couldntLoad')}</Text>
           <TouchableOpacity style={[s.retryBtn, { backgroundColor: theme.primary }]} onPress={() => load()}>
             <Text style={s.retryText}>{t('common.tryAgain')}</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       ) : uploads.length === 0 ? (
-        <View style={[s.center, { flex: 1 }]}>
+        <ScrollView
+          contentContainerStyle={[s.center, { flex: 1 }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+          }
+        >
           <Ionicons name="shirt-outline" size={56} color={theme.textSecondary} />
           <Text style={[s.emptyTitle, { color: theme.text }]}>{t('history.noAnalyses')}</Text>
           <Text style={[s.emptySub, { color: theme.textSecondary }]}>
             {t('history.noAnalysesSub')}
           </Text>
-        </View>
+        </ScrollView>
       ) : (
         <FlatList
           data={uploads}
@@ -256,6 +267,7 @@ const makeStyles = (theme: any) => StyleSheet.create({
   header: {
     paddingTop: Platform.OS === 'ios' ? 56 : 40,
     paddingHorizontal: 20, paddingBottom: 16,
+    borderBottomWidth: 1,
   },
   title: { fontSize: 26, fontWeight: '800', color: theme.text, letterSpacing: -0.5 },
   subtitle: { fontSize: 13, color: theme.textSecondary, marginTop: 2 },

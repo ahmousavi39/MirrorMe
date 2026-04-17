@@ -16,7 +16,7 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
     model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 8192,
     },
   });
 
@@ -128,6 +128,7 @@ OTHERWISE respond with:
   ],
   "occasionTipRefs": [null, "sneakers_white"],
   "colorPalette": ["#1a1a2e", "#e8c4a0", "#4a4a4a"],  /* outfit + skin colors only, no background */
+  "clothingItemsLocalized": null,  /* see rule below */
   "occasionScores": {
 ${allOccasionsList}
   }
@@ -141,6 +142,7 @@ Rules:
 - occasionTips: 1–3 tips about adapting the outfit specifically for the chosen event/occasion context. If no occasion was chosen, give general versatility tips. Each starts with an action verb. When a wardrobe piece the user owns would be a natural swap or addition for the occasion, mention it by its [key:...] label — but only if it genuinely fits.
 - occasionTipRefs: parallel array to occasionTips, same length. For each tip, if you referenced a wardrobe item using its [key:...] label, put that key string here. Otherwise put null.
 - colorPalette: array of 1–5 hex color strings representing ONLY the dominant colors of the clothing items and visible skin tone. IGNORE background, walls, furniture, floors, and any non-clothing objects. Focus strictly on what the person is wearing and their skin.
+- clothingItemsLocalized: ${languageName ? `describe each detected clothing item's fields (category, color, fit, material, pattern, style) directly in ${languageName} — the same language you used for feedback and styleTips. Do NOT translate from the English detected items; write the values naturally as a native speaker would. Return an array of objects with the same keys. Keep null values as null. JSON keys must stay in English. The array MUST have the same number of objects in the same order as the detected clothing items.` : 'set to null (locale is English).'}
 - occasionScores: CRITICAL — these scores must be GROUNDED in the actual outfit quality. First establish an honest base style score (fit, color, proportions). Then for each occasion, ask: does this specific outfit work for that context? Adjust ±2 points max from the base. A mediocre outfit (5–6) cannot score 8+ for any occasion. A poor fit cannot be saved by a good occasion match. Scores should feel realistic and consistent — the selected occasion score MUST equal "score".
 - Keep language simple, warm and practical.`;
 
@@ -215,10 +217,22 @@ Rules:
     .filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c))
     .slice(0, 5);
 
-  // Translate clothing items into the user's language via a dedicated focused call
+  // Extract clothingItemsLocalized directly from the main response (no separate API call)
   let clothingItemsLocalized = null;
-  if (languageName && clothingItems && clothingItems.length > 0) {
-    clothingItemsLocalized = await translateClothingItems(clothingItems, languageName);
+  if (
+    languageName &&
+    Array.isArray(parsed.clothingItemsLocalized) &&
+    parsed.clothingItemsLocalized.length === clothingItems.length
+  ) {
+    clothingItemsLocalized = parsed.clothingItemsLocalized.map((item) => ({
+      category: typeof item.category === 'string' ? item.category : null,
+      color:    typeof item.color    === 'string' ? item.color    : null,
+      fit:      typeof item.fit      === 'string' ? item.fit      : null,
+      material: typeof item.material === 'string' ? item.material : null,
+      pattern:  typeof item.pattern  === 'string' ? item.pattern  : null,
+      style:    typeof item.style    === 'string' ? item.style    : null,
+      tags:     [],
+    }));
   }
 
   return {
@@ -249,7 +263,7 @@ async function translateClothingItems(items, languageName) {
     model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.1,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 2048,
       responseMimeType: 'application/json',
     },
   });
