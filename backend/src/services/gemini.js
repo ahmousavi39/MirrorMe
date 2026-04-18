@@ -361,6 +361,16 @@ async function extractClothingFromImage(base64Image, mimeType = 'image/jpeg', lo
     ? `Write all string values (category, color, material, pattern, fit, style) in ${languageName}. ALL JSON keys must stay in English.`
     : '';
 
+  // Build locale-aware examples so they don't anchor Gemini's output to English
+  const examplesByLocale = {
+    'zh-Hans': '{"items":[{"category":"白色T恤","color":"白色","material":"棉","pattern":"纯色","fit":"常规","style":"休闲"},{"category":"蓝色牛仔裤","color":"蓝色","material":"牛仔布","pattern":"纯色","fit":"修身","style":"休闲"}]}',
+    'ja':      '{"items":[{"category":"白いTシャツ","color":"白","material":"コットン","pattern":"無地","fit":"レギュラー","style":"カジュアル"},{"category":"ブルーデニム","color":"青","material":"デニム","pattern":"無地","fit":"スリム","style":"カジュアル"}]}',
+    'de':      '{"items":[{"category":"Weißes T-Shirt","color":"weiß","material":"Baumwolle","pattern":"uni","fit":"regular","style":"casual"},{"category":"Blaue Jeans","color":"blau","material":"Denim","pattern":"uni","fit":"slim","style":"casual"}]}',
+    'fr':      '{"items":[{"category":"T-shirt blanc","color":"blanc","material":"coton","pattern":"uni","fit":"regular","style":"casual"},{"category":"Jean bleu","color":"bleu","material":"denim","pattern":"uni","fit":"slim","style":"casual"}]}',
+    'es':      '{"items":[{"category":"Camiseta blanca","color":"blanco","material":"algodón","pattern":"liso","fit":"regular","style":"casual"},{"category":"Jeans azules","color":"azul","material":"denim","pattern":"liso","fit":"slim","style":"casual"}]}',
+  };
+  const exampleOutput = examplesByLocale[locale] || '{"items":[{"category":"White T-Shirt","color":"white","material":"cotton","pattern":"solid","fit":"regular","style":"casual"},{"category":"Blue Jeans","color":"blue","material":"denim","pattern":"solid","fit":"slim","style":"casual"}]}';
+
   const attempts = [
     {
       temperature: 0.1,
@@ -369,17 +379,17 @@ ${langInstruction ? `\n${langInstruction}\n` : ''}
 Output ONLY a raw JSON object. No markdown. No code fences. No comments. No extra text.
 
 Schema — each item has exactly these 6 keys:
-  "category": string  (e.g. "Jeans", "T-Shirt", "Sneakers", "Hoodie")
-  "color":    string or null  (e.g. "black", "white", "navy blue")
-  "material": string or null  (e.g. "cotton", "denim", "leather", "polyester")
-  "pattern":  string or null  (e.g. "solid", "striped", "floral", "plaid", "checkered")
-  "fit":      string or null  (e.g. "slim", "regular", "oversized", "baggy", "fitted")
-  "style":    string or null  (e.g. "casual", "formal", "streetwear", "sporty", "preppy")
+  "category": string
+  "color":    string or null
+  "material": string or null
+  "pattern":  string or null
+  "fit":      string or null
+  "style":    string or null
 
 All values must be plain strings or null. No arrays. No nested objects.
 
 Example output:
-{"items":[{"category":"White T-Shirt","color":"white","material":"cotton","pattern":"solid","fit":"regular","style":"casual"},{"category":"Blue Jeans","color":"blue","material":"denim","pattern":"solid","fit":"slim","style":"casual"}]}
+${exampleOutput}
 
 If no clothing is visible: {"items":[]}`,
     },
@@ -388,6 +398,7 @@ If no clothing is visible: {"items":[]}`,
       prompt: `List clothing items in this photo as JSON. Output only the JSON, nothing else.${langInstruction ? ` ${langInstruction}` : ''}
 Format: {"items":[{"category":"name","color":"color or null","material":"material or null","pattern":"pattern or null","fit":"fit or null","style":"style or null"}]}
 One object per garment. All values are strings or the word null. No arrays inside objects.
+Example: ${exampleOutput}
 If no clothing: {"items":[]}`,
     },
   ];

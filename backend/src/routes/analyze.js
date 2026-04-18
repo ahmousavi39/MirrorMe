@@ -7,7 +7,6 @@ const router = express.Router();
 const { FieldValue } = require('firebase-admin/firestore');
 const verifyToken = require('../middleware/verifyToken');
 const { db, bucket } = require('../services/firebase');
-const { analyzeClothing } = require('../services/ximilar');
 const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
 const FREE_UPLOADS_PER_WEEK = 2;
@@ -218,20 +217,14 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       }
     }
 
-    // ── 3. Ximilar — identify clothing items ──────────────────────────────────
+    // ── 3. Gemini — identify clothing items in the user's locale ─────────────
     let clothingItems = [];
     try {
-      clothingItems = await analyzeClothing(base64Image);
-    } catch (ximilarErr) {
-      // Ximilar unavailable — fall back to Gemini vision for clothing extraction
-      console.warn('Ximilar failed, trying Gemini fallback for clothing tags:', ximilarErr.message);
-      try {
-        clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
-        console.log(`Gemini extracted ${clothingItems.length} clothing item(s) as fallback`);
-      } catch (fallbackErr) {
-        // Still non-fatal — Gemini can rate the outfit from the image alone
-        console.warn('Gemini clothing fallback also failed:', fallbackErr.message);
-      }
+      clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
+      console.log(`Gemini extracted ${clothingItems.length} clothing item(s)`);
+    } catch (extractErr) {
+      // Non-fatal — Gemini can still rate the outfit from the image alone
+      console.warn('Gemini clothing extraction failed:', extractErr.message);
     }
 
     // ── 4. Gemini — rate the outfit ───────────────────────────────────────────
@@ -311,14 +304,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       const normalize = (s) => (s || '').toLowerCase().trim();
 
       for (let idx = 0; idx < clothingItems.length; idx++) {
-        const item = clothingItems[idx];
+        const item = clothingItems[idx]; // already in user's locale
         const secondaryFields = ['fit', 'material', 'pattern', 'style'];
 
-        // clothingItems fields are already in the user's language:
-        //   • Ximilar always returns English
-        //   • Gemini fallback runs with locale, so fields are in the user's language
-        // We store these directly as the primary wardrobe fields so the key,
-        // display and PATCH re-key all use the same values — no mismatch possible.
         const categoryNorm = normalize(item.category);
         const colorNorm    = normalize(item.color);
 
