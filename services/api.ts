@@ -214,6 +214,9 @@ export async function addWardrobeItem(imageUri: string, locale?: string): Promis
   const headers = await authHeaders();
   const formData = new FormData();
   formData.append('photo', { uri: imageUri, type: 'image/jpeg', name: 'photo.jpg' } as unknown as Blob);
+  // Send locale both ways: form field (mirrors analyze route, proven to work)
+  // and query param (fallback in case multipart body parsing strips it)
+  if (locale) formData.append('locale', locale);
   const url = `${BACKEND_URL}/api/wardrobe/add${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`;
   const res = await fetch(url, {
     method: 'POST',

@@ -69,12 +69,13 @@ export default function CustomAlert({
             <Text style={[styles.message, { color: theme.textSecondary }]}>{message}</Text>
           </ScrollView>
 
-          <View style={styles.buttonsContainer}>
+          <View style={[styles.buttonsContainer, buttons.length > 2 && styles.buttonsColumn]}>
             {buttons.map((button, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
                   styles.button,
+                  buttons.length > 2 && styles.buttonColumnItem,
                   {
                     backgroundColor:
                       button.style === 'destructive'
@@ -85,7 +86,8 @@ export default function CustomAlert({
                     borderWidth: button.style === 'cancel' ? 2 : 0,
                     borderColor: button.style === 'cancel' ? theme.border : 'transparent',
                   },
-                  buttons.length > 1 && index < buttons.length - 1 && styles.buttonMargin,
+                  index < buttons.length - 1 &&
+                    (buttons.length > 2 ? styles.buttonMarginBottom : styles.buttonMargin),
                 ]}
                 onPress={() => handleButtonPress(button)}
               >
@@ -100,6 +102,9 @@ export default function CustomAlert({
                       fontWeight: button.style === 'destructive' ? 'bold' : '600',
                     },
                   ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
                 >
                   {button.text}
                 </Text>
@@ -149,14 +154,27 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 12,
   },
+  buttonsColumn: {
+    flexDirection: 'column',
+    gap: 0,
+  },
   button: {
     flex: 1,
     paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonColumnItem: {
+    flex: 0,
+    width: '100%',
   },
   buttonMargin: {
     marginRight: 8,
+  },
+  buttonMarginBottom: {
+    marginBottom: 8,
   },
   buttonText: {
     fontSize: 16,
