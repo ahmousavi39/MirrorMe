@@ -214,8 +214,8 @@ export async function addWardrobeItem(imageUri: string, locale?: string): Promis
   const headers = await authHeaders();
   const formData = new FormData();
   formData.append('photo', { uri: imageUri, type: 'image/jpeg', name: 'photo.jpg' } as unknown as Blob);
-  if (locale) formData.append('locale', locale);
-  const res = await fetch(`${BACKEND_URL}/api/wardrobe/add`, {
+  const url = `${BACKEND_URL}/api/wardrobe/add${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`;
+  const res = await fetch(url, {
     method: 'POST',
     headers,
     body: formData,

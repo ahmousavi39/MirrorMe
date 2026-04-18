@@ -116,7 +116,8 @@ router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
     }
 
     // ── Detect clothing item via Gemini ───────────────────────────────────────
-    const locale = req.body?.locale || 'en';
+    // Locale comes via query param (more reliable than multipart body fields)
+    const locale = req.query?.locale || req.body?.locale || 'en';
     let clothingItems = [];
     try {
       clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
