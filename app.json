@@ -14,7 +14,8 @@
       "backgroundColor": "#B033B5"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
+      "requiresFullScreen": true,
       "bundleIdentifier": "com.ahmousavi.mirrorme",
       "googleServicesFile": "./credits/GoogleService-Info.plist",
       "infoPlist": {
@@ -55,6 +56,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#B033B5",
+          "image": "./assets/splash.png",
+          "imageWidth": 160
+        }
+      ],
       [
         "expo-image-picker",
         {

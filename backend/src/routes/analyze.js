@@ -218,7 +218,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       // Ximilar unavailable — fall back to Gemini vision for clothing extraction
       console.warn('Ximilar failed, trying Gemini fallback for clothing tags:', ximilarErr.message);
       try {
-        clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
+        clothingItems = await extractClothingFromImage(base64Image, mimeType);
         console.log(`Gemini extracted ${clothingItems.length} clothing item(s) as fallback`);
       } catch (fallbackErr) {
         // Still non-fatal — Gemini can rate the outfit from the image alone

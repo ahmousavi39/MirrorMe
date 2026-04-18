@@ -49,7 +49,9 @@ const OCCASION_ORDER: Occasion[] = [
 ];
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.1);
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const IS_IPAD = Platform.OS === 'ios' && Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) >= 768;
+const PHOTO_HEIGHT = IS_IPAD ? Math.round(Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) * 0.88) : Math.round(SCREEN_WIDTH * 1.1);
 
 function getScoreColor(score: number) {
   if (score >= 8) return '#30D158';

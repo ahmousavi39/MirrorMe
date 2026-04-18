@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform, Animated } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform, Animated, Dimensions } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -99,8 +99,8 @@ const s = StyleSheet.create({
   root:   { flex: 1 },
   pager:  { flex: 1 },
   tabBar: {
-    height: Platform.OS === 'ios' ? 84 : 68,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+    height: Platform.OS === 'ios' && Math.min(Dimensions.get('window').width, Dimensions.get('window').height) >= 768 ? 68 : Platform.OS === 'ios' ? 84 : 68,
+    paddingBottom: Platform.OS === 'ios' && Math.min(Dimensions.get('window').width, Dimensions.get('window').height) >= 768 ? 10 : Platform.OS === 'ios' ? 24 : 8,
     paddingTop: 8,
     flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,

@@ -3,7 +3,7 @@ import LottieView from 'lottie-react-native';
 import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Image, ActivityIndicator, Platform, Modal,
+  Image, ActivityIndicator, Platform, Modal, Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -377,7 +377,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
   photoArea: {
-    height: 370, borderRadius: 20, overflow: 'hidden',
+    height: Platform.OS === 'ios' && Math.min(Dimensions.get('window').width, Dimensions.get('window').height) >= 768 ? 630 : 370,
+    borderRadius: 20, overflow: 'hidden',
     backgroundColor: theme.card,
     borderWidth: 2, borderColor: theme.border, borderStyle: 'dashed',
   },
