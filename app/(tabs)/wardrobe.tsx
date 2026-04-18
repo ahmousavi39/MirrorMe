@@ -165,7 +165,7 @@ export default function WardrobeScreen() {
   const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -244,7 +244,8 @@ export default function WardrobeScreen() {
   };
 
   const renderItem = ({ item }: { item: WardrobeItem }) => {
-    const detail = [item.color, item.fit, item.material].filter(Boolean).join(' · ');
+    const display = item.localized?.[i18n.language] ?? item;
+    const detail = [display.color, display.fit, display.material].filter(Boolean).join(' · ');
     return (
       <View style={[s.card, { backgroundColor: theme.card }]}>
         <TouchableOpacity
@@ -265,9 +266,9 @@ export default function WardrobeScreen() {
           )}
         </TouchableOpacity>
         <View style={s.info}>
-          <Text style={[s.category, { color: theme.text }]}>{item.category}</Text>
+          <Text style={[s.category, { color: theme.text }]}>{display.category ?? item.category}</Text>
           {detail ? <Text style={[s.detail, { color: theme.textSecondary }]}>{detail}</Text> : null}
-          {item.style ? <Text style={[s.style, { color: theme.textSecondary }]}>{item.style}</Text> : null}
+          {display.style ? <Text style={[s.style, { color: theme.textSecondary }]}>{display.style}</Text> : null}
           <View style={s.metaRow}>
             <View style={[s.badge, { backgroundColor: `${theme.primary}14` }]}>
               <Ionicons name="repeat" size={11} color={theme.primary} />

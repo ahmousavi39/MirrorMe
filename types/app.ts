@@ -77,6 +77,16 @@ export interface SubscriptionStatus {
   remainingPremiumUploads: number | null;
 }
 
+// ── Localized display fields for a wardrobe item ────────────────────────────────
+export interface WardrobeItemLocalized {
+  category?: string | null;
+  color?: string | null;
+  fit?: string | null;
+  material?: string | null;
+  pattern?: string | null;
+  style?: string | null;
+}
+
 // ── Wardrobe item stored in Firestore ────────────────────────────────────────────
 export interface WardrobeItem {
   id: string;
@@ -91,4 +101,6 @@ export interface WardrobeItem {
   firstSeenAt: string;
   lastSeenAt: string;
   timesWorn: number;
+  /** Legacy locale overlay (kept for backward compat with items saved before this change) */
+  localized?: Record<string, WardrobeItemLocalized> | null;
 }

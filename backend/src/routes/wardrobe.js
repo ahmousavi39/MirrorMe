@@ -21,6 +21,12 @@ const upload = multer({
 /** Wardrobe document key — includes all 6 identifying fields so items that differ
  *  on even a single field are stored as separate wardrobe entries. */
 function wardrobeKey(category, color, fit, material, pattern, style) {
+  const fields = [category, color, fit, material, pattern, style];
+  const raw = fields.map((s) => (s || '').trim()).join('|');
+  // For non-ASCII input (e.g. Chinese, Japanese) use a deterministic content hash
+  if (/[^\x00-\x7F]/.test(raw)) {
+    return 'item_' + crypto.createHash('sha1').update(raw.toLowerCase()).digest('hex').slice(0, 24);
+  }
   const clean = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
   const parts = [
     clean(category) || 'item',

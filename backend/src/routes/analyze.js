@@ -69,6 +69,13 @@ function getDayKey() {
 /** Wardrobe document key — includes all 6 identifying fields so items that differ
  *  on even a single field (e.g. fit) are stored as separate wardrobe entries. */
 function wardrobeKey(category, color, fit, material, pattern, style) {
+  const fields = [category, color, fit, material, pattern, style];
+  const raw = fields.map((s) => (s || '').trim()).join('|');
+  // For non-ASCII input (e.g. Chinese, Japanese) use a deterministic content hash
+  // so each unique combination produces a stable, unique document ID.
+  if (/[^\x00-\x7F]/.test(raw)) {
+    return 'item_' + crypto.createHash('sha1').update(raw.toLowerCase()).digest('hex').slice(0, 24);
+  }
   const clean = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
   const parts = [
     clean(category) || 'item',
@@ -218,7 +225,7 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       // Ximilar unavailable — fall back to Gemini vision for clothing extraction
       console.warn('Ximilar failed, trying Gemini fallback for clothing tags:', ximilarErr.message);
       try {
-        clothingItems = await extractClothingFromImage(base64Image, mimeType);
+        clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
         console.log(`Gemini extracted ${clothingItems.length} clothing item(s) as fallback`);
       } catch (fallbackErr) {
         // Still non-fatal — Gemini can rate the outfit from the image alone
@@ -301,9 +308,15 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
 
       for (let idx = 0; idx < clothingItems.length; idx++) {
         const item = clothingItems[idx];
+        const secondaryFields = ['fit', 'material', 'pattern', 'style'];
+
+        // clothingItems fields are already in the user's language:
+        //   • Ximilar always returns English
+        //   • Gemini fallback runs with locale, so fields are in the user's language
+        // We store these directly as the primary wardrobe fields so the key,
+        // display and PATCH re-key all use the same values — no mismatch possible.
         const categoryNorm = normalize(item.category);
         const colorNorm    = normalize(item.color);
-        const secondaryFields = ['fit', 'material', 'pattern', 'style'];
 
         const candidates = existingDocs.filter((doc) => {
           const d = doc.data();
