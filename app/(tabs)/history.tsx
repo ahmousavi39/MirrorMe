@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   ActivityIndicator, Platform, RefreshControl, Image, Alert, ScrollView,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
@@ -82,7 +82,7 @@ function HistoryCard({ item, onPress, onDelete }: { item: HistoryItem; onPress: 
 
 export default function HistoryScreen() {
   const { theme } = useTheme();
-  const { setResult, setImageUri } = useAnalysis();
+  const { setResult, setImageUri, analysisVersion } = useAnalysis();
   const router = useRouter();
 
   const [uploads, setUploads] = useState<HistoryItem[]>([]);
@@ -105,7 +105,9 @@ export default function HistoryScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  // Load on mount and whenever a new analysis completes — skip useFocusEffect
+  // so navigating between tabs doesn't trigger unnecessary refetches.
+  useEffect(() => { load(); }, [analysisVersion]);
 
   const handleRefresh = () => {
     setRefreshing(true);

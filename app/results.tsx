@@ -682,7 +682,7 @@ export default function ResultsScreen() {
                         activeOpacity={0.7}
                       >
                         <Ionicons name="shirt-outline" size={11} color={theme.primary} />
-                        <Text style={[s.tipItemChipText, { color: theme.primary }]}>{itemLabel}</Text>
+                        <Text style={[s.tipItemChipText, { color: theme.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{itemLabel}</Text>
                         <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
                       </TouchableOpacity>
                     ) : null}
@@ -724,7 +724,7 @@ export default function ResultsScreen() {
                         activeOpacity={0.7}
                       >
                         <Ionicons name="shirt-outline" size={11} color={theme.secondary} />
-                        <Text style={[s.tipItemChipText, { color: theme.secondary }]}>{itemLabel}</Text>
+                        <Text style={[s.tipItemChipText, { color: theme.secondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{itemLabel}</Text>
                         <Ionicons name="image-outline" size={11} color={theme.secondary} style={{ marginLeft: 2 }} />
                       </TouchableOpacity>
                     ) : null}
@@ -1016,8 +1016,8 @@ const makeStyles = (theme: any) => StyleSheet.create({
   tipRow: { flexDirection: 'row', gap: 14, paddingVertical: 12, alignItems: 'flex-start' },
   tipIndex: { fontSize: 13, fontWeight: '800', width: 24 },
   tipText: { flex: 1, fontSize: 14, lineHeight: 22 },
-  tipItemChip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  tipItemChipText: { fontSize: 11, fontWeight: '600' },
+  tipItemChip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, alignSelf: 'flex-start', maxWidth: '100%', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  tipItemChipText: { fontSize: 11, fontWeight: '600', flexShrink: 1 },
 
 
 });

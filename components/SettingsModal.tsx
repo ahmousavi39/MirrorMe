@@ -7,7 +7,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, signOut as firebaseSig
 import { auth } from '@/services/firebase';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import ProfileEditModal from './ProfileEditModal';
-import { getSettings, saveSettings, deleteAccount } from '@/services/api';
+import { getSettings, saveSettings, deleteAccount, AppSettings } from '@/services/api';
 import { useTranslation } from 'react-i18next';
 import i18n, { changeLanguage, SUPPORTED_LANGUAGES } from '@/services/i18n';
 
@@ -24,6 +24,8 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
   const handleChangeLanguage = async (code: string) => {
     await changeLanguage(code);
     setCurrentLang(code);
+    // Persist to backend so the preference survives reinstalls / device switches
+    saveSettings({ language: code }).catch(() => {/* non-critical */});
   };
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{

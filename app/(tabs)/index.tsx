@@ -36,7 +36,7 @@ const OCCASION_KEYS: { key: Occasion; icon: string; color: string }[] = [
 export default function AnalyzeScreen() {
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { setResult, setImageUri } = useAnalysis();
+  const { setResult, setImageUri, bumpAnalysis } = useAnalysis();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -148,6 +148,8 @@ export default function AnalyzeScreen() {
       }, controller.signal, cToken, i18n.language);
       setImageUri(imageUri);
       setResult(result);
+      // Signal history + wardrobe tabs to reload on next focus
+      bumpAnalysis();
       // Refresh usage counter after a successful analysis
       loadStatus();
       router.push('/results');

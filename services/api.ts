@@ -149,12 +149,13 @@ export async function saveProfile(profile: UserProfile): Promise<void> {
 export interface AppSettings {
   shareWardrobe: boolean;
   addToWardrobe: boolean;
+  language?: string | null;
 }
 
 export async function getSettings(): Promise<AppSettings> {
   const headers = await authHeaders();
   const res = await fetch(`${BACKEND_URL}/api/user/settings`, { headers });
-  if (!res.ok) return { shareWardrobe: true, addToWardrobe: true };
+  if (!res.ok) return { shareWardrobe: true, addToWardrobe: true, language: null };
   return res.json();
 }
 

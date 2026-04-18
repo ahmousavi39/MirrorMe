@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAnalysis } from '@/contexts/AnalysisContext';
 import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, RefreshControl,
   Modal, StatusBar, Platform, Animated, KeyboardAvoidingView, TextInput, ScrollView, PanResponder,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
@@ -181,7 +182,10 @@ export default function WardrobeScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  const { analysisVersion } = useAnalysis();
+  // Load on mount and whenever a new analysis completes (analysis may add wardrobe items).
+  // Manual adds update state directly via setItems — no extra reload needed.
+  useEffect(() => { load(); }, [analysisVersion]);
 
   const handleAddItem = async () => {
     if (!isSubscribed) {

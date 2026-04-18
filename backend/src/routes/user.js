@@ -152,6 +152,7 @@ router.get('/settings', verifyToken, async (req, res) => {
     return res.json({
       shareWardrobe: d.shareWardrobe !== false, // default true
       addToWardrobe: d.addToWardrobe !== false, // default true
+      language: d.language || null,
     });
   } catch (error) {
     console.error('Get settings error:', error);
@@ -163,11 +164,17 @@ router.get('/settings', verifyToken, async (req, res) => {
 // Updates one or more app settings on the user's Firestore doc.
 router.patch('/settings', verifyToken, async (req, res) => {
   try {
+    const VALID_LOCALES = ['en', 'zh-Hans', 'ja', 'de', 'fr', 'es'];
     const allowed = ['shareWardrobe', 'addToWardrobe'];
     const update = {};
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
         update[key] = req.body[key] === true || req.body[key] === 'true';
+      }
+    }
+    if (req.body.language !== undefined) {
+      if (VALID_LOCALES.includes(req.body.language)) {
+        update.language = req.body.language;
       }
     }
     if (Object.keys(update).length === 0) {

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, User } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import { initUser, getProfile, getSettings } from '@/services/api';
+import { changeLanguage } from '@/services/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RC_IOS_API_KEY } from '@/constants/config';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
@@ -103,6 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           AsyncStorage.setItem('@shareWardrobe', String(settings.shareWardrobe)),
           AsyncStorage.setItem('@addToWardrobe', String(settings.addToWardrobe)),
         ]);
+        // Restore the user's saved language preference from their profile
+        if (settings.language) {
+          await changeLanguage(settings.language);
+        }
       } catch (e) {
         console.warn('User init / profile check error:', e);
       }
