@@ -67,8 +67,9 @@ async function rateOutfit(base64Image, clothingItems, mimeType = 'image/jpeg', o
     ? `The user's wardrobe (pieces they already own):\n${wardrobeItems
         .map((w) => {
           const details = [w.color, w.material, w.fit, w.style].filter(Boolean).join(', ');
-          const clean = (s) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
-          const key = `${clean(w.category)}_${clean(w.color)}`;
+          // Build a readable key from category + color in whatever language the item is stored in
+          const makeKey = (s) => (s || 'unknown').toLowerCase().replace(/\s+/g, '_').slice(0, 40);
+          const key = w.id || `${makeKey(w.category)}_${makeKey(w.color)}`;
           return `• [key:${key}] ${w.category}${details ? ` (${details})` : ''}`;
         })
         .join('\n')}`

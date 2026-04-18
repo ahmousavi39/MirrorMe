@@ -116,9 +116,10 @@ router.post('/add', verifyToken, upload.single('photo'), async (req, res) => {
     }
 
     // ── Detect clothing item via Gemini ───────────────────────────────────────
+    const locale = req.body?.locale || 'en';
     let clothingItems = [];
     try {
-      clothingItems = await extractClothingFromImage(base64Image, mimeType);
+      clothingItems = await extractClothingFromImage(base64Image, mimeType, locale);
     } catch (e) {
       console.warn('Wardrobe add: Gemini extraction failed:', e.message);
     }

@@ -210,10 +210,11 @@ export async function deleteWardrobeItem(id: string): Promise<void> {
 }
 
 // ── POST /api/wardrobe/add ────────────────────────────────────────────────────────
-export async function addWardrobeItem(imageUri: string): Promise<WardrobeItem> {
+export async function addWardrobeItem(imageUri: string, locale?: string): Promise<WardrobeItem> {
   const headers = await authHeaders();
   const formData = new FormData();
   formData.append('photo', { uri: imageUri, type: 'image/jpeg', name: 'photo.jpg' } as unknown as Blob);
+  if (locale) formData.append('locale', locale);
   const res = await fetch(`${BACKEND_URL}/api/wardrobe/add`, {
     method: 'POST',
     headers,

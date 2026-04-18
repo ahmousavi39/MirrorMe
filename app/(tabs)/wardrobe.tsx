@@ -224,7 +224,7 @@ export default function WardrobeScreen() {
         [{ resize: { width: 1200 } }],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
-      const newItem = await addWardrobeItem(compressed.uri);
+      const newItem = await addWardrobeItem(compressed.uri, i18n.language);
       setItems((prev) => [newItem, ...prev.filter((i) => i.id !== newItem.id)]);
     } catch (e: any) {
       if (e.code === 'NO_ITEM') {

@@ -210,7 +210,8 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       try {
         wardrobeSnap = await userRef.collection('wardrobe').get();
         if (shareWardrobe) {
-          wardrobeItems = wardrobeSnap.docs.map((d) => d.data());
+          // Include the doc ID so gemini.js can use it as a stable unique key label
+          wardrobeItems = wardrobeSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         }
       } catch (e) {
         console.warn('Could not fetch wardrobe:', e.message);
@@ -252,9 +253,12 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // Resolve each styleTipRef key to a human-readable item label (or null)
     const wardrobeByKey = {};
     wardrobeItems.forEach((w) => {
-      const clean = (s) => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
-      const key = `${clean(w.category)}_${clean(w.color)}`;
-      wardrobeByKey[key] = w;
+      // Primary index: same key formula used in the Gemini prompt (category_color in item's language)
+      const makeKey = (s) => (s || 'unknown').toLowerCase().replace(/\s+/g, '_').slice(0, 40);
+      const labelKey = `${makeKey(w.category)}_${makeKey(w.color)}`;
+      wardrobeByKey[labelKey] = w;
+      // Also index by doc ID as fallback (for old items / edge cases)
+      if (w.id) wardrobeByKey[w.id] = w;
     });
 
     // Replace [key:xxx] markers in tip text with the readable item name so the

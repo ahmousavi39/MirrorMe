@@ -182,8 +182,10 @@ function ClothingEditSheet({ item, originalKey, onSave, onClose, onAlert }: Edit
 
     setSaving(true);
     try {
-      await updateWardrobeItem(originalKey, { ...trimmed, source: 'results' });
-      const newKey = wardrobeKeyFor(trimmed.category, trimmed.color, trimmed.fit ?? null, trimmed.material ?? null, trimmed.pattern ?? null, trimmed.style ?? null);
+      const updated = await updateWardrobeItem(originalKey, { ...trimmed, source: 'results' });
+      // Use the server-returned id as the new key — client-side wardrobeKeyFor
+      // does not handle non-ASCII (e.g. Chinese) so we must trust the server.
+      const newKey = updated.id;
       dismiss(() => onSave({ ...item, ...trimmed } as ClothingItem, newKey));
     } catch (e: any) {
       onAlert(t('results.saveFailed'), e.message ?? t('results.saveFailedMsg'), 'error');
