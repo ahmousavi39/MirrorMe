@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as StoreReview from 'expo-store-review';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Share, Platform, Image, Animated, Dimensions,
@@ -9,6 +10,7 @@ import PagerView from 'react-native-pager-view';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
@@ -445,6 +447,7 @@ export default function ResultsScreen() {
   const { theme } = useTheme();
   const { result, imageUri, setResult, clear } = useAnalysis();
   const router = useRouter();
+  const navigation = useNavigation();
   const { t } = useTranslation();
   const s = makeStyles(theme);
   const insets = useSafeAreaInsets();
@@ -483,6 +486,23 @@ export default function ResultsScreen() {
       Animated.timing(slideAnim, { toValue: 0, duration: 400, delay: 150, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  // Fire review prompt at milestone closes — covers back button, swipe gesture, and router.back()
+  const REVIEW_MILESTONES = new Set([1, 3, 5, 8, 10, 15, 20, 25, 30]);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', async () => {
+      const raw = await AsyncStorage.getItem('@resultCloseCount');
+      const next = (parseInt(raw ?? '0', 10) || 0) + 1;
+      await AsyncStorage.setItem('@resultCloseCount', String(next));
+      if (REVIEW_MILESTONES.has(next)) {
+        const isAvailable = await StoreReview.isAvailableAsync();
+        if (isAvailable) {
+          await StoreReview.requestReview();
+        }
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleBack = () => router.back();
 
