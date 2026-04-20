@@ -4,18 +4,11 @@ const axios = require('axios');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { Resvg } = require('@resvg/resvg-js');
 const verifyToken = require('../middleware/verifyToken');
 
-// Resolve CJK font path from the bundled npm package (installed with npm install)
-let cjkFontUri = null;
-try {
-  const fontFile = require.resolve(
-    '@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-400-normal.woff2'
-  );
-  cjkFontUri = `file://${fontFile.replace(/\\/g, '/')}`;
-} catch {
-  // Font package not found — CJK characters will fall back to system fonts
-}
+// Path to the CJK OTF font downloaded by the postinstall script
+const FONT_PATH = path.join(__dirname, '../../fonts/NotoSansSC-Regular.otf');
 
 // ── POST /api/share-image ─────────────────────────────────────────────────────────
 // Downloads the outfit photo, composites the score overlay, returns base64 JPEG.
@@ -61,14 +54,8 @@ router.post('/', verifyToken, async (req, res) => {
     const brandY = labelY - labelFontSize - Math.round(h * 0.012);
     const scoreY = brandY - brandFontSize - Math.round(h * 0.008);
 
-    const fontFaceBlock = cjkFontUri
-      ? `<defs><style>@font-face{font-family:'NotoSansSC';src:url('${cjkFontUri}') format('woff2');}</style></defs>`
-      : '';
-    const cjkFont = 'NotoSansSC, Noto Sans CJK SC, ';
-
     const svg = `
       <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-        ${fontFaceBlock}
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="black" stop-opacity="0"/>
@@ -78,19 +65,19 @@ router.post('/', verifyToken, async (req, res) => {
         <rect x="0" y="${h - gradH}" width="${w}" height="${gradH}" fill="url(#grad)"/>
         <text
           x="${paddingX}" y="${scoreY}"
-          font-family="${cjkFont}Arial Black, Arial, sans-serif"
+          font-family="Noto Sans SC, Arial Black, Arial, sans-serif"
           font-size="${scoreFontSize}" font-weight="900"
           fill="${safeColor}"
         >${safeScore}<tspan font-size="${Math.round(scoreFontSize * 0.38)}" fill="rgba(255,255,255,0.65)" dy="-${Math.round(scoreFontSize * 0.18)}">/10</tspan></text>
         <text
           x="${paddingX}" y="${brandY}"
-          font-family="${cjkFont}Arial, sans-serif"
+          font-family="Noto Sans SC, Arial, sans-serif"
           font-size="${labelFontSize}" font-weight="800"
           fill="${safeColor}"
         >${safeLabel}</text>
         <text
           x="${paddingX}" y="${labelY}"
-          font-family="${cjkFont}Arial, sans-serif"
+          font-family="Noto Sans SC, Arial, sans-serif"
           font-size="${brandFontSize}" font-weight="600"
           fill="rgba(255,255,255,0.5)"
           letter-spacing="2"
@@ -98,8 +85,19 @@ router.post('/', verifyToken, async (req, res) => {
       </svg>
     `.trim();
 
+    // Render SVG overlay to PNG using resvg (loads OTF font directly — supports CJK)
+    const resvgOptions = { fitTo: { mode: 'original' } };
+    if (fs.existsSync(FONT_PATH)) {
+      resvgOptions.font = {
+        fontFiles: [FONT_PATH],
+        loadSystemFonts: false,
+        defaultFontFamily: 'Noto Sans SC',
+      };
+    }
+    const overlayPng = new Resvg(svg, resvgOptions).render().asPng();
+
     const outputBuffer = await sharp(inputBuffer)
-      .composite([{ input: Buffer.from(svg), blend: 'over' }])
+      .composite([{ input: overlayPng, blend: 'over' }])
       .jpeg({ quality: 88 })
       .toBuffer();
 
