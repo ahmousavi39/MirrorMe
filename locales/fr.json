@@ -239,7 +239,16 @@
     "registrationFailed": "Inscription échouée. Veuillez réessayer",
     "checkInbox": "Vérifie ta boîte de réception",
     "checkInboxMsg": "Nous avons envoyé un lien de vérification à\n{{email}}.\nAppuie sur le lien puis connecte-toi.\nSi tu ne le vois pas, vérifie tes spams.",
-    "goToSignIn": "Aller à la connexion"
+    "goToSignIn": "Aller à la connexion",
+    "agreePrefix": "J'accepte les ",
+    "termsLink": "Conditions d'utilisation",
+    "agreeMiddle": " et la ",
+    "policyLink": "Politique de confidentialité",
+    "agreeSuffix": "",
+    "mustAcceptTerms": "Veuillez accepter les Conditions d'utilisation et la Politique de confidentialité pour continuer",
+    "socialConsentPrefix": "En continuant, vous acceptez nos ",
+    "socialConsentMiddle": " et notre ",
+    "socialConsentSuffix": "."
   },
 
   "forgotPassword": {

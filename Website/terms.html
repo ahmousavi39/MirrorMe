@@ -178,6 +178,16 @@
 </head>
 
 <body>
+    <div class="lang-switcher">
+        <select id="langSelect" onchange="setLang(this.value)" aria-label="Select language">
+            <option value="en">&#127468;&#127463; English</option>
+            <option value="de">&#127465;&#127466; Deutsch</option>
+            <option value="es">&#127466;&#127480; Espa&ntilde;ol</option>
+            <option value="fr">&#127467;&#127479; Fran&ccedil;ais</option>
+            <option value="ja">&#127471;&#127477; &#26085;&#26412;&#35486;</option>
+            <option value="zh">&#127464;&#127475; &#20013;&#25991;</option>
+        </select>
+    </div>
     <div class="hero">
         <img src="icon.png" alt="MirrorMe App Logo" class="logo">
         <h1>Terms of Use</h1>
@@ -346,6 +356,83 @@
             <p><strong>Thank you for using MirrorMe. Enjoy your style journey!</strong></p>
         </div>
     </div>
+
+    <style>
+        .lang-switcher { position: fixed; top: 16px; right: 16px; z-index: 1000; }
+        .lang-switcher select {
+            background: rgba(255,255,255,0.95);
+            border: none; border-radius: 8px;
+            padding: 7px 30px 7px 12px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25); color: #333;
+            outline: none; -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23667eea'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center;
+        }
+    </style>
+    <script>
+        var translations = {
+            en: {
+                pageTitle: 'Terms of Use - MirrorMe', heroTitle: 'Terms of Use',
+                effectiveDate: 'Effective Date:',
+                h2: ['Introduction','License Grant','Pricing and Subscription','User Account and Responsibilities','Acceptable Use','Content and Intellectual Property','AI-Generated Content','Privacy and Data Protection','App Store Terms','Disclaimers and Limitations','Termination','Updates and Modifications','Governing Law and Disputes','Severability','Contact Information'],
+                h3: ['Our Content','User-Generated Content','Service Availability','Fashion Advice Disclaimer','Limitation of Liability','App Updates','Terms Changes']
+            },
+            de: {
+                pageTitle: 'Nutzungsbedingungen - MirrorMe', heroTitle: 'Nutzungsbedingungen',
+                effectiveDate: 'G\u00fcltig ab:',
+                h2: ['Einleitung','Lizenzvergabe','Preise und Abonnement','Benutzerkonto und Pflichten','Zul\u00e4ssige Nutzung','Inhalte und geistiges Eigentum','KI-generierte Inhalte','Datenschutz','App-Store-Bedingungen','Haftungsausschl\u00fcsse und Beschr\u00e4nkungen','K\u00fcndigung','Updates und \u00c4nderungen','Anwendbares Recht und Streitigkeiten','Salvatorische Klausel','Kontaktinformationen'],
+                h3: ['Unsere Inhalte','Nutzergenerierte Inhalte','Dienstverfügbarkeit','Haftungsausschluss f\u00fcr Modeberatung','Haftungsbeschr\u00e4nkung','App-Updates','\u00c4nderungen der Bedingungen']
+            },
+            es: {
+                pageTitle: 'T\u00e9rminos de uso - MirrorMe', heroTitle: 'T\u00e9rminos de uso',
+                effectiveDate: 'Fecha de entrada en vigor:',
+                h2: ['Introducci\u00f3n','Concesi\u00f3n de licencia','Precios y suscripci\u00f3n','Cuenta de usuario y responsabilidades','Uso aceptable','Contenido y propiedad intelectual','Contenido generado por IA','Privacidad y protecci\u00f3n de datos','T\u00e9rminos de la App Store','Descargos de responsabilidad y limitaciones','Rescisi\u00f3n','Actualizaciones y modificaciones','Ley aplicable y disputas','Divisibilidad','Informaci\u00f3n de contacto'],
+                h3: ['Nuestro contenido','Contenido generado por usuarios','Disponibilidad del servicio','Descargo de responsabilidad sobre consejos de moda','Limitaci\u00f3n de responsabilidad','Actualizaciones de la app','Cambios en los t\u00e9rminos']
+            },
+            fr: {
+                pageTitle: 'Conditions d\u2019utilisation - MirrorMe', heroTitle: 'Conditions d\u2019utilisation',
+                effectiveDate: 'Date d\u2019entr\u00e9e en vigueur\u00a0:',
+                h2: ['Introduction','Octroi de licence','Tarification et abonnement','Compte utilisateur et responsabilit\u00e9s','Utilisation acceptable','Contenu et propri\u00e9t\u00e9 intellectuelle','Contenu g\u00e9n\u00e9r\u00e9 par IA','Confidentialit\u00e9 et protection des donn\u00e9es','Conditions de l\u2019App Store','Avertissements et limitations','R\u00e9siliation','Mises \u00e0 jour et modifications','Droit applicable et litiges','Divisibilit\u00e9','Coordonn\u00e9es'],
+                h3: ['Notre contenu','Contenu g\u00e9n\u00e9r\u00e9 par les utilisateurs','Disponibilit\u00e9 du service','Avertissement concernant les conseils de mode','Limitation de responsabilit\u00e9','Mises \u00e0 jour de l\u2019app','Modifications des conditions']
+            },
+            ja: {
+                pageTitle: '\u5229\u7528\u898f\u7d04 - MirrorMe', heroTitle: '\u5229\u7528\u898f\u7d04',
+                effectiveDate: '\u767a\u52b9\u65e5\uff1a',
+                h2: ['\u306f\u3058\u3081\u306b','\u30e9\u30a4\u30bb\u30f3\u30b9\u306e\u4ed8\u4e0e','\u6599\u91d1\u3068\u30b5\u30d6\u30b9\u30af\u30ea\u30d7\u30b7\u30e7\u30f3','\u30e6\u30fc\u30b6\u30fc\u30a2\u30ab\u30a6\u30f3\u30c8\u3068\u8cac\u4efb','\u8a31\u5bb9\u3055\u308c\u308b\u4f7f\u7528','\u30b3\u30f3\u30c6\u30f3\u30c4\u3068\u77e5\u7684\u8ca1\u7523','AI\u751f\u6210\u30b3\u30f3\u30c6\u30f3\u30c4','\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u3068\u30c7\u30fc\u30bf\u4fdd\u8b77','App Store\u306e\u5229\u7528\u898f\u7d04','\u514d\u8ca3\u4e8b\u9805\u3068\u5236\u9650','\u89e3\u7d04','\u66f4\u65b0\u3068\u5909\u66f4','\u6e96\u62e0\u6cd5\u3068\u7d1b\u4e89','\u5206\u96e2\u53ef\u80fd\u6027','\u9023\u7d61\u5148\u60c5\u5831'],
+                h3: ['\u5f53\u793e\u306e\u30b3\u30f3\u30c6\u30f3\u30c4','\u30e6\u30fc\u30b6\u30fc\u751f\u6210\u30b3\u30f3\u30c6\u30f3\u30c4','\u30b5\u30fc\u30d3\u30b9\u306e\u53ef\u7528\u6027','\u30d5\u30a1\u30c3\u30b7\u30e7\u30f3\u30a2\u30c9\u30d0\u30a4\u30b9\u306e\u514d\u8ca3\u4e8b\u9805','\u8cac\u4efb\u306e\u5236\u9650','\u30a2\u30d7\u30ea\u306e\u66f4\u65b0','\u898f\u7d04\u306e\u5909\u66f4']
+            },
+            zh: {
+                pageTitle: '\u4f7f\u7528\u6761\u6b3e - MirrorMe', heroTitle: '\u4f7f\u7528\u6761\u6b3e',
+                effectiveDate: '\u751f\u6548\u65e5\u671f\uff1a',
+                h2: ['\u7b80\u4ecb','\u8bb8\u53ef\u6388\u6743','\u5b9a\u4ef7\u4e0e\u8ba2\u9605','\u7528\u6237\u8d26\u6237\u4e0e\u8d23\u4efb','\u53ef\u63a5\u53d7\u7684\u4f7f\u7528','\u5185\u5bb9\u4e0e\u77e5\u8bc6\u4ea7\u6743','AI\u751f\u6210\u5185\u5bb9','\u9690\u79c1\u4e0e\u6570\u636e\u4fdd\u62a4','App Store\u6761\u6b3e','\u514d\u8d23\u58f0\u660e\u4e0e\u9650\u5236','\u7ec8\u6b62','\u66f4\u65b0\u4e0e\u4fee\u6539','\u9002\u7528\u6cd5\u5f8b\u4e0e\u4e89\u8bae','\u53ef\u5206\u5272\u6027','\u8054\u7cfb\u4fe1\u606f'],
+                h3: ['\u6211\u4eec\u7684\u5185\u5bb9','\u7528\u6237\u751f\u6210\u7684\u5185\u5bb9','\u670d\u52a1\u53ef\u7528\u6027','\u65f6\u5c1a\u5efa\u8bae\u514d\u8d23\u58f0\u660e','\u8d23\u4efb\u9650\u5236','\u5e94\u7528\u66f4\u65b0','\u6761\u6b3e\u53d8\u66f4']
+            }
+        };
+
+        function setLang(lang) {
+            var t = translations[lang] || translations.en;
+            document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+            document.title = t.pageTitle;
+            document.querySelector('.hero h1').textContent = t.heroTitle;
+            var effDate = document.querySelector('.meta-info strong');
+            if (effDate) effDate.textContent = t.effectiveDate;
+            var h2s = document.querySelectorAll('.container h2');
+            t.h2.forEach(function (text, i) { if (h2s[i]) h2s[i].textContent = text; });
+            var h3s = document.querySelectorAll('.container h3');
+            t.h3.forEach(function (text, i) { if (h3s[i]) h3s[i].textContent = text; });
+            document.getElementById('langSelect').value = lang;
+            localStorage.setItem('mirrorMeLang', lang);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var saved = localStorage.getItem('mirrorMeLang');
+            var browser = ((navigator.language || navigator.userLanguage || 'en').split('-')[0]).toLowerCase();
+            var supported = ['en', 'de', 'es', 'fr', 'ja', 'zh'];
+            var lang = saved || (supported.indexOf(browser) !== -1 ? browser : 'en');
+            setLang(lang);
+        });
+    </script>
 </body>
 
 </html>

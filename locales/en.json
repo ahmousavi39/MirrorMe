@@ -239,7 +239,16 @@
     "registrationFailed": "Registration failed. Please try again",
     "checkInbox": "Check your inbox",
     "checkInboxMsg": "We sent a verification link to\n{{email}}.\nTap the link, then sign in.\nIf you don't see it, check your spam folder.",
-    "goToSignIn": "Go to Sign In"
+    "goToSignIn": "Go to Sign In",
+    "agreePrefix": "I agree to the ",
+    "termsLink": "Terms of Service",
+    "agreeMiddle": " and ",
+    "policyLink": "Privacy Policy",
+    "agreeSuffix": "",
+    "mustAcceptTerms": "Please accept the Terms of Service and Privacy Policy to continue",
+    "socialConsentPrefix": "By continuing, you agree to our ",
+    "socialConsentMiddle": " and ",
+    "socialConsentSuffix": "."
   },
 
   "forgotPassword": {

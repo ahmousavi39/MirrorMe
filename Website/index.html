@@ -211,6 +211,16 @@
     </style>
 </head>
 <body>
+    <div class="lang-switcher">
+        <select id="langSelect" onchange="setLang(this.value)" aria-label="Select language">
+            <option value="en">&#127468;&#127463; English</option>
+            <option value="de">&#127465;&#127466; Deutsch</option>
+            <option value="es">&#127466;&#127480; Espa&ntilde;ol</option>
+            <option value="fr">&#127467;&#127479; Fran&ccedil;ais</option>
+            <option value="ja">&#127471;&#127477; &#26085;&#26412;&#35486;</option>
+            <option value="zh">&#127464;&#127475; &#20013;&#25991;</option>
+        </select>
+    </div>
     <header class="hero">
         <img src="icon.png" alt="MirrorMe App Logo" class="logo">
         <h1>MirrorMe</h1>
@@ -276,5 +286,177 @@
     <footer class="footer">
         <p>&copy; 2026 MirrorMe. All rights reserved.</p>
     </footer>
+    <style>
+        .lang-switcher { position: fixed; top: 16px; right: 16px; z-index: 1000; }
+        .lang-switcher select {
+            background: rgba(255,255,255,0.95);
+            border: none; border-radius: 8px;
+            padding: 7px 30px 7px 12px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25); color: #333;
+            outline: none; -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23667eea'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center;
+        }
+    </style>
+    <script>
+        var translations = {
+            en: {
+                pageTitle: 'MirrorMe \u2013 AI Outfit Stylist',
+                tagline: 'Your AI-powered personal stylist',
+                mainTitle: 'Your Personal AI Stylist',
+                mainDesc: 'Upload any outfit photo and get an instant style score out of 10, personalized feedback, and expert styling recommendations \u2014 all powered by advanced AI.',
+                bestValue: 'BEST VALUE',
+                monthly: { name: 'Monthly', period: '/mo', desc: 'Billed monthly. Cancel anytime.', feature: '100 analyses per month' },
+                annual:  { name: 'Annual',  period: '/yr', desc: 'Just \u20ac2.50/month. Save 75%.', feature: '100 analyses per month' },
+                features: [
+                    { title: '\uD83C\uDFAF Style Score',       desc: 'Get an honest score out of 10 with detailed, personalized feedback on your entire outfit.' },
+                    { title: '\uD83D\uDCF8 Occasion Styling',  desc: 'Tailored tips for any occasion \u2014 casual, work, date night, formal events, and more.' },
+                    { title: '\uD83D\uDC4C Smart Wardrobe',    desc: 'Automatically build and manage your digital wardrobe with every outfit you analyze.' },
+                    { title: '\uD83D\uDCCA Style History',     desc: 'Track your fashion journey over time and watch your personal style evolve.' },
+                    { title: '\uD83C\uDFA8 Color Palette',     desc: 'Detect the colors in your outfit and receive smart color-matching recommendations.' },
+                    { title: '\u2728 Improvement Tips',        desc: 'Get actionable, AI-powered tips to elevate your look for any style goal.' }
+                ],
+                termsLink: 'Terms of Use', privacyLink: 'Privacy Policy',
+                footer: '\u00a9 2026 MirrorMe. All rights reserved.'
+            },
+            de: {
+                pageTitle: 'MirrorMe \u2013 KI-Outfit-Stylist',
+                tagline: 'Dein KI-gest\u00fctzter pers\u00f6nlicher Stylist',
+                mainTitle: 'Dein pers\u00f6nlicher KI-Stylist',
+                mainDesc: 'Lade ein Outfit-Foto hoch und erhalte sofort einen Stil-Score aus 10, pers\u00f6nliches Feedback und Styling-Empfehlungen \u2013 alles mit KI.',
+                bestValue: 'BESTES ANGEBOT',
+                monthly: { name: 'Monatlich', period: '/Mo.', desc: 'Monatlich abgerechnet. Jederzeit k\u00fcndbar.', feature: '100 Analysen pro Monat' },
+                annual:  { name: 'J\u00e4hrlich', period: '/Jahr', desc: 'Nur 2,50\u00a0\u20ac/Monat. 75\u00a0% sparen.', feature: '100 Analysen pro Monat' },
+                features: [
+                    { title: '\uD83C\uDFAF Stil-Score',             desc: 'Erhalte eine ehrliche Bewertung aus 10 mit detailliertem, pers\u00f6nlichem Feedback zu deinem Outfit.' },
+                    { title: '\uD83D\uDCF8 Anlass-Styling',         desc: 'Ma\u00dfgeschneiderte Tipps f\u00fcr jeden Anlass \u2013 Casual, Arbeit, Date, formelle Events und mehr.' },
+                    { title: '\uD83D\uDC4C Intelligente Garderobe', desc: 'Erstelle und verwalte automatisch deine digitale Garderobe bei jedem analysierten Outfit.' },
+                    { title: '\uD83D\uDCCA Stil-Verlauf',           desc: 'Verfolge deine Modereise und beobachte, wie sich dein pers\u00f6nlicher Stil entwickelt.' },
+                    { title: '\uD83C\uDFA8 Farbpalette',            desc: 'Erkenne die Farben in deinem Outfit und erhalte Farbkombinations-Empfehlungen.' },
+                    { title: '\u2728 Verbesserungstipps',           desc: 'Erhalte umsetzbare, KI-gest\u00fctzte Tipps, um deinen Look aufzuwerten.' }
+                ],
+                termsLink: 'Nutzungsbedingungen', privacyLink: 'Datenschutzrichtlinie',
+                footer: '\u00a9 2026 MirrorMe. Alle Rechte vorbehalten.'
+            },
+            es: {
+                pageTitle: 'MirrorMe \u2013 Estilista de outfits con IA',
+                tagline: 'Tu estilista personal con IA',
+                mainTitle: 'Tu estilista personal con IA',
+                mainDesc: 'Sube cualquier foto de outfit y obt\u00e9n al instante una puntuaci\u00f3n de estilo sobre 10, retroalimentaci\u00f3n personalizada y recomendaciones de styling \u2014 todo con IA avanzada.',
+                bestValue: 'MEJOR OFERTA',
+                monthly: { name: 'Mensual', period: '/mes', desc: 'Facturado mensualmente. Cancela en cualquier momento.', feature: '100 an\u00e1lisis por mes' },
+                annual:  { name: 'Anual',   period: '/a\u00f1o', desc: 'Solo \u20ac2,50/mes. Ahorra un 75\u00a0%.', feature: '100 an\u00e1lisis por mes' },
+                features: [
+                    { title: '\uD83C\uDFAF Puntuaci\u00f3n de estilo', desc: 'Obt\u00e9n una puntuaci\u00f3n honesta sobre 10 con retroalimentaci\u00f3n detallada de tu outfit.' },
+                    { title: '\uD83D\uDCF8 Styling por ocasi\u00f3n',  desc: 'Consejos a medida para cualquier ocasi\u00f3n \u2014 casual, trabajo, cita, eventos formales y m\u00e1s.' },
+                    { title: '\uD83D\uDC4C Armario inteligente',       desc: 'Crea y gestiona autom\u00e1ticamente tu armario digital con cada outfit que analices.' },
+                    { title: '\uD83D\uDCCA Historial de estilo',       desc: 'Sigue tu viaje de moda y observa c\u00f3mo evoluciona tu estilo personal.' },
+                    { title: '\uD83C\uDFA8 Paleta de colores',         desc: 'Detecta los colores de tu outfit y recibe recomendaciones de combinaci\u00f3n de colores.' },
+                    { title: '\u2728 Consejos de mejora',              desc: 'Obt\u00e9n consejos pr\u00e1cticos con IA para elevar tu look.' }
+                ],
+                termsLink: 'T\u00e9rminos de uso', privacyLink: 'Pol\u00edtica de privacidad',
+                footer: '\u00a9 2026 MirrorMe. Todos los derechos reservados.'
+            },
+            fr: {
+                pageTitle: 'MirrorMe \u2013 Styliste de tenues IA',
+                tagline: 'Ton styliste personnel propuls\u00e9 par l\u2019IA',
+                mainTitle: 'Ton styliste personnel IA',
+                mainDesc: 'T\u00e9l\u00e9charge n\u2019importe quelle photo de tenue et obtiens instantan\u00e9ment un score de style sur 10, des retours personnalis\u00e9s et des recommandations de styling \u2014 le tout par IA.',
+                bestValue: 'MEILLEURE OFFRE',
+                monthly: { name: 'Mensuel', period: '/mois', desc: 'Factur\u00e9 mensuellement. Annulez \u00e0 tout moment.', feature: '100 analyses par mois' },
+                annual:  { name: 'Annuel',  period: '/an',   desc: 'Seulement 2,50\u00a0\u20ac/mois. \u00c9conomisez 75\u00a0%.', feature: '100 analyses par mois' },
+                features: [
+                    { title: '\uD83C\uDFAF Score de style',           desc: 'Obtenez un score honn\u00eate sur 10 avec des retours d\u00e9taill\u00e9s et personnalis\u00e9s sur ta tenue.' },
+                    { title: '\uD83D\uDCF8 Styling par occasion',     desc: 'Des conseils sur mesure pour toute occasion \u2014 casual, travail, soir\u00e9e romantique, \u00e9v\u00e9nements formels et plus.' },
+                    { title: '\uD83D\uDC4C Garde-robe intelligente',  desc: 'Constitue et g\u00e8re automatiquement ta garde-robe num\u00e9rique \u00e0 chaque tenue analys\u00e9e.' },
+                    { title: '\uD83D\uDCCA Historique de style',      desc: 'Suis ton parcours mode dans le temps et observe l\u2019\u00e9volution de ton style personnel.' },
+                    { title: '\uD83C\uDFA8 Palette de couleurs',      desc: 'D\u00e9tecte les couleurs de ta tenue et re\u00e7ois des recommandations d\u2019association de couleurs.' },
+                    { title: '\u2728 Conseils d\u2019am\u00e9lioration', desc: 'Obtiens des conseils actionnables par IA pour sublimer ton look.' }
+                ],
+                termsLink: 'Conditions d\u2019utilisation', privacyLink: 'Politique de confidentialit\u00e9',
+                footer: '\u00a9 2026 MirrorMe. Tous droits r\u00e9serv\u00e9s.'
+            },
+            ja: {
+                pageTitle: 'MirrorMe \u2013 AI\u30b3\u30fc\u30c7\u30a3\u30cd\u30fc\u30c8\u30b9\u30bf\u30a4\u30ea\u30b9\u30c8',
+                tagline: 'AI\u304c\u652f\u3048\u308b\u3042\u306a\u305f\u5c02\u5c5e\u306e\u30b9\u30bf\u30a4\u30ea\u30b9\u30c8',
+                mainTitle: '\u3042\u306a\u305f\u306e\u30d1\u30fc\u30bd\u30ca\u30ebAI\u30b9\u30bf\u30a4\u30ea\u30b9\u30c8',
+                mainDesc: '\u30b3\u30fc\u30c7\u30a3\u30cd\u30fc\u30c8\u306e\u5199\u771f\u3092\u30a2\u30c3\u30d7\u30ed\u30fc\u30c9\u3059\u308b\u3060\u3051\u3067\u300110\u70b9\u6e80\u70b9\u306e\u30b9\u30bf\u30a4\u30eb\u30b9\u30b3\u30a2\u3001\u500b\u5225\u30d5\u30a3\u30fc\u30c9\u30d0\u30c3\u30af\u3001\u5c02\u9580\u7684\u306a\u30b9\u30bf\u30a4\u30ea\u30f3\u30b0\u30a2\u30c9\u30d0\u30a4\u30b9\u3092\u5373\u5ea7\u306b\u53d6\u5f97\u3002\u3059\u3079\u3066AI\u642d\u8f09\u3002',
+                bestValue: '\u304a\u5f97\u306a\u30d7\u30e9\u30f3',
+                monthly: { name: '\u6708\u6255\u3044', period: '/\u6708', desc: '\u6708\u3054\u3068\u306b\u8acb\u6c42\u3002\u3044\u3064\u3067\u3082\u30ad\u30e3\u30f3\u30bb\u30eb\u53ef\u80fd\u3002', feature: '\u6bce\u6708100\u56de\u306e\u5206\u6790' },
+                annual:  { name: '\u5e74\u6255\u3044', period: '/\u5e74', desc: '\u6708\u3042\u305f\u308a\u7d04\u20ac2.50\u300275\uff05\u304a\u5f97\u3002', feature: '\u6bce\u6708100\u56de\u306e\u5206\u6790' },
+                features: [
+                    { title: '\uD83C\uDFAF \u30b9\u30bf\u30a4\u30eb\u30b9\u30b3\u30a2',          desc: '\u30b3\u30fc\u30c7\u30a3\u30cd\u30fc\u30c8\u5168\u4f53\u306b\u5bfe\u3059\u308b\u8a73\u7d30\u30d5\u30a3\u30fc\u30c9\u30d0\u30c3\u30af\u3092\u6dfb\u3048\u305f10\u70b9\u6e80\u70b9\u306e\u30b9\u30b3\u30a2\u3092\u53d6\u5f97\u3002' },
+                    { title: '\uD83D\uDCF8 \u30b7\u30fc\u30f3\u5225\u30b9\u30bf\u30a4\u30ea\u30f3\u30b0', desc: '\u30ab\u30b8\u30e5\u30a2\u30eb\u3001\u4ed5\u4e8b\u3001\u30c7\u30fc\u30c8\u3001\u30d5\u30a9\u30fc\u30de\u30eb\u306a\u3069\u3001\u3042\u3089\u3086\u308b\u30b7\u30fc\u30f3\u306b\u5408\u308f\u305b\u305f\u30a2\u30c9\u30d0\u30a4\u30b9\u3002' },
+                    { title: '\uD83D\uDC4C \u30b9\u30de\u30fc\u30c8\u30ef\u30fc\u30c9\u30ed\u30fc\u30d6', desc: '\u5206\u6790\u3059\u308b\u305f\u3073\u306b\u30c7\u30b8\u30bf\u30eb\u30ef\u30fc\u30c9\u30ed\u30fc\u30d6\u3092\u81ea\u52d5\u3067\u4f5c\u6210\u30fb\u7ba1\u7406\u3002' },
+                    { title: '\uD83D\uDCCA \u30b9\u30bf\u30a4\u30eb\u5c65\u6b74',          desc: '\u30d5\u30a1\u30c3\u30b7\u30e7\u30f3\u306e\u65c5\u3092\u6642\u7cfb\u5217\u3067\u8ffd\u8de1\u3057\u3001\u500b\u4eba\u30b9\u30bf\u30a4\u30eb\u306e\u9032\u5316\u3092\u78ba\u8a8d\u3002' },
+                    { title: '\uD83C\uDFA8 \u30ab\u30e9\u30fc\u30d1\u30ec\u30c3\u30c8',     desc: '\u30b3\u30fc\u30c7\u30a3\u30cd\u30fc\u30c8\u306e\u8272\u3092\u691c\u51fa\u3057\u3001\u30b9\u30de\u30fc\u30c8\u306a\u30ab\u30e9\u30fc\u30de\u30c3\u30c1\u30f3\u30b0\u306e\u63d0\u6848\u3092\u53d7\u3051\u53d6\u308b\u3002' },
+                    { title: '\u2728 \u6539\u5584\u30a2\u30c9\u30d0\u30a4\u30b9',           desc: 'AI\u306b\u3088\u308b\u5b9f\u8df5\u7684\u306a\u30c2\u30f3\u30c8\u3067\u3069\u3093\u306a\u30b9\u30bf\u30a4\u30eb\u76ee\u6a19\u306b\u3082\u5bfe\u5fdc\u3002' }
+                ],
+                termsLink: '\u5229\u7528\u898f\u7d04', privacyLink: '\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u30dd\u30ea\u30b7\u30fc',
+                footer: '\u00a9 2026 MirrorMe. All rights reserved.'
+            },
+            zh: {
+                pageTitle: 'MirrorMe \u2013 AI\u7a7f\u642d\u9020\u578b\u5e08',
+                tagline: 'AI \u9a71\u52a8\u7684\u4e13\u5c5e\u9020\u578b\u5e08',
+                mainTitle: '\u4f60\u7684 AI \u79c1\u4eba\u9020\u578b\u5e08',
+                mainDesc: '\u4e0a\u4f20\u4efb\u610f\u7a7f\u642d\u7167\u7247\uff0c\u7acb\u5373\u83b7\u5f97\u6ee1\u520610\u5206\u7684\u98ce\u683c\u8bc4\u5206\u3001\u4e2a\u6027\u5316\u53cd\u9988\u548c\u4e13\u4e1a\u9020\u578b\u5efa\u8bae\u2014\u2014\u5168\u90e8\u7531\u5148\u8fdb AI \u9a71\u52a8\u3002',
+                bestValue: '\u6700\u4f18\u9009\u62e9',
+                monthly: { name: '\u6708\u4ed8', period: '/\u6708', desc: '\u6309\u6708\u8ba1\u8d39\uff0c\u968f\u65f6\u53d6\u6d88\u3002', feature: '\u6bcf\u6708100\u6b21\u5206\u6790' },
+                annual:  { name: '\u5e74\u4ed8', period: '/\u5e74', desc: '\u7ea6\u20ac2.50/\u6708\uff0c\u7701 75\uff05\u3002', feature: '\u6bcf\u6708100\u6b21\u5206\u6790' },
+                features: [
+                    { title: '\uD83C\uDFAF \u98ce\u683c\u8bc4\u5206', desc: '\u83b7\u5f97\u6ee1\u520610\u5206\u7684\u8bda\u5b9e\u8bc4\u5206\uff0c\u9644\u5e26\u6574\u4f53\u7a7f\u642d\u7684\u8be6\u7ec6\u4e2a\u6027\u5316\u53cd\u9988\u3002' },
+                    { title: '\uD83D\uDCF8 \u573a\u5408\u9020\u578b', desc: '\u9488\u5bf9\u4efb\u4f55\u573a\u5408\u7684\u5b9a\u5236\u5efa\u8bae\u2014\u2014\u4f11\u95f2\u3001\u804c\u573a\u3001\u7ea6\u4f1a\u3001\u6b63\u5f0f\u573a\u5408\u7b49\u3002' },
+                    { title: '\uD83D\uDC4C \u667a\u80fd\u8863\u6a71', desc: '\u6bcf\u6b21\u5206\u6790\u7a7f\u642d\uff0c\u81ea\u52a8\u6784\u5efa\u548c\u7ba1\u7406\u4f60\u7684\u6570\u5b57\u8863\u6a71\u3002' },
+                    { title: '\uD83D\uDCCA \u98ce\u683c\u5386\u53f2', desc: '\u8ffd\u8e2a\u4f60\u7684\u65f6\u5c1a\u4e4b\u65c5\uff0c\u89c1\u8bc1\u4e2a\u4eba\u98ce\u683c\u7684\u6f14\u53d8\u3002' },
+                    { title: '\uD83C\uDFA8 \u8272\u5f69\u642d\u914d', desc: '\u68c0\u6d4b\u7a7f\u642d\u4e2d\u7684\u989c\u8272\uff0c\u83b7\u53d6\u667a\u80fd\u8272\u5f69\u642d\u914d\u5efa\u8bae\u3002' },
+                    { title: '\u2728 \u6539\u8fdb\u5efa\u8bae',       desc: 'AI \u9a71\u52a8\u7684\u5b9e\u7528\u6280\u5de7\uff0c\u4e3a\u4efb\u4f55\u98ce\u683c\u76ee\u6807\u63d0\u5347\u4f60\u7684\u9020\u578b\u3002' }
+                ],
+                termsLink: '\u4f7f\u7528\u6761\u6b3e', privacyLink: '\u9690\u79c1\u653f\u7b56',
+                footer: '\u00a9 2026 MirrorMe. \u4fdd\u7559\u6240\u6709\u6743\u5229\u3002'
+            }
+        };
+
+        function setLang(lang) {
+            var t = translations[lang] || translations.en;
+            document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : lang;
+            document.title = t.pageTitle;
+            document.querySelector('.hero .tagline').textContent = t.tagline;
+            document.querySelector('.container h2').textContent = t.mainTitle;
+            var descP = document.querySelector('.container > p');
+            if (descP) descP.textContent = t.mainDesc;
+            document.querySelector('.plan.best-value .plan-badge').textContent = t.bestValue;
+            var plans = document.querySelectorAll('.plan');
+            plans[0].querySelector('.plan-name').textContent = t.monthly.name;
+            plans[0].querySelector('.plan-price span').textContent = t.monthly.period;
+            plans[0].querySelector('.plan-desc').textContent = t.monthly.desc;
+            plans[0].querySelector('.plan-feature').textContent = t.monthly.feature;
+            plans[1].querySelector('.plan-name').textContent = t.annual.name;
+            plans[1].querySelector('.plan-price span').textContent = t.annual.period;
+            plans[1].querySelector('.plan-desc').textContent = t.annual.desc;
+            plans[1].querySelector('.plan-feature').textContent = t.annual.feature;
+            var features = document.querySelectorAll('.feature');
+            t.features.forEach(function (f, i) {
+                if (features[i]) {
+                    features[i].querySelector('h3').textContent = f.title;
+                    features[i].querySelector('p').textContent = f.desc;
+                }
+            });
+            var links = document.querySelectorAll('.links a');
+            if (links[0]) links[0].textContent = t.termsLink;
+            if (links[1]) links[1].textContent = t.privacyLink;
+            document.querySelector('.footer p').textContent = t.footer;
+            document.getElementById('langSelect').value = lang;
+            localStorage.setItem('mirrorMeLang', lang);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var saved = localStorage.getItem('mirrorMeLang');
+            var browser = ((navigator.language || navigator.userLanguage || 'en').split('-')[0]).toLowerCase();
+            var supported = ['en', 'de', 'es', 'fr', 'ja', 'zh'];
+            var lang = saved || (supported.indexOf(browser) !== -1 ? browser : 'en');
+            setLang(lang);
+        });
+    </script>
 </body>
 </html>

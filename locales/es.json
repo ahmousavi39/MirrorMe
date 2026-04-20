@@ -239,7 +239,16 @@
     "registrationFailed": "Error de registro. Inténtalo de nuevo",
     "checkInbox": "Revisa tu bandeja de entrada",
     "checkInboxMsg": "Enviamos un enlace de verificación a\n{{email}}.\nToca el enlace e inicia sesión.\nSi no lo ves, revisa tu carpeta de spam.",
-    "goToSignIn": "Ir a iniciar sesión"
+    "goToSignIn": "Ir a iniciar sesión",
+    "agreePrefix": "Acepto los ",
+    "termsLink": "Términos de servicio",
+    "agreeMiddle": " y la ",
+    "policyLink": "Política de privacidad",
+    "agreeSuffix": "",
+    "mustAcceptTerms": "Debes aceptar los Términos de servicio y la Política de privacidad para continuar",
+    "socialConsentPrefix": "Al continuar, aceptas nuestros ",
+    "socialConsentMiddle": " y nuestra ",
+    "socialConsentSuffix": "."
   },
 
   "forgotPassword": {

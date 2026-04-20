@@ -239,7 +239,16 @@
     "registrationFailed": "注册失败，请重试",
     "checkInbox": "查看收件箱",
     "checkInboxMsg": "我们已向\n{{email}}\n发送了验证链接。\n点击链接后即可登录。\n如果未收到，请检查垃圾邮件文件夹。",
-    "goToSignIn": "前往登录"
+    "goToSignIn": "前往登录",
+    "agreePrefix": "我同意",
+    "termsLink": "服务条款",
+    "agreeMiddle": "和",
+    "policyLink": "隐私政策",
+    "agreeSuffix": "",
+    "mustAcceptTerms": "请同意服务条款和隐私政策以继续",
+    "socialConsentPrefix": "继续即表示您同意我们的",
+    "socialConsentMiddle": "和",
+    "socialConsentSuffix": "。"
   },
 
   "forgotPassword": {

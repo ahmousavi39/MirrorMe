@@ -239,7 +239,16 @@
     "registrationFailed": "登録に失敗しました。もう一度お試しください",
     "checkInbox": "受信トレイを確認してください",
     "checkInboxMsg": "{{email}}\nに確認リンクを送信しました。\nリンクをタップしてからサインインしてください。\n見つからない場合はスパムフォルダをご確認ください。",
-    "goToSignIn": "サインインへ"
+    "goToSignIn": "サインインへ",
+    "agreePrefix": "",
+    "termsLink": "利用規約",
+    "agreeMiddle": "と",
+    "policyLink": "プライバシーポリシー",
+    "agreeSuffix": "に同意します",
+    "mustAcceptTerms": "続行するには利用規約とプライバシーポリシーに同意してください",
+    "socialConsentPrefix": "続行することで、",
+    "socialConsentMiddle": "と",
+    "socialConsentSuffix": "に同意したことになります。"
   },
 
   "forgotPassword": {

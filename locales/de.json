@@ -239,7 +239,16 @@
     "registrationFailed": "Registrierung fehlgeschlagen. Bitte erneut versuchen",
     "checkInbox": "Überprüfe deinen Posteingang",
     "checkInboxMsg": "Wir haben einen Bestätigungslink an\n{{email}}\ngesendet.\nTippe auf den Link und melde dich dann an.\nFalls du ihn nicht siehst, überprüfe deinen Spam-Ordner.",
-    "goToSignIn": "Zur Anmeldung"
+    "goToSignIn": "Zur Anmeldung",
+    "agreePrefix": "Ich stimme den ",
+    "termsLink": "Nutzungsbedingungen",
+    "agreeMiddle": " und der ",
+    "policyLink": "Datenschutzrichtlinie",
+    "agreeSuffix": " zu",
+    "mustAcceptTerms": "Bitte akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinie, um fortzufahren",
+    "socialConsentPrefix": "Mit dem Fortfahren stimmst du unseren ",
+    "socialConsentMiddle": " und unserer ",
+    "socialConsentSuffix": " zu."
   },
 
   "forgotPassword": {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, Linking,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
@@ -11,6 +11,14 @@ import { setPendingOnboarding } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import SocialSignInButtons from '@/components/SocialSignInButtons';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/services/i18n';
+
+const getLangSlug = () => {
+  const lang = i18n.language?.toLowerCase() ?? 'en';
+  if (lang.startsWith('zh')) return 'zh';
+  const base = lang.split('-')[0];
+  return ['de', 'es', 'fr', 'ja'].includes(base) ? base : 'en';
+};
 
 export default function RegisterScreen() {
   const { theme } = useTheme();
@@ -23,6 +31,7 @@ export default function RegisterScreen() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [sent, setSent] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleRegister = async () => {
     if (!email.trim() || !password || !confirmPassword) {
@@ -35,6 +44,10 @@ export default function RegisterScreen() {
     }
     if (password !== confirmPassword) {
       setError(t('register.passwordMismatch'));
+      return;
+    }
+    if (!termsAccepted) {
+      setError(t('register.mustAcceptTerms'));
       return;
     }
     setError('');
@@ -151,6 +164,33 @@ export default function RegisterScreen() {
             />
           </View>
 
+          <View style={s.checkboxRow}>
+            <TouchableOpacity
+              onPress={() => setTermsAccepted(!termsAccepted)}
+              activeOpacity={0.7}
+              style={[s.checkbox, termsAccepted && s.checkboxChecked]}
+            >
+              {termsAccepted && <Ionicons name="checkmark" size={13} color="#fff" />}
+            </TouchableOpacity>
+            <Text style={s.checkboxLabel}>
+              {t('register.agreePrefix')}
+              <Text
+                style={s.checkboxLink}
+                onPress={() => Linking.openURL(`https://mirrorme.ahmousavi.com/${getLangSlug()}/terms/`)}
+              >
+                {t('register.termsLink')}
+              </Text>
+              {t('register.agreeMiddle')}
+              <Text
+                style={s.checkboxLink}
+                onPress={() => Linking.openURL(`https://mirrorme.ahmousavi.com/${getLangSlug()}/policy/`)}
+              >
+                {t('register.policyLink')}
+              </Text>
+              {t('register.agreeSuffix')}
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={[s.button, loading && s.buttonDisabled]}
             onPress={handleRegister}
@@ -166,6 +206,23 @@ export default function RegisterScreen() {
 
         {/* Social sign-in */}
         <SocialSignInButtons onError={setError} onLoadingChange={setLoading} />
+        <Text style={s.consentNote}>
+          {t('register.socialConsentPrefix')}
+          <Text
+            style={s.consentNoteLink}
+            onPress={() => Linking.openURL(`https://mirrorme.ahmousavi.com/${getLangSlug()}/terms/`)}
+          >
+            {t('register.termsLink')}
+          </Text>
+          {t('register.socialConsentMiddle')}
+          <Text
+            style={s.consentNoteLink}
+            onPress={() => Linking.openURL(`https://mirrorme.ahmousavi.com/${getLangSlug()}/policy/`)}
+          >
+            {t('register.policyLink')}
+          </Text>
+          {t('register.socialConsentSuffix')}
+        </Text>
 
         {/* Footer */}
         <View style={s.footer}>
@@ -221,4 +278,18 @@ const styles = (theme: any) => StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
   footerText: { color: theme.textSecondary, fontSize: 15 },
   linkText: { color: theme.primary, fontSize: 15, fontWeight: '600' },
+  checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 5, borderWidth: 2,
+    borderColor: theme.border, justifyContent: 'center', alignItems: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: { backgroundColor: theme.primary, borderColor: theme.primary },
+  checkboxLabel: { flex: 1, color: theme.textSecondary, fontSize: 13, lineHeight: 20 },
+  checkboxLink: { color: theme.primary, fontWeight: '600' },
+  consentNote: {
+    textAlign: 'center', color: theme.textSecondary, fontSize: 12,
+    lineHeight: 18, marginTop: 4,
+  },
+  consentNoteLink: { color: theme.primary, fontWeight: '600' },
 });

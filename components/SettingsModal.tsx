@@ -138,12 +138,22 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
     setAlertVisible(true);
   };
 
+  const getLangSlug = () => {
+    const lang = i18n.language;
+    if (lang.startsWith('zh')) return 'zh';
+    if (lang.startsWith('ja')) return 'ja';
+    if (lang.startsWith('de')) return 'de';
+    if (lang.startsWith('fr')) return 'fr';
+    if (lang.startsWith('es')) return 'es';
+    return 'en';
+  };
+
   const handlePrivacyPolicy = () => {
-    Linking.openURL('https://mirrorme.ahmousavi.com/policy');
+    Linking.openURL(`https://mirrorme.ahmousavi.com/${getLangSlug()}/policy/`);
   };
 
   const handleTerms = () => {
-    Linking.openURL('https://mirrorme.ahmousavi.com/terms');
+    Linking.openURL(`https://mirrorme.ahmousavi.com/${getLangSlug()}/terms/`);
   };
 
   const isEmailUser = auth.currentUser?.providerData?.some((p) => p.providerId === 'password');
