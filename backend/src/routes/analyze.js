@@ -396,7 +396,6 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       clothingItemKeys,
       occasion: occasion || null,
       imageUrl: imageUrl || null,
-      weekKey,
       createdAt: new Date().toISOString(),
     };
 

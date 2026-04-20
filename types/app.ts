@@ -62,7 +62,6 @@ export interface HistoryItem {
   occasionScores?: Record<Occasion, number>;
   colorPalette?: string[];
   imageUrl?: string | null;
-  weekKey: string;
   createdAt: string;
 }
 
