@@ -83,7 +83,7 @@
     "premiumMember": "プレミアム会員 ✨",
     "freePlan": "無料プラン",
     "monthlyScans": "今月{{used}}/{{limit}}回使用済み",
-    "weeklyUploads": "今週{{used}}/{{limit}}回無料アップロード済み",
+    "weeklyUploads": "{{used}}/{{limit}}回無料スキャン使用済み",
     "goPremium": "プレミアムへアップグレード ✨",
     "goPremiumSub": "€9.99/月 または €29.99/年 · 毎月最大100回のコーディネート分析。",
     "perk1": "毎月100回の分析",
@@ -305,7 +305,7 @@
 
   "premiumGate": {
     "title": "プレミアムへアップグレード ✨",
-    "subtitle": "今週の無料スキャンを使い切りました。コーディネート分析を続けるにはアップグレードしてください。",
+    "subtitle": "無料スキャンをすべて使い切りました。コーディネート分析を続けるにはアップグレードしてください。",
     "perk1": "毎月100回のコーディネート分析",
     "perk2": "AI優先処理",
     "perk3": "全履歴へのアクセス",
@@ -323,10 +323,10 @@
     "premiumScansLeft_one": "プレミアム — 今月残り{{count}}回",
     "premiumScansLeft_other": "プレミアム — 今月残り{{count}}回",
     "premiumUsage": "今月{{used}}/{{limit}}回使用済み",
-    "weeklyLimitReached": "週間無料上限に達しました",
-    "weeklyUploadsLeft_one": "今週残り{{count}}回無料アップロード",
-    "weeklyUploadsLeft_other": "今週残り{{count}}回無料アップロード",
-    "weeklyUsage": "今週{{used}}/{{limit}}回使用済み",
+    "weeklyLimitReached": "無料スキャン上限に達しました",
+    "weeklyUploadsLeft_one": "残り{{count}}回無料スキャン",
+    "weeklyUploadsLeft_other": "残り{{count}}回無料スキャン",
+    "weeklyUsage": "{{used}}/{{limit}}回無料スキャン使用済み",
     "upgradeToPremium": "プレミアムにアップグレード"
   },
 

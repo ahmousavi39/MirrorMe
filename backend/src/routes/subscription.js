@@ -4,7 +4,7 @@ const router = express.Router();
 const { db } = require('../services/firebase');
 const verifyToken = require('../middleware/verifyToken');
 
-const FREE_UPLOADS_PER_WEEK = 2;
+const FREE_UPLOADS_TOTAL = 2;
 const PREMIUM_UPLOADS_PER_MONTH = 100;
 
 // ── Helper ────────────────────────────────────────────────────────────────────────
@@ -23,31 +23,29 @@ function getMonthKey() {
 }
 
 // ── GET /api/subscription/status ─────────────────────────────────────────────────
-// Returns the current user's subscription state and weekly upload usage.
+// Returns the current user's subscription state and total upload usage.
 // The app also reads entitlements directly from RevenueCat SDK on-device,
 // but this endpoint is the source of truth for the backend upload-limit check.
 router.get('/status', verifyToken, async (req, res) => {
   try {
-    const weekKey = getWeekKey();
     const monthKey = getMonthKey();
     const userRef = db.collection('users').doc(req.uid);
 
-    const [userSnap, weeklySnap, monthlySnap] = await Promise.all([
+    const [userSnap, monthlySnap] = await Promise.all([
       userRef.get(),
-      userRef.collection('weeklyUploads').doc(weekKey).get(),
       userRef.collection('monthlyUploads').doc(monthKey).get(),
     ]);
 
     const userData = userSnap.data() || {};
-    const weeklyCount = weeklySnap.exists ? (weeklySnap.data().count || 0) : 0;
+    const totalCount = userData.totalUploadsUsed || 0;
     const monthlyCount = monthlySnap.exists ? (monthlySnap.data().count || 0) : 0;
     const isSubscribed = userData.isSubscribed === true;
 
     return res.json({
       isSubscribed,
-      uploadsUsedThisWeek: weeklyCount,
-      uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
-      remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_PER_WEEK - weeklyCount),
+      totalUploadsUsed: isSubscribed ? null : totalCount,
+      totalUploadsLimit: isSubscribed ? null : FREE_UPLOADS_TOTAL,
+      remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_TOTAL - totalCount),
       monthlyUploadsUsed: isSubscribed ? monthlyCount : null,
       monthlyUploadsLimit: isSubscribed ? PREMIUM_UPLOADS_PER_MONTH : null,
       remainingPremiumUploads: isSubscribed ? Math.max(0, PREMIUM_UPLOADS_PER_MONTH - monthlyCount) : null,

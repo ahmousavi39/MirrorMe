@@ -83,7 +83,7 @@
     "premiumMember": "Premium Member ✨",
     "freePlan": "Free Plan",
     "monthlyScans": "{{used}}/{{limit}} scans used this month",
-    "weeklyUploads": "{{used}}/{{limit}} free uploads used this week",
+    "weeklyUploads": "{{used}}/{{limit}} free scans used",
     "goPremium": "Go Premium ✨",
     "goPremiumSub": "€9.99/month or €29.99/year · 100 outfit analyses per month.",
     "perk1": "100 analyses per month",
@@ -305,7 +305,7 @@
 
   "premiumGate": {
     "title": "Go Premium ✨",
-    "subtitle": "You've used your free scans for this week. Upgrade to keep analyzing your outfits.",
+    "subtitle": "You've used all your free scans. Upgrade to keep analyzing your outfits.",
     "perk1": "100 outfit analyses per month",
     "perk2": "Priority AI processing",
     "perk3": "Full history access",
@@ -323,10 +323,10 @@
     "premiumScansLeft_one": "Premium — {{count}} scan left this month",
     "premiumScansLeft_other": "Premium — {{count}} scans left this month",
     "premiumUsage": "{{used}}/{{limit}} scans used this month",
-    "weeklyLimitReached": "Weekly free limit reached",
-    "weeklyUploadsLeft_one": "{{count}} free upload left this week",
-    "weeklyUploadsLeft_other": "{{count}} free uploads left this week",
-    "weeklyUsage": "{{used}}/{{limit}} uploads used this week",
+    "weeklyLimitReached": "Free scan limit reached",
+    "weeklyUploadsLeft_one": "{{count}} free scan left",
+    "weeklyUploadsLeft_other": "{{count}} free scans left",
+    "weeklyUsage": "{{used}}/{{limit}} free scans used",
     "upgradeToPremium": "Upgrade to Premium"
   },
 

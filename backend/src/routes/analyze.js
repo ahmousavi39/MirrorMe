@@ -9,7 +9,7 @@ const verifyToken = require('../middleware/verifyToken');
 const { db, bucket } = require('../services/firebase');
 const { rateOutfit, extractClothingFromImage } = require('../services/gemini');
 
-const FREE_UPLOADS_PER_WEEK = 2;
+const FREE_UPLOADS_TOTAL = 2;
 const PREMIUM_UPLOADS_PER_MONTH = 100;
 const MAX_UPLOADS_PER_DAY = 20;
 
@@ -98,24 +98,21 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     }
 
     // ── 1. Check upload limits ────────────────────────────────────────────────
-    const weekKey = getWeekKey();
     const monthKey = getMonthKey();
     const dayKey = getDayKey();
     const userRef = db.collection('users').doc(uid);
-    const weeklyRef = userRef.collection('weeklyUploads').doc(weekKey);
     const monthlyRef = userRef.collection('monthlyUploads').doc(monthKey);
     const dailyRef = userRef.collection('dailyUploads').doc(dayKey);
 
-    const [userSnap, weeklySnap, monthlySnap, dailySnap] = await Promise.all([
+    const [userSnap, monthlySnap, dailySnap] = await Promise.all([
       userRef.get(),
-      weeklyRef.get(),
       monthlyRef.get(),
       dailyRef.get(),
     ]);
 
     const userData = userSnap.data() || {};
     const isSubscribed = userData.isSubscribed === true;
-    const weeklyCount = weeklySnap.exists ? (weeklySnap.data().count || 0) : 0;
+    const totalCount = userData.totalUploadsUsed || 0;
     const monthlyCount = monthlySnap.exists ? (monthlySnap.data().count || 0) : 0;
     const dailyCount = dailySnap.exists ? (dailySnap.data().count || 0) : 0;
 
@@ -134,13 +131,13 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       styleCategories:  userData.styleCategories  || [],
     };
 
-    if (!isSubscribed && weeklyCount >= FREE_UPLOADS_PER_WEEK) {
+    if (!isSubscribed && totalCount >= FREE_UPLOADS_TOTAL) {
       return res.status(403).json({
-        error: 'Weekly free limit reached',
+        error: 'Free scan limit reached',
         code: 'LIMIT_REACHED',
-        message: `You have used all ${FREE_UPLOADS_PER_WEEK} free uploads for this week. Upgrade to Premium for unlimited access.`,
-        uploadsUsedThisWeek: weeklyCount,
-        uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
+        message: `You have used all ${FREE_UPLOADS_TOTAL} free scans. Upgrade to Premium for unlimited access.`,
+        totalUploadsUsed: totalCount,
+        totalUploadsLimit: FREE_UPLOADS_TOTAL,
         isSubscribed: false,
       });
     }
@@ -406,18 +403,20 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
     // Save upload result
     batch.set(uploadRef, uploadData);
 
-    // Increment weekly counter (free users) and monthly counter (all users)
-    batch.set(weeklyRef, { count: weeklyCount + 1 }, { merge: true });
+    // Increment monthly counter (all users) and daily counter
     batch.set(monthlyRef, { count: monthlyCount + 1 }, { merge: true });
     batch.set(dailyRef, { count: dailyCount + 1 }, { merge: true });
 
-    // Create user document on first upload
+    // Create user document on first upload; increment total free scan counter for free users
     if (!userSnap.exists) {
       batch.set(userRef, {
         email: email || '',
         createdAt: new Date().toISOString(),
         isSubscribed: false,
+        totalUploadsUsed: 1,
       });
+    } else if (!isSubscribed) {
+      batch.update(userRef, { totalUploadsUsed: FieldValue.increment(1) });
     }
 
     // Check if client cancelled before we commit anything to Firestore
@@ -444,9 +443,9 @@ router.post('/', verifyToken, upload.single('photo'), async (req, res) => {
       clothingItemKeys,
       occasion: occasion || null,
       imageUrl: imageUrl || null,
-      uploadsUsedThisWeek: weeklyCount + 1,
-      uploadsLimitPerWeek: FREE_UPLOADS_PER_WEEK,
-      remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_PER_WEEK - (weeklyCount + 1)),
+      totalUploadsUsed: isSubscribed ? null : totalCount + 1,
+      totalUploadsLimit: isSubscribed ? null : FREE_UPLOADS_TOTAL,
+      remainingFreeUploads: isSubscribed ? null : Math.max(0, FREE_UPLOADS_TOTAL - (totalCount + 1)),
       monthlyUploadsUsed: isSubscribed ? monthlyCount + 1 : null,
       monthlyUploadsLimit: isSubscribed ? PREMIUM_UPLOADS_PER_MONTH : null,
       remainingPremiumUploads: isSubscribed ? Math.max(0, PREMIUM_UPLOADS_PER_MONTH - (monthlyCount + 1)) : null,

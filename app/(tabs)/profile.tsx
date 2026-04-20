@@ -153,7 +153,7 @@ export default function ProfileScreen() {
                   <Text style={[s.cardSub, { color: theme.textSecondary }]}>
                     {status?.isSubscribed
                       ? t('profile.monthlyScans', { used: status?.monthlyUploadsUsed ?? 0, limit: status?.monthlyUploadsLimit ?? 100 })
-                      : t('profile.weeklyUploads', { used: status?.uploadsUsedThisWeek ?? 0, limit: status?.uploadsLimitPerWeek ?? 2 })
+                      : t('profile.weeklyUploads', { used: status?.totalUploadsUsed ?? 0, limit: status?.totalUploadsLimit ?? 2 })
                     }
                   </Text>
                 </View>
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
                   <View style={[
                     s.barFill,
                     {
-                      width: `${Math.min(((status?.uploadsUsedThisWeek ?? 0) / (status?.uploadsLimitPerWeek ?? 2)) * 100, 100)}%`,
+                      width: `${Math.min(((status?.totalUploadsUsed ?? 0) / (status?.totalUploadsLimit ?? 2)) * 100, 100)}%`,
                       backgroundColor: (status?.remainingFreeUploads ?? 1) === 0 ? theme.error : theme.primary,
                     }
                   ]} />

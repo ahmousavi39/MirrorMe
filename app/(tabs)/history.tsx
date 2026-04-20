@@ -152,8 +152,8 @@ export default function HistoryScreen() {
       occasionScores: item.occasionScores ?? {} as any,
       colorPalette: item.colorPalette ?? [],
       imageUrl: item.imageUrl ?? null,
-      uploadsUsedThisWeek: 0,
-      uploadsLimitPerWeek: 2,
+      totalUploadsUsed: 0,
+      totalUploadsLimit: 2,
       remainingFreeUploads: null,
       isSubscribed: false,
     });

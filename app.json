@@ -2,7 +2,7 @@
   "expo": {
     "name": "MirrorMe",
     "slug": "MirrorMe",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "mirrorme",
@@ -81,8 +81,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "30856d60-3f87-40c9-babb-e226d5bfedde"
+        "projectId": "55d5c14e-91d5-4518-8eb0-c37a496a9727"
       }
-    }
+    },
+    "owner": "ahmousavi39"
   }
 }

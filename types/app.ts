@@ -37,8 +37,8 @@ export interface AnalysisResult {
   occasionScores: Record<Occasion, number>;
   colorPalette: string[];
   imageUrl?: string | null;
-  uploadsUsedThisWeek: number;
-  uploadsLimitPerWeek: number;
+  totalUploadsUsed: number | null;
+  totalUploadsLimit: number | null;
   remainingFreeUploads: number | null;
   monthlyUploadsUsed: number | null;
   monthlyUploadsLimit: number | null;
@@ -69,8 +69,8 @@ export interface HistoryItem {
 // ── Subscription status returned by /api/subscription/status ─────────────────────
 export interface SubscriptionStatus {
   isSubscribed: boolean;
-  uploadsUsedThisWeek: number;
-  uploadsLimitPerWeek: number;
+  totalUploadsUsed: number | null;
+  totalUploadsLimit: number | null;
   remainingFreeUploads: number | null;
   monthlyUploadsUsed: number | null;
   monthlyUploadsLimit: number | null;

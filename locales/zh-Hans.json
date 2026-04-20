@@ -83,7 +83,7 @@
     "premiumMember": "高级会员 ✨",
     "freePlan": "免费版",
     "monthlyScans": "本月已使用 {{used}}/{{limit}} 次扫描",
-    "weeklyUploads": "本周已使用 {{used}}/{{limit}} 次免费上传",
+    "weeklyUploads": "已使用 {{used}}/{{limit}} 次免费扫描",
     "goPremium": "升级高级版 ✨",
     "goPremiumSub": "€9.99/月 或 €29.99/年 · 每月最多 100 套穿搭分析。",
     "perk1": "每月 100 次分析",
@@ -305,7 +305,7 @@
 
   "premiumGate": {
     "title": "升级高级版 ✨",
-    "subtitle": "你本周的免费扫描次数已用完。升级以继续分析你的穿搭。",
+    "subtitle": "你的免费扫描次数已全部用完。升级以继续分析你的穿搭。",
     "perk1": "每月 100 次穿搭分析",
     "perk2": "优先 AI 处理",
     "perk3": "完整历史记录",
@@ -323,10 +323,10 @@
     "premiumScansLeft_one": "高级版 — 本月还剩 {{count}} 次扫描",
     "premiumScansLeft_other": "高级版 — 本月还剩 {{count}} 次扫描",
     "premiumUsage": "本月已使用 {{used}}/{{limit}} 次扫描",
-    "weeklyLimitReached": "本周免费限额已用完",
-    "weeklyUploadsLeft_one": "本周还剩 {{count}} 次免费上传",
-    "weeklyUploadsLeft_other": "本周还剩 {{count}} 次免费上传",
-    "weeklyUsage": "本周已使用 {{used}}/{{limit}} 次上传",
+    "weeklyLimitReached": "免费扫描次数已用完",
+    "weeklyUploadsLeft_one": "还剩 {{count}} 次免费扫描",
+    "weeklyUploadsLeft_other": "还剩 {{count}} 次免费扫描",
+    "weeklyUsage": "已使用 {{used}}/{{limit}} 次免费扫描",
     "upgradeToPremium": "升级到高级版"  },
 
   "social": {

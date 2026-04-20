@@ -83,7 +83,7 @@
     "premiumMember": "Miembro Premium ✨",
     "freePlan": "Plan gratuito",
     "monthlyScans": "{{used}}/{{limit}} escaneos usados este mes",
-    "weeklyUploads": "{{used}}/{{limit}} subidas gratuitas usadas esta semana",
+    "weeklyUploads": "{{used}}/{{limit}} escaneos gratuitos usados",
     "goPremium": "Hazte Premium ✨",
     "goPremiumSub": "9,99 €/mes o 29,99 €/año · 100 análisis de outfits por mes.",
     "perk1": "100 análisis por mes",
@@ -305,7 +305,7 @@
 
   "premiumGate": {
     "title": "Hazte Premium ✨",
-    "subtitle": "Has usado tus escaneos gratuitos de esta semana. Actualiza para seguir analizando tus outfits.",
+    "subtitle": "Has usado todos tus escaneos gratuitos. Actualiza para seguir analizando tus outfits.",
     "perk1": "100 análisis de outfits por mes",
     "perk2": "Procesamiento IA prioritario",
     "perk3": "Acceso completo al historial",
@@ -323,10 +323,10 @@
     "premiumScansLeft_one": "Premium — {{count}} escaneo restante este mes",
     "premiumScansLeft_other": "Premium — {{count}} escaneos restantes este mes",
     "premiumUsage": "{{used}}/{{limit}} escaneos usados este mes",
-    "weeklyLimitReached": "Límite gratuito semanal alcanzado",
-    "weeklyUploadsLeft_one": "{{count}} subida gratuita restante esta semana",
-    "weeklyUploadsLeft_other": "{{count}} subidas gratuitas restantes esta semana",
-    "weeklyUsage": "{{used}}/{{limit}} subidas usadas esta semana",
+    "weeklyLimitReached": "Límite de escaneos gratuitos alcanzado",
+    "weeklyUploadsLeft_one": "{{count}} escaneo gratuito restante",
+    "weeklyUploadsLeft_other": "{{count}} escaneos gratuitos restantes",
+    "weeklyUsage": "{{used}}/{{limit}} escaneos gratuitos usados",
     "upgradeToPremium": "Actualizar a Premium"
   },
 

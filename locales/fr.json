@@ -83,7 +83,7 @@
     "premiumMember": "Membre Premium ✨",
     "freePlan": "Plan gratuit",
     "monthlyScans": "{{used}}/{{limit}} scans utilisés ce mois",
-    "weeklyUploads": "{{used}}/{{limit}} transferts gratuits utilisés cette semaine",
+    "weeklyUploads": "{{used}}/{{limit}} transferts gratuits utilisés",
     "goPremium": "Passer Premium ✨",
     "goPremiumSub": "9,99 €/mois ou 29,99 €/an · 100 analyses de tenues par mois.",
     "perk1": "100 analyses par mois",
@@ -305,7 +305,7 @@
 
   "premiumGate": {
     "title": "Passer Premium ✨",
-    "subtitle": "Tu as utilisé tes scans gratuits pour cette semaine. Passe à Premium pour continuer à analyser tes tenues.",
+    "subtitle": "Tu as utilisé tous tes scans gratuits. Passe à Premium pour continuer à analyser tes tenues.",
     "perk1": "100 analyses de tenues par mois",
     "perk2": "Traitement IA prioritaire",
     "perk3": "Accès complet à l'historique",
@@ -323,10 +323,10 @@
     "premiumScansLeft_one": "Premium — {{count}} scan restant ce mois",
     "premiumScansLeft_other": "Premium — {{count}} scans restants ce mois",
     "premiumUsage": "{{used}}/{{limit}} scans utilisés ce mois",
-    "weeklyLimitReached": "Limite gratuite hebdomadaire atteinte",
-    "weeklyUploadsLeft_one": "{{count}} transfert gratuit restant cette semaine",
-    "weeklyUploadsLeft_other": "{{count}} transferts gratuits restants cette semaine",
-    "weeklyUsage": "{{used}}/{{limit}} transferts utilisés cette semaine",
+    "weeklyLimitReached": "Limite de scans gratuits atteinte",
+    "weeklyUploadsLeft_one": "{{count}} transfert gratuit restant",
+    "weeklyUploadsLeft_other": "{{count}} transferts gratuits restants",
+    "weeklyUsage": "{{used}}/{{limit}} transferts gratuits utilisés",
     "upgradeToPremium": "Passer à Premium"
   },
 
