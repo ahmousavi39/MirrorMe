@@ -4,7 +4,7 @@ services:
     env: node
     region: frankfurt
     plan: free
-    buildCommand: apt-get install -y fonts-noto-cjk && npm install
+    buildCommand: apt-get update -y && apt-get install -y fonts-noto-cjk fontconfig && fc-cache -f && npm install
     startCommand: node src/server.js
     envVars:
       - key: NODE_ENV
