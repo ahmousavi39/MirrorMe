@@ -59,19 +59,19 @@ router.post('/', verifyToken, async (req, res) => {
         <rect x="0" y="${h - gradH}" width="${w}" height="${gradH}" fill="url(#grad)"/>
         <text
           x="${paddingX}" y="${scoreY}"
-          font-family="Arial Black, Arial, sans-serif"
+          font-family="Noto Sans CJK SC, Noto Sans CJK JP, Noto Sans, Arial Black, Arial, sans-serif"
           font-size="${scoreFontSize}" font-weight="900"
           fill="${safeColor}"
         >${safeScore}<tspan font-size="${Math.round(scoreFontSize * 0.38)}" fill="rgba(255,255,255,0.65)" dy="-${Math.round(scoreFontSize * 0.18)}">/10</tspan></text>
         <text
           x="${paddingX}" y="${brandY}"
-          font-family="Arial, sans-serif"
+          font-family="Noto Sans CJK SC, Noto Sans CJK JP, Noto Sans, Arial, sans-serif"
           font-size="${labelFontSize}" font-weight="800"
           fill="${safeColor}"
         >${safeLabel}</text>
         <text
           x="${paddingX}" y="${labelY}"
-          font-family="Arial, sans-serif"
+          font-family="Noto Sans CJK SC, Noto Sans CJK JP, Noto Sans, Arial, sans-serif"
           font-size="${brandFontSize}" font-weight="600"
           fill="rgba(255,255,255,0.5)"
           letter-spacing="2"

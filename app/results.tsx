@@ -465,6 +465,7 @@ export default function ResultsScreen() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [addToWardrobe, setAddToWardrobe] = useState(true);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
@@ -512,7 +513,8 @@ export default function ResultsScreen() {
   };
 
   const handleShare = async () => {
-    if (!result) return;
+    if (!result || isSharing) return;
+    setIsSharing(true);
     const scoreColor = getScoreColor(result.score);
     const shareText = `${result.score}/10 — ${getScoreLabel(result.score)}\n\n"${result.feedback}"\n\nRated by MirrorMe`;
     // Prefer the remote Firebase URL for server-side composition;
@@ -560,7 +562,9 @@ export default function ResultsScreen() {
       } else {
         await Share.share({ message: shareText });
       }
-    } catch { /* dismissed */ }
+    } catch { /* dismissed */ } finally {
+      setIsSharing(false);
+    }
   };
 
   if (!result) {
@@ -807,8 +811,10 @@ export default function ResultsScreen() {
           <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleBack}>
             <Ionicons name="chevron-back" size={22} color={theme.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleShare}>
-            <Ionicons name="share-outline" size={20} color={theme.text} />
+          <TouchableOpacity style={[s.floatBtn, { backgroundColor: `${theme.background}CC` }]} onPress={handleShare} disabled={isSharing}>
+            {isSharing
+              ? <ActivityIndicator size="small" color={theme.text} />
+              : <Ionicons name="share-outline" size={20} color={theme.text} />}
           </TouchableOpacity>
         </View>
       </View>
