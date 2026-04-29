@@ -324,7 +324,11 @@
     "devBuildMsg": "Abonnements erfordern einen nativen Build. RevenueCat ist in Expo Go nicht verfügbar.",
     "purchaseFailed": "Kauf fehlgeschlagen",
     "premiumSuccess": "Du bist Premium! 🎉",
-    "premiumSuccessMsg": "Genieße 100 Outfit-Analysen pro Monat."
+    "premiumSuccessMsg": "Genieße 100 Outfit-Analysen pro Monat.",
+    "legalFooter": "Das Abo verlängert sich automatisch, sofern es nicht mindestens 24 Stunden vor Ende der Laufzeit gekündigt wird. Verwaltung über App-Store-Einstellungen.",
+    "legalPrice": "Ab 9,99 €/Monat oder 29,99 €/Jahr",
+    "privacyPolicy": "Datenschutz",
+    "terms": "Nutzungsbedingungen"
   },
 
   "usage": {
@@ -337,6 +341,25 @@
     "weeklyUploadsLeft_other": "Noch {{count}} kostenlose Uploads",
     "weeklyUsage": "{{used}}/{{limit}} kostenlose Uploads verwendet",
     "upgradeToPremium": "Auf Premium upgraden"
+  },
+
+  "dataConsent": {
+    "title": "Datenschutzhinweis",
+    "intro": "Vor der Analyse deines Outfits übermittelt MirrorMe folgende Daten an KI-Dienste von Drittanbietern:",
+    "dataSentLabel": "Übermittelte Daten",
+    "dataItem1": "Dein Outfit-Foto",
+    "dataItem2": "Von dir angegebene Profildaten (Alter, Geschlecht, Größe, Gewicht, Stilvorlieben)",
+    "recipients": "Empfänger deiner Daten",
+    "recipient1Title": "Ximilar s.r.o. (Kleidungserkennung)",
+    "recipient1Desc": "Erhält dein Foto zur Erkennung von Kleidungsstücken. Bilder werden nur für die Dauer des API-Aufrufs verarbeitet und nicht gespeichert.",
+    "recipient2Title": "Google LLC (Gemini KI-Analyse)",
+    "recipient2Desc": "Erhält dein Foto und deine Profildaten, um einen personalisierten Style-Score und Empfehlungen zu erstellen.",
+    "policyNote": "Beide Dienste sind an ihre eigenen Datenschutzrichtlinien gebunden und bieten einen gleichwertigen Datenschutz wie in der MirrorMe-Datenschutzerklärung beschrieben.",
+    "viewPrivacyPolicy": "MirrorMe Datenschutzerklärung ansehen",
+    "ximilarPolicy": "Ximilar Datenschutzerklärung",
+    "googlePolicy": "Google Datenschutzerklärung",
+    "acceptBtn": "Ich stimme zu – Outfit analysieren",
+    "declineBtn": "Ablehnen"
   },
 
   "social": {

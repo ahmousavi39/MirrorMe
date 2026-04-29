@@ -324,7 +324,11 @@
     "devBuildMsg": "Les abonnements nécessitent un build natif. RevenueCat n'est pas disponible dans Expo Go.",
     "purchaseFailed": "Achat échoué",
     "premiumSuccess": "Tu es Premium ! 🎉",
-    "premiumSuccessMsg": "Profite de 100 analyses de tenues par mois."
+    "premiumSuccessMsg": "Profite de 100 analyses de tenues par mois.",
+    "legalFooter": "L'abonnement se renouvelle automatiquement sauf annulation au moins 24 h avant la fin de la période. Gérez-le dans les Réglages de l'App Store.",
+    "legalPrice": "À partir de 9,99 €/mois ou 29,99 €/an",
+    "privacyPolicy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
   },
 
   "usage": {
@@ -337,6 +341,25 @@
     "weeklyUploadsLeft_other": "{{count}} transferts gratuits restants",
     "weeklyUsage": "{{used}}/{{limit}} transferts gratuits utilisés",
     "upgradeToPremium": "Passer à Premium"
+  },
+
+  "dataConsent": {
+    "title": "Avis de confidentialité",
+    "intro": "Avant d'analyser ta tenue, MirrorMe partage les données suivantes avec des services d'IA tiers :",
+    "dataSentLabel": "Données partagées",
+    "dataItem1": "Ta photo de tenue",
+    "dataItem2": "Les informations de profil que tu as renseignées (âge, sexe, taille, poids, préférences de style)",
+    "recipients": "Destinataires de tes données",
+    "recipient1Title": "Ximilar s.r.o. (Détection de vêtements)",
+    "recipient1Desc": "Reçoit ta photo pour identifier les vêtements. Les images sont traitées de façon transitoire et ne sont pas conservées par Ximilar.",
+    "recipient2Title": "Google LLC (Analyse IA Gemini)",
+    "recipient2Desc": "Reçoit ta photo et tes informations de profil pour générer un score de style personnalisé et des recommandations.",
+    "policyNote": "Les deux services sont soumis à leurs propres politiques de confidentialité et offrent des protections équivalentes à celles décrites dans la Politique de confidentialité de MirrorMe.",
+    "viewPrivacyPolicy": "Voir la politique de confidentialité de MirrorMe",
+    "ximilarPolicy": "Politique de confidentialité de Ximilar",
+    "googlePolicy": "Politique de confidentialité de Google",
+    "acceptBtn": "J'accepte — Analyser ma tenue",
+    "declineBtn": "Refuser"
   },
 
   "social": {

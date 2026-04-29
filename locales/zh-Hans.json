@@ -324,7 +324,11 @@
     "devBuildMsg": "订阅功能需要本机版本，在 Expo Go 中不可用。",
     "purchaseFailed": "购买失败",
     "premiumSuccess": "已升级高级版！🎉",
-    "premiumSuccessMsg": "享受每月 100 次穿搭分析。"
+    "premiumSuccessMsg": "享受每月 100 次穿搭分析。",
+    "legalFooter": "除非在当前周期结束前至少 24 小时取消，否则订阅将自动续期。可在 App Store 设置中管理。",
+    "legalPrice": "月费 €9.99 或年费 €29.99 起",
+    "privacyPolicy": "隐私政策",
+    "terms": "使用条款"
   },
 
   "usage": {
@@ -337,6 +341,25 @@
     "weeklyUploadsLeft_other": "还剩 {{count}} 次免费扫描",
     "weeklyUsage": "已使用 {{used}}/{{limit}} 次免费扫描",
     "upgradeToPremium": "升级到高级版"  },
+
+  "dataConsent": {
+    "title": "数据隐私声明",
+    "intro": "在分析您的穿搭之前，MirrorMe 将向以下第三方 AI 服务共享数据：",
+    "dataSentLabel": "共享的数据",
+    "dataItem1": "您的穿搭照片",
+    "dataItem2": "您填写的个人资料（年龄、性别、身高、体重、风格偏好）",
+    "recipients": "数据接收方",
+    "recipient1Title": "Ximilar s.r.o.（服装识别）",
+    "recipient1Desc": "接收您的照片以识别服装单品。图片仅在 API 调用期间处理，Ximilar 不会留存。",
+    "recipient2Title": "Google LLC（Gemini AI 分析）",
+    "recipient2Desc": "接收您的照片和个人资料，以生成个性化风格评分与穿搭建议。",
+    "policyNote": "两家服务均受其各自隐私政策约束，并提供与 MirrorMe 隐私政策中所述同等的数据保护。",
+    "viewPrivacyPolicy": "查看 MirrorMe 隐私政策",
+    "ximilarPolicy": "Ximilar 隐私政策",
+    "googlePolicy": "Google 隐私政策",
+    "acceptBtn": "同意 — 分析我的穿搭",
+    "declineBtn": "拒绝"
+  },
 
   "social": {
     "orContinueWith": "或使用以下方式继续",

@@ -17,6 +17,7 @@ import { analyzePhoto, cancelAnalysis, getSubscriptionStatus } from '@/services/
 import SettingsModal from '@/components/SettingsModal';
 import CustomAlert from '@/components/CustomAlert';
 import PremiumGateModal from '@/components/PremiumGateModal';
+import DataConsentModal from '@/components/DataConsentModal';
 import { Occasion, SubscriptionStatus } from '@/types/app';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/services/i18n';
@@ -60,6 +61,8 @@ export default function AnalyzeScreen() {
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
+  const [consentModalVisible, setConsentModalVisible] = useState(false);
+  const pendingAnalysisRef = useRef(false);
 
   // Load usage status when screen focuses
   const loadStatus = useCallback(async () => {
@@ -130,6 +133,16 @@ export default function AnalyzeScreen() {
 
   const handleAnalyze = async () => {
     if (!imageUri) return;
+    const consent = await AsyncStorage.getItem('@aiDataConsent');
+    if (consent !== 'granted') {
+      pendingAnalysisRef.current = true;
+      setConsentModalVisible(true);
+      return;
+    }
+    await runAnalysis();
+  };
+
+  const runAnalysis = async () => {
     const controller = new AbortController();
     abortRef.current = controller;
     const cToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -312,6 +325,20 @@ export default function AnalyzeScreen() {
           </View>
         </View>
       )}
+
+      <DataConsentModal
+        visible={consentModalVisible}
+        onAccept={async () => {
+          await AsyncStorage.setItem('@aiDataConsent', 'granted');
+          setConsentModalVisible(false);
+          pendingAnalysisRef.current = false;
+          await runAnalysis();
+        }}
+        onDecline={() => {
+          setConsentModalVisible(false);
+          pendingAnalysisRef.current = false;
+        }}
+      />
 
       <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
 

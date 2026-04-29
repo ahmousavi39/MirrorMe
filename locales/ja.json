@@ -324,7 +324,11 @@
     "devBuildMsg": "サブスクリプションにはネイティブビルドが必要です。Expo GoではRevenueCatは利用できません。",
     "purchaseFailed": "購入失敗",
     "premiumSuccess": "プレミアムになりました！🎉",
-    "premiumSuccessMsg": "毎月100回のコーディネート分析をお楽しみください。"
+    "premiumSuccessMsg": "毎月100回のコーディネート分析をお楽しみください。",
+    "legalFooter": "現在の期間終了の24時間前までにキャンセルしない限り、自動更新されます。App Store設定で管理できます。",
+    "legalPrice": "月額€9.99または年額€29.99から",
+    "privacyPolicy": "プライバシーポリシー",
+    "terms": "利用規約"
   },
 
   "usage": {
@@ -337,6 +341,25 @@
     "weeklyUploadsLeft_other": "残り{{count}}回無料スキャン",
     "weeklyUsage": "{{used}}/{{limit}}回無料スキャン使用済み",
     "upgradeToPremium": "プレミアムにアップグレード"
+  },
+
+  "dataConsent": {
+    "title": "データプライバシーに関するお知らせ",
+    "intro": "コーデを分析する前に、MirrorMeは以下のデータをサードパーティのAIサービスに送信します：",
+    "dataSentLabel": "送信されるデータ",
+    "dataItem1": "コーデの写真",
+    "dataItem2": "登録済みのプロフィール情報（年齢・性別・身長・体重・スタイルの好み）",
+    "recipients": "データの送信先",
+    "recipient1Title": "Ximilar s.r.o.（服装検出）",
+    "recipient1Desc": "衣類の検出のために写真を受け取ります。画像はAPIコールの間だけ処理され、Ximilarには保存されません。",
+    "recipient2Title": "Google LLC（Gemini AI分析）",
+    "recipient2Desc": "パーソナライズされたスタイルスコアとアドバイスを生成するために、写真とプロフィール情報を受け取ります。",
+    "policyNote": "両サービスはそれぞれのプライバシーポリシーに基づき、MirrorMeのプライバシーポリシーと同等のデータ保護を提供しています。",
+    "viewPrivacyPolicy": "MirrorMeプライバシーポリシーを見る",
+    "ximilarPolicy": "Ximilarプライバシーポリシー",
+    "googlePolicy": "Googleプライバシーポリシー",
+    "acceptBtn": "同意する — コーデを分析",
+    "declineBtn": "拒否する"
   },
 
   "social": {

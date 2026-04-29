@@ -324,7 +324,11 @@
     "devBuildMsg": "Subscriptions require a native build. RevenueCat is not available in Expo Go.",
     "purchaseFailed": "Purchase Failed",
     "premiumSuccess": "You're Premium! 🎉",
-    "premiumSuccessMsg": "Enjoy 100 outfit analyses per month."
+    "premiumSuccessMsg": "Enjoy 100 outfit analyses per month.",
+    "legalFooter": "Subscription auto-renews unless cancelled at least 24 hours before renewal. Managed via App Store Settings.",
+    "legalPrice": "From €9.99/month or €29.99/year",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms of Use"
   },
 
   "usage": {
@@ -337,6 +341,25 @@
     "weeklyUploadsLeft_other": "{{count}} free scans left",
     "weeklyUsage": "{{used}}/{{limit}} free scans used",
     "upgradeToPremium": "Upgrade to Premium"
+  },
+
+  "dataConsent": {
+    "title": "Data Privacy Notice",
+    "intro": "Before analyzing your outfit, MirrorMe shares the following data with third-party AI services to power the analysis:",
+    "dataSentLabel": "Data shared",
+    "dataItem1": "Your outfit photo",
+    "dataItem2": "Profile details you have shared (age, sex, height, weight, style preferences)",
+    "recipients": "Who receives your data",
+    "recipient1Title": "Ximilar s.r.o. (Fashion Detection)",
+    "recipient1Desc": "Receives your photo to identify clothing items. Images are processed transiently and not stored by Ximilar beyond the API call.",
+    "recipient2Title": "Google LLC (Gemini AI Analysis)",
+    "recipient2Desc": "Receives your photo and profile details to generate a personalised style score and recommendations.",
+    "policyNote": "Both services are bound by their own privacy policies and provide data protections equivalent to those described in the MirrorMe Privacy Policy.",
+    "viewPrivacyPolicy": "View MirrorMe Privacy Policy",
+    "ximilarPolicy": "Ximilar Privacy Policy",
+    "googlePolicy": "Google Privacy Policy",
+    "acceptBtn": "I Agree — Analyze My Outfit",
+    "declineBtn": "Decline"
   },
 
   "social": {

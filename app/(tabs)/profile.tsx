@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  ActivityIndicator, Platform,
+  ActivityIndicator, Platform, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -13,6 +13,7 @@ import SettingsModal from '@/components/SettingsModal';
 import CustomAlert from '@/components/CustomAlert';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/services/i18n';
 
 // RevenueCat — native modules, not available in Expo Go
 let Purchases: any = null;
@@ -204,6 +205,33 @@ export default function ProfileScreen() {
                     : <Text style={s.upgradeBtnText}>{t('profile.upgradeToPremium')}</Text>
                   }
                 </TouchableOpacity>
+
+                {/* Legal footer — required by Apple for auto-renewable subscriptions */}
+                <View style={s.legalFooter}>
+                  <Text style={[s.legalPrice, { color: theme.textSecondary }]}>
+                    {t('premiumGate.legalPrice')}
+                  </Text>
+                  <Text style={[s.legalText, { color: theme.textSecondary }]}>
+                    {t('premiumGate.legalFooter')}
+                  </Text>
+                  <View style={s.legalLinks}>
+                    <TouchableOpacity onPress={() => {
+                      const lang = i18n.language;
+                      const slug = lang.startsWith('zh') ? 'zh' : lang.startsWith('ja') ? 'ja' : lang.startsWith('de') ? 'de' : lang.startsWith('fr') ? 'fr' : lang.startsWith('es') ? 'es' : 'en';
+                      Linking.openURL(`https://mirrorme.ahmousavi.com/${slug}/policy/`);
+                    }}>
+                      <Text style={[s.legalLink, { color: theme.primary }]}>{t('premiumGate.privacyPolicy')}</Text>
+                    </TouchableOpacity>
+                    <Text style={[s.legalSep, { color: theme.textSecondary }]}>{'  |  '}</Text>
+                    <TouchableOpacity onPress={() => {
+                      const lang = i18n.language;
+                      const slug = lang.startsWith('zh') ? 'zh' : lang.startsWith('ja') ? 'ja' : lang.startsWith('de') ? 'de' : lang.startsWith('fr') ? 'fr' : lang.startsWith('es') ? 'es' : 'en';
+                      Linking.openURL(`https://mirrorme.ahmousavi.com/${slug}/terms/`);
+                    }}>
+                      <Text style={[s.legalLink, { color: theme.primary }]}>{t('premiumGate.terms')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             )}
 
@@ -311,6 +339,12 @@ const makeStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginTop: 4,
   },
   upgradeBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  legalFooter: { width: '100%', alignItems: 'center', gap: 4, marginTop: 8 },
+  legalPrice: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  legalText: { fontSize: 11, textAlign: 'center', lineHeight: 16, opacity: 0.8 },
+  legalLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  legalLink: { fontSize: 11, fontWeight: '600', textDecorationLine: 'underline' },
+  legalSep: { fontSize: 11 },
   section: { gap: 2 },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

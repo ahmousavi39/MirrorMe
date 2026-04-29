@@ -324,7 +324,11 @@
     "devBuildMsg": "Las suscripciones requieren un build nativo. RevenueCat no está disponible en Expo Go.",
     "purchaseFailed": "Compra fallida",
     "premiumSuccess": "¡Eres Premium! 🎉",
-    "premiumSuccessMsg": "Disfruta de 100 análisis de outfits por mes."
+    "premiumSuccessMsg": "Disfruta de 100 análisis de outfits por mes.",
+    "legalFooter": "La suscripción se renueva automáticamente salvo cancelación al menos 24 h antes del periodo de renovación. Gestión en Ajustes del App Store.",
+    "legalPrice": "Desde €9,99/mes o €29,99/año",
+    "privacyPolicy": "Política de privacidad",
+    "terms": "Términos de uso"
   },
 
   "usage": {
@@ -337,6 +341,25 @@
     "weeklyUploadsLeft_other": "{{count}} escaneos gratuitos restantes",
     "weeklyUsage": "{{used}}/{{limit}} escaneos gratuitos usados",
     "upgradeToPremium": "Actualizar a Premium"
+  },
+
+  "dataConsent": {
+    "title": "Aviso de privacidad de datos",
+    "intro": "Antes de analizar tu outfit, MirrorMe comparte los siguientes datos con servicios de IA de terceros:",
+    "dataSentLabel": "Datos compartidos",
+    "dataItem1": "Tu foto del outfit",
+    "dataItem2": "Detalles del perfil que has compartido (edad, sexo, altura, peso, preferencias de estilo)",
+    "recipients": "Quién recibe tus datos",
+    "recipient1Title": "Ximilar s.r.o. (Detección de ropa)",
+    "recipient1Desc": "Recibe tu foto para identificar prendas de ropa. Las imágenes se procesan de forma transitoria y Ximilar no las almacena.",
+    "recipient2Title": "Google LLC (Análisis con Gemini AI)",
+    "recipient2Desc": "Recibe tu foto y detalles del perfil para generar una puntuación de estilo personalizada y recomendaciones.",
+    "policyNote": "Ambos servicios están sujetos a sus propias políticas de privacidad y ofrecen protecciones equivalentes a las descritas en la Política de privacidad de MirrorMe.",
+    "viewPrivacyPolicy": "Ver política de privacidad de MirrorMe",
+    "ximilarPolicy": "Política de privacidad de Ximilar",
+    "googlePolicy": "Política de privacidad de Google",
+    "acceptBtn": "Acepto — Analizar mi outfit",
+    "declineBtn": "Rechazar"
   },
 
   "social": {
