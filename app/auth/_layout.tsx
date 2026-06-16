@@ -10,6 +10,11 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: theme.background },
         animation: 'slide_from_right',
       }}
-    />
+    >
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="email-action" options={{ animation: 'fade' }} />
+    </Stack>
   );
 }

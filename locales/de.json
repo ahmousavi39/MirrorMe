@@ -374,5 +374,30 @@
     "invalidCredential": "Anmeldedaten waren ungültig. Bitte erneut versuchen.",
     "networkError": "Netzwerkfehler. Überprüfe deine Verbindung und versuche es erneut.",
     "tooManyRequests": "Zu viele Versuche. Bitte später erneut versuchen."
+  },
+
+  "emailAction": {
+    "verifying": "Wird überprüft…",
+    "verifiedTitle": "E-Mail bestätigt!",
+    "verifiedMsg": "Deine E-Mail wurde bestätigt. Du kannst dich jetzt anmelden.",
+    "resetTitle": "Neues Passwort setzen",
+    "resetFor": "Passwort zurücksetzen für {{email}}",
+    "newPasswordPlaceholder": "Neues Passwort (mind. 6 Zeichen)",
+    "confirmPasswordPlaceholder": "Neues Passwort bestätigen",
+    "savePassword": "Passwort speichern",
+    "resetSuccessTitle": "Passwort aktualisiert!",
+    "resetSuccessMsg": "Dein Passwort wurde zurückgesetzt. Du kannst dich jetzt anmelden.",
+    "signIn": "Anmelden",
+    "backToSignIn": "Zurück zur Anmeldung",
+    "errorTitle": "Etwas ist schiefgelaufen",
+    "invalidLink": "Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.",
+    "linkExpired": "Dieser Link ist abgelaufen. Bitte fordere einen neuen an.",
+    "linkAlreadyUsed": "Dieser Link wurde bereits verwendet. Bitte fordere einen neuen an.",
+    "verifyFailed": "E-Mail konnte nicht verifiziert werden. Bitte versuche es erneut.",
+    "resetVerifyFailed": "Der Reset-Link konnte nicht validiert werden. Bitte fordere einen neuen an.",
+    "resetFailed": "Passwort konnte nicht zurückgesetzt werden. Bitte versuche es erneut.",
+    "fillAllFields": "Bitte alle Felder ausfüllen.",
+    "passwordMinLength": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+    "passwordMismatch": "Die Passwörter stimmen nicht überein."
   }
 }

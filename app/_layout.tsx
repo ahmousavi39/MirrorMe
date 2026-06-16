@@ -8,6 +8,35 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Linking from 'expo-linking';
+
+// ── Parse a Firebase Auth action URL and navigate to the in-app handler ───────────
+// Firebase sends links like:
+//   https://ai-stylist-88cbb.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=XXX
+// With handleCodeInApp:true the OS opens the app instead of a browser; we
+// intercept here and push the dedicated email-action screen.
+function handleFirebaseAuthUrl(url: string, router: ReturnType<typeof useRouter>) {
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname !== 'ai-stylist-88cbb.firebaseapp.com' ||
+      !parsed.pathname.startsWith('/__/auth/action')
+    ) return;
+
+    const mode = parsed.searchParams.get('mode');
+    const oobCode = parsed.searchParams.get('oobCode');
+
+    if (!mode || !oobCode) return;
+    if (!['verifyEmail', 'resetPassword', 'recoverEmail'].includes(mode)) return;
+
+    router.push({
+      pathname: '/auth/email-action',
+      params: { mode, oobCode },
+    });
+  } catch {
+    // Not a valid URL — ignore
+  }
+}
 
 // ── Auth guard — redirects based on login state ───────────────────────────────────
 function RootNavigator() {
@@ -15,6 +44,21 @@ function RootNavigator() {
   const { theme } = useTheme();
   const segments = useSegments();
   const router = useRouter();
+
+  // ── Firebase email action deep-link handler (replaces Dynamic Links) ──────
+  useEffect(() => {
+    // Handle URL when app is already open (foreground / background)
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleFirebaseAuthUrl(url, router);
+    });
+
+    // Handle URL when app is launched cold by tapping the link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleFirebaseAuthUrl(url, router);
+    });
+
+    return () => subscription.remove();
+  }, [router]);
 
   useEffect(() => {
     if (loading) return;

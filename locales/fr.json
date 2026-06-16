@@ -374,5 +374,30 @@
     "invalidCredential": "Les identifiants de connexion étaient invalides. Veuillez réessayer.",
     "networkError": "Erreur réseau. Vérifie ta connexion et réessaie.",
     "tooManyRequests": "Trop de tentatives. Veuillez réessayer plus tard."
+  },
+
+  "emailAction": {
+    "verifying": "Vérification en cours…",
+    "verifiedTitle": "E-mail vérifié !",
+    "verifiedMsg": "Ton adresse e-mail a été confirmée. Tu peux maintenant te connecter.",
+    "resetTitle": "Définir un nouveau mot de passe",
+    "resetFor": "Réinitialisation du mot de passe pour {{email}}",
+    "newPasswordPlaceholder": "Nouveau mot de passe (min. 6 caractères)",
+    "confirmPasswordPlaceholder": "Confirmer le nouveau mot de passe",
+    "savePassword": "Enregistrer le mot de passe",
+    "resetSuccessTitle": "Mot de passe mis à jour !",
+    "resetSuccessMsg": "Ton mot de passe a été réinitialisé. Tu peux maintenant te connecter avec ton nouveau mot de passe.",
+    "signIn": "Se connecter",
+    "backToSignIn": "Retour à la connexion",
+    "errorTitle": "Quelque chose s'est mal passé",
+    "invalidLink": "Ce lien est invalide ou a expiré. Veuillez en demander un nouveau.",
+    "linkExpired": "Ce lien a expiré. Veuillez en demander un nouveau.",
+    "linkAlreadyUsed": "Ce lien a déjà été utilisé. Veuillez en demander un nouveau.",
+    "verifyFailed": "Impossible de vérifier ton e-mail. Veuillez réessayer.",
+    "resetVerifyFailed": "Impossible de valider le lien de réinitialisation. Veuillez en demander un nouveau.",
+    "resetFailed": "Impossible de réinitialiser ton mot de passe. Veuillez réessayer.",
+    "fillAllFields": "Veuillez remplir tous les champs.",
+    "passwordMinLength": "Le mot de passe doit comporter au moins 6 caractères.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas."
   }
 }

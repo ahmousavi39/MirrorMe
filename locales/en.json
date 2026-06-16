@@ -374,5 +374,30 @@
     "invalidCredential": "Sign-in credential was invalid. Please try again.",
     "networkError": "Network error. Check your connection and try again.",
     "tooManyRequests": "Too many attempts. Please try again later."
+  },
+
+  "emailAction": {
+    "verifying": "Verifying…",
+    "verifiedTitle": "Email Verified!",
+    "verifiedMsg": "Your email has been confirmed. You can now sign in.",
+    "resetTitle": "Set New Password",
+    "resetFor": "Resetting password for {{email}}",
+    "newPasswordPlaceholder": "New password (min. 6 characters)",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "savePassword": "Save Password",
+    "resetSuccessTitle": "Password Updated!",
+    "resetSuccessMsg": "Your password has been reset. You can now sign in with your new password.",
+    "signIn": "Sign In",
+    "backToSignIn": "Back to Sign In",
+    "errorTitle": "Something Went Wrong",
+    "invalidLink": "This link is invalid or has expired. Please request a new one.",
+    "linkExpired": "This link has expired. Please request a new one.",
+    "linkAlreadyUsed": "This link has already been used. Please request a new one.",
+    "verifyFailed": "Could not verify your email. Please try again.",
+    "resetVerifyFailed": "Could not validate the reset link. Please request a new one.",
+    "resetFailed": "Could not reset your password. Please try again.",
+    "fillAllFields": "Please fill in all fields.",
+    "passwordMinLength": "Password must be at least 6 characters.",
+    "passwordMismatch": "Passwords do not match."
   }
 }

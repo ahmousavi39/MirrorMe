@@ -374,5 +374,30 @@
     "invalidCredential": "Las credenciales de inicio de sesión no eran válidas. Inténtalo de nuevo.",
     "networkError": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
     "tooManyRequests": "Demasiados intentos. Inténtalo más tarde."
+  },
+
+  "emailAction": {
+    "verifying": "Verificando…",
+    "verifiedTitle": "¡Correo verificado!",
+    "verifiedMsg": "Tu correo ha sido confirmado. Ahora puedes iniciar sesión.",
+    "resetTitle": "Establecer nueva contraseña",
+    "resetFor": "Restableciendo contraseña para {{email}}",
+    "newPasswordPlaceholder": "Nueva contraseña (mín. 6 caracteres)",
+    "confirmPasswordPlaceholder": "Confirmar nueva contraseña",
+    "savePassword": "Guardar contraseña",
+    "resetSuccessTitle": "¡Contraseña actualizada!",
+    "resetSuccessMsg": "Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión con tu nueva contraseña.",
+    "signIn": "Iniciar sesión",
+    "backToSignIn": "Volver a iniciar sesión",
+    "errorTitle": "Algo salió mal",
+    "invalidLink": "Este enlace no es válido o ha expirado. Por favor solicita uno nuevo.",
+    "linkExpired": "Este enlace ha expirado. Por favor solicita uno nuevo.",
+    "linkAlreadyUsed": "Este enlace ya ha sido utilizado. Por favor solicita uno nuevo.",
+    "verifyFailed": "No se pudo verificar tu correo. Por favor inténtalo de nuevo.",
+    "resetVerifyFailed": "No se pudo validar el enlace de restablecimiento. Por favor solicita uno nuevo.",
+    "resetFailed": "No se pudo restablecer tu contraseña. Por favor inténtalo de nuevo.",
+    "fillAllFields": "Por favor rellena todos los campos.",
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres.",
+    "passwordMismatch": "Las contraseñas no coinciden."
   }
 }

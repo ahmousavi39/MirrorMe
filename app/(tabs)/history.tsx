@@ -153,7 +153,7 @@ export default function HistoryScreen() {
       colorPalette: item.colorPalette ?? [],
       imageUrl: item.imageUrl ?? null,
       totalUploadsUsed: 0,
-      totalUploadsLimit: 2,
+      totalUploadsLimit: 1,
       remainingFreeUploads: null,
       isSubscribed: false,
     });

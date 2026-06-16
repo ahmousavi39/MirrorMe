@@ -4,7 +4,7 @@ const router = express.Router();
 const { db } = require('../services/firebase');
 const verifyToken = require('../middleware/verifyToken');
 
-const FREE_UPLOADS_TOTAL = 2;
+const FREE_UPLOADS_TOTAL = 1;
 const PREMIUM_UPLOADS_PER_MONTH = 100;
 
 // ── Helper ────────────────────────────────────────────────────────────────────────

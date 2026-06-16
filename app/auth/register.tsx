@@ -6,6 +6,7 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
+import { EMAIL_ACTION_CODE_SETTINGS } from '@/constants/config';
 import { useTheme } from '@/contexts/ThemeContext';
 import { setPendingOnboarding } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,7 +55,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
-      await sendEmailVerification(cred.user);
+      await sendEmailVerification(cred.user, EMAIL_ACTION_CODE_SETTINGS);
       // Sign out immediately — user must verify before accessing the app
       await signOut(auth);
       setSent(true);

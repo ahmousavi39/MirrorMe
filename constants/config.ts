@@ -1,5 +1,26 @@
 // ── Backend URL ───────────────────────────────────────────────────────────────────
-export const BACKEND_URL = 'https://mirrorme-0d8o.onrender.com';
+export const BACKEND_URL = 'https://server.mirrorme.ahmousavi.com';
+
+// ── Firebase Auth email action settings (replaces deprecated Dynamic Links) ───────
+// Tells Firebase to generate a Universal Link / App Link instead of a Dynamic Link
+// so that verification & password-reset emails open directly in the app.
+// NOTE: Add the iOS bundle ID and Android package name in Firebase Console under
+// Authentication → Settings → Authorized domains / iOS & Android apps so that
+// Firebase hosts the apple-app-site-association and assetlinks.json for this domain.
+export const EMAIL_ACTION_CODE_SETTINGS = {
+  // After the action is handled the browser lands on the app's Firebase Hosting page.
+  url: 'https://ai-stylist-88cbb.firebaseapp.com',
+  // handleCodeInApp:true → Firebase generates a Universal Link (iOS) / App Link
+  // (Android) pointing at firebaseapp.com/__/auth/action; the OS opens the app
+  // instead of a browser so we can call applyActionCode / confirmPasswordReset in-app.
+  handleCodeInApp: true,
+  iOS: { bundleId: 'com.ahmousavi.mirrorme' },
+  android: {
+    packageName: 'com.ahmousavi.MirrorMe',
+    installIfNotInstalled: true,
+    minimumVersion: '12',
+  },
+} as const;
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 // iOS client ID from GoogleService-Info.plist (CLIENT_ID)
 export const GOOGLE_IOS_CLIENT_ID = '511134609232-l6ufeq2gnunaqp2j32kt7p8duop9ffd2.apps.googleusercontent.com';

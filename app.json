@@ -2,7 +2,7 @@
   "expo": {
     "name": "MirrorMe",
     "slug": "MirrorMe",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "mirrorme",
@@ -30,6 +30,9 @@
           }
         ]
       },
+      "associatedDomains": [
+        "applinks:ai-stylist-88cbb.firebaseapp.com"
+      ],
       "entitlements": {
         "com.apple.developer.applesignin": [
           "Default"
@@ -47,6 +50,20 @@
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.RECORD_AUDIO"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "ai-stylist-88cbb.firebaseapp.com",
+              "pathPrefix": "/__/auth/action"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {

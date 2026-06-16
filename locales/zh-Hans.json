@@ -372,5 +372,31 @@
     "methodNotEnabled": "此登录方式未启用，请联系客服。",
     "invalidCredential": "登录凭证无效，请重试。",
     "networkError": "网络错误，请检查您的连接后重试。",
-    "tooManyRequests": "尝试次数过多，请稍后再试。"  }
+    "tooManyRequests": "尝试次数过多，请稍后再试。"
+  },
+
+  "emailAction": {
+    "verifying": "验证中…",
+    "verifiedTitle": "邮箱已验证！",
+    "verifiedMsg": "您的邮箱已确认。现在可以登录了。",
+    "resetTitle": "设置新密码",
+    "resetFor": "正在重置 {{email}} 的密码",
+    "newPasswordPlaceholder": "新密码（至少6位）",
+    "confirmPasswordPlaceholder": "确认新密码",
+    "savePassword": "保存密码",
+    "resetSuccessTitle": "密码已更新！",
+    "resetSuccessMsg": "您的密码已重置。现在可以用新密码登录了。",
+    "signIn": "登录",
+    "backToSignIn": "返回登录",
+    "errorTitle": "出现了问题",
+    "invalidLink": "此链接无效或已过期，请重新申请。",
+    "linkExpired": "此链接已过期，请重新申请。",
+    "linkAlreadyUsed": "此链接已被使用，请重新申请。",
+    "verifyFailed": "无法验证您的邮箱，请重试。",
+    "resetVerifyFailed": "无法验证重置链接，请重新申请。",
+    "resetFailed": "无法重置密码，请重试。",
+    "fillAllFields": "请填写所有字段。",
+    "passwordMinLength": "密码至少需要6个字符。",
+    "passwordMismatch": "两次输入的密码不一致。"
+  }
 }

@@ -6,6 +6,7 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { signInWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
+import { EMAIL_ACTION_CODE_SETTINGS } from '@/constants/config';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import SocialSignInButtons from '@/components/SocialSignInButtons';
@@ -69,7 +70,7 @@ export default function LoginScreen() {
     if (!unverifiedUser) return;
     setResending(true);
     try {
-      await sendEmailVerification(unverifiedUser);
+      await sendEmailVerification(unverifiedUser, EMAIL_ACTION_CODE_SETTINGS);
       setError(t('login.verificationResent'));
     } catch {
       setError(t('login.resendFailed'));

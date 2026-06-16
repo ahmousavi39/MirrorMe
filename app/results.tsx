@@ -15,8 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { ClothingItem, Occasion } from '@/types/app';
-import { updateWardrobeItem, composeShareImage } from '@/services/api';
+import { updateWardrobeItem, composeShareImage, getSubscriptionStatus } from '@/services/api';
 import CustomAlert from '@/components/CustomAlert';
+import PremiumGateModal from '@/components/PremiumGateModal';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -466,6 +467,16 @@ export default function ResultsScreen() {
   const [addToWardrobe, setAddToWardrobe] = useState(true);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
+  const [isSubscribedOverride, setIsSubscribedOverride] = useState<boolean | null>(null);
+
+  // Fetch live subscription status on mount so upgrades made on other screens
+  // are reflected without needing to re-analyse.
+  useEffect(() => {
+    getSubscriptionStatus()
+      .then((s) => setIsSubscribedOverride(s.isSubscribed))
+      .catch(() => { /* fall back to result.isSubscribed */ });
+  }, []);
   const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
@@ -579,6 +590,13 @@ export default function ResultsScreen() {
   }
 
   const scoreColor = getScoreColor(result.score);
+  const isFree = !(isSubscribedOverride ?? result.isSubscribed);
+  // Pre-compute feedback split for free-user blurring
+  const _feedbackMid = Math.floor(result.feedback.length / 2);
+  const _feedbackBreak = result.feedback.indexOf('. ', _feedbackMid - 40);
+  const _feedbackCutoff = _feedbackBreak > 0 ? _feedbackBreak + 2 : _feedbackMid;
+  const feedbackFirstHalf = result.feedback.slice(0, _feedbackCutoff);
+  const feedbackSecondHalf = result.feedback.slice(_feedbackCutoff);
   const hasOccasionTips = !!(result.occasion && (result.occasionTips?.length ?? 0) > 0);
   const occasionIcon = (result.occasion ? OCCASION_ICONS[result.occasion] : 'calendar') as any;
   const TAB_COUNT = hasOccasionTips ? 5 : 4;
@@ -644,7 +662,29 @@ export default function ResultsScreen() {
           </View>
           <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.aiFeedback')}</Text>
         </View>
-        <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
+        {isFree ? (
+          <>
+            <Text style={[s.feedbackText, { color: theme.text }]}>{feedbackFirstHalf}</Text>
+            <View>
+              <Text style={[s.feedbackText, { color: theme.text, opacity: 0.12 }]} numberOfLines={3}>{feedbackSecondHalf}</Text>
+              <LinearGradient
+                colors={[`${theme.card}00`, theme.card]}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 0.55 }}
+                pointerEvents="none"
+              />
+            </View>
+            <TouchableOpacity style={s.upgradeRow} onPress={() => setShowPremiumGate(true)} activeOpacity={0.85}>
+              <View style={s.upgradePill}>
+                <Ionicons name="lock-closed" size={13} color="#fff" />
+                <Text style={s.upgradePillText}>{t('profile.upgradeToPremium')}</Text>
+              </View>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <Text style={[s.feedbackText, { color: theme.text }]}>{result.feedback}</Text>
+        )}
       </View>
       <View style={{ height: Platform.OS === 'ios' ? 40 : 24 }} />
     </ScrollView>,
@@ -659,23 +699,79 @@ export default function ResultsScreen() {
             <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.occasionFit')}</Text>
           </View>
           <View style={s.occasionList}>
-            {OCCASION_ORDER.map((key) => {
-              const sc: number = (result.occasionScores as any)?.[key] ?? 0;
-              const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
-              const isSelected = result.occasion === key;
-              return (
-                <View key={key} style={s.occasionRow}>
-                  <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
-                  <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
-                    {t(`occasions.${key}`)}
-                  </Text>
-                  <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
-                    <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
+            {isFree ? (
+              <>
+                {OCCASION_ORDER.slice(0, 4).map((key) => {
+                  const sc: number = (result.occasionScores as any)?.[key] ?? 0;
+                  const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
+                  const isSelected = result.occasion === key;
+                  return (
+                    <View key={key} style={s.occasionRow}>
+                      <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
+                      <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
+                        {t(`occasions.${key}`)}
+                      </Text>
+                      <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
+                        <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
+                      </View>
+                      <Text style={[s.occasionRowScore, { color }]}>{sc.toFixed(1)}</Text>
+                    </View>
+                  );
+                })}
+                <View>
+                  <View pointerEvents="none">
+                    {OCCASION_ORDER.slice(4).map((key) => {
+                      const sc: number = (result.occasionScores as any)?.[key] ?? 0;
+                      const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
+                      const isSelected = result.occasion === key;
+                      return (
+                        <View key={key} style={[s.occasionRow, { opacity: 0.12 }]}>
+                          <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
+                          <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
+                            {t(`occasions.${key}`)}
+                          </Text>
+                          <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
+                            <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
+                          </View>
+                          <Text style={[s.occasionRowScore, { color }]}>{sc.toFixed(1)}</Text>
+                        </View>
+                      );
+                    })}
+                    <LinearGradient
+                      colors={[`${theme.card}00`, theme.card]}
+                      style={StyleSheet.absoluteFill}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 0, y: 0.6 }}
+                      pointerEvents="none"
+                    />
                   </View>
-                  <Text style={[s.occasionRowScore, { color }]}>{sc.toFixed(1)}</Text>
+                  <TouchableOpacity style={s.upgradeRow} onPress={() => setShowPremiumGate(true)} activeOpacity={0.85}>
+                    <View style={s.upgradePill}>
+                      <Ionicons name="lock-closed" size={13} color="#fff" />
+                      <Text style={s.upgradePillText}>{t('profile.upgradeToPremium')}</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-              );
-            })}
+              </>
+            ) : (
+              OCCASION_ORDER.map((key) => {
+                const sc: number = (result.occasionScores as any)?.[key] ?? 0;
+                const color = sc >= 8 ? '#30D158' : sc >= 6 ? '#FF9F0A' : '#FF453A';
+                const isSelected = result.occasion === key;
+                return (
+                  <View key={key} style={s.occasionRow}>
+                    <Ionicons name={OCCASION_ICONS[key] as any} size={15} color={OCCASION_COLORS[key]} style={s.occasionRowEmoji} />
+                    <Text style={[s.occasionRowLabel, { color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? '700' : '500' }]}>
+                      {t(`occasions.${key}`)}
+                    </Text>
+                    <View style={[s.occasionBarBg, { backgroundColor: `${color}20` }]}>
+                      <View style={[s.occasionBarFill, { width: `${(sc / 10) * 100}%` as any, backgroundColor: color }]} />
+                    </View>
+                    <Text style={[s.occasionRowScore, { color }]}>{sc.toFixed(1)}</Text>
+                  </View>
+                );
+              })
+            )}
           </View>
         </View>
       )}
@@ -692,28 +788,84 @@ export default function ResultsScreen() {
             <Text style={[s.cardTitle, { color: theme.text }]}>{t('results.improveStyle')}</Text>
           </View>
           <View style={s.tipsList}>
-            {(result.styleTips ?? []).map((tip, i) => {
-              const itemLabel = result.styleTipItems?.[i];
-              return (
-                <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-                  <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
-                    {itemLabel ? (
-                      <TouchableOpacity
-                        style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}
-                        onPress={() => setShowPhotoModal(true)}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="shirt-outline" size={11} color={theme.primary} />
-                        <Text style={[s.tipItemChipText, { color: theme.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{itemLabel}</Text>
-                        <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
-                      </TouchableOpacity>
-                    ) : null}
+            {isFree ? (
+              <>
+                {/* First tip — fully visible */}
+                {(result.styleTips ?? []).slice(0, 1).map((tip, i) => {
+                  const itemLabel = result.styleTipItems?.[i];
+                  return (
+                    <View key={i} style={[s.tipRow, (result.styleTips?.length ?? 0) > 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                      <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                        {itemLabel ? (
+                          <TouchableOpacity
+                            style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}
+                            onPress={() => setShowPhotoModal(true)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="shirt-outline" size={11} color={theme.primary} />
+                            <Text style={[s.tipItemChipText, { color: theme.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{itemLabel}</Text>
+                            <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
+                    </View>
+                  );
+                })}
+                {/* Remaining tips — blurred */}
+                {(result.styleTips?.length ?? 0) > 1 && (
+                  <View>
+                    <View pointerEvents="none">
+                      {(result.styleTips ?? []).slice(1).map((tip, i) => (
+                        <View key={i + 1} style={[s.tipRow, { opacity: 0.12 }, i < (result.styleTips?.length ?? 0) - 2 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                          <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 2).padStart(2, '0')}</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                          </View>
+                        </View>
+                      ))}
+                      <LinearGradient
+                        colors={[`${theme.card}00`, theme.card]}
+                        style={StyleSheet.absoluteFill}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 0.6 }}
+                        pointerEvents="none"
+                      />
+                    </View>
+                    <TouchableOpacity style={s.upgradeRow} onPress={() => setShowPremiumGate(true)} activeOpacity={0.85}>
+                      <View style={s.upgradePill}>
+                        <Ionicons name="lock-closed" size={13} color="#fff" />
+                        <Text style={s.upgradePillText}>{t('profile.upgradeToPremium')}</Text>
+                      </View>
+                    </TouchableOpacity>
                   </View>
-                </View>
-              );
-            })}
+                )}
+              </>
+            ) : (
+              (result.styleTips ?? []).map((tip, i) => {
+                const itemLabel = result.styleTipItems?.[i];
+                return (
+                  <View key={i} style={[s.tipRow, i < (result.styleTips?.length ?? 0) - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                    <Text style={[s.tipIndex, { color: theme.primary }]}>{String(i + 1).padStart(2, '0')}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.tipText, { color: theme.text }]}>{tip}</Text>
+                      {itemLabel ? (
+                        <TouchableOpacity
+                          style={[s.tipItemChip, { backgroundColor: `${theme.primary}14`, borderColor: `${theme.primary}35` }]}
+                          onPress={() => setShowPhotoModal(true)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="shirt-outline" size={11} color={theme.primary} />
+                          <Text style={[s.tipItemChipText, { color: theme.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{itemLabel}</Text>
+                          <Ionicons name="image-outline" size={11} color={theme.primary} style={{ marginLeft: 2 }} />
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                  </View>
+                );
+              })
+            )}
           </View>
         </View>
       )}
@@ -912,6 +1064,12 @@ export default function ResultsScreen() {
         onClose={() => setShowPhotoModal(false)}
       />
 
+      <PremiumGateModal
+        visible={showPremiumGate}
+        onClose={() => setShowPremiumGate(false)}
+        onUpgraded={() => { setIsSubscribedOverride(true); setShowPremiumGate(false); }}
+      />
+
       <CustomAlert
         visible={customAlert.visible}
         title={customAlert.title}
@@ -1044,6 +1202,21 @@ const makeStyles = (theme: any) => StyleSheet.create({
   tipText: { flex: 1, fontSize: 14, lineHeight: 22 },
   tipItemChip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, alignSelf: 'flex-start', maxWidth: '100%', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   tipItemChipText: { fontSize: 11, fontWeight: '600', flexShrink: 1 },
+
+  // Free-user upgrade pill
+  upgradeRow: { alignItems: 'center', paddingTop: 8, paddingBottom: 2 },
+  upgradePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: theme.primary,
+    paddingHorizontal: 18, paddingVertical: 10,
+    borderRadius: 22,
+    shadowColor: theme.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  upgradePillText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
 
 });

@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/services/firebase';
+import { EMAIL_ACTION_CODE_SETTINGS } from '@/constants/config';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { BACKEND_URL } from '@/constants/config';
@@ -42,7 +43,7 @@ export default function ForgotPasswordScreen() {
         setError(t('forgotPassword.wentWrong'));
         return;
       }
-      await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+      await sendPasswordResetEmail(auth, email.trim().toLowerCase(), EMAIL_ACTION_CODE_SETTINGS);
       setSent(true);
     } catch (e: any) {
       const msg =
