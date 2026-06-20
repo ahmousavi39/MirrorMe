@@ -10,7 +10,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { getWardrobe, deleteWardrobeItem, addWardrobeItem, getSubscriptionStatus, updateWardrobeItem } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { getWardrobe, deleteWardrobeItem, addWardrobeItem, updateWardrobeItem } from '@/services/api';
 import { WardrobeItem } from '@/types/app';
 import CustomAlert from '@/components/CustomAlert';
 import PremiumGateModal from '@/components/PremiumGateModal';
@@ -151,6 +152,8 @@ function WardrobeEditSheet({ item, onSave, onClose, onAlert }: WardrobeEditSheet
 
 export default function WardrobeScreen() {
   const { theme } = useTheme();
+  const { subscriptionStatus } = useAuth();
+  const isSubscribed = subscriptionStatus?.isSubscribed ?? false;
   const s = makeStyles(theme);
 
   const [items, setItems] = useState<WardrobeItem[]>([]);
@@ -158,7 +161,6 @@ export default function WardrobeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [editingItem, setEditingItem] = useState<WardrobeItem | null>(null);
   const [premiumGateVisible, setPremiumGateVisible] = useState(false);
   const [pendingDeleteItem, setPendingDeleteItem] = useState<WardrobeItem | null>(null);
@@ -171,9 +173,8 @@ export default function WardrobeScreen() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [data, status] = await Promise.all([getWardrobe(), getSubscriptionStatus()]);
+      const data = await getWardrobe();
       setItems(data);
-      setIsSubscribed(status.isSubscribed);
     } catch {
       // Non-fatal
     } finally {

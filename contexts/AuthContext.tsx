@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, User } from 'firebase/auth';
 import { auth } from '@/services/firebase';
-import { initUser, getProfile, getSettings } from '@/services/api';
+import { initUser, getProfile, getSettings, getSubscriptionStatus } from '@/services/api';
 import { changeLanguage } from '@/services/i18n';
+import { SubscriptionStatus } from '@/types/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RC_IOS_API_KEY } from '@/constants/config';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
@@ -30,6 +31,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isNewUser: boolean;
+  subscriptionStatus: SubscriptionStatus | null;
+  refreshSubscription: () => Promise<void>;
   completeOnboarding: () => void;
   signOut: () => Promise<void>;
 }
@@ -40,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
   useEffect(() => {
     // Safety net: if Firebase doesn't respond in 5s, stop loading anyway
@@ -65,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Signed out — unblock immediately
         setIsNewUser(false);
         setUser(null);
+        setSubscriptionStatus(null);
         setLoading(false);
         if (Purchases && rcConfigured) {
           try { await Purchases.logOut(); } catch { /* ignore */ }
@@ -91,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         await initUser();
-        const [profile, settings] = await Promise.all([getProfile(), getSettings()]);
+        const [profile, settings, subStatus] = await Promise.all([getProfile(), getSettings(), getSubscriptionStatus()]);
+        setSubscriptionStatus(subStatus);
         if (
           !profile.name ||
           !profile.sex ||
@@ -127,10 +133,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(auth);
   };
 
+  const refreshSubscription = async () => {
+    try {
+      const s = await getSubscriptionStatus();
+      setSubscriptionStatus(s);
+    } catch { /* ignore */ }
+  };
+
   const completeOnboarding = () => setIsNewUser(false);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isNewUser, completeOnboarding, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isNewUser, subscriptionStatus, refreshSubscription, completeOnboarding, signOut }}>
       {children}
     </AuthContext.Provider>
   );

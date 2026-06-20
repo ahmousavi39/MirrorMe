@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   ActivityIndicator, Platform, Linking,
@@ -7,8 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSubscriptionStatus, getProfile } from '@/services/api';
-import { SubscriptionStatus } from '@/types/app';
+import { getProfile } from '@/services/api';
 import SettingsModal from '@/components/SettingsModal';
 import CustomAlert from '@/components/CustomAlert';
 import { RC_PREMIUM_ENTITLEMENT, RC_OFFERING_ID } from '@/constants/config';
@@ -38,11 +36,9 @@ function getInitials(name: string, email: string): string {
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, subscriptionStatus: status, refreshSubscription } = useAuth();
   const { t } = useTranslation();
 
-  const [status, setStatus] = useState<SubscriptionStatus | null>(null);
-  const [loading, setLoading] = useState(true);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [profileName, setProfileName] = useState<string>('');
@@ -52,22 +48,9 @@ export default function ProfileScreen() {
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
 
-  const loadStatus = useCallback(async () => {
-    try {
-      const s = await getSubscriptionStatus();
-      setStatus(s);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     getProfile().then((p) => { if (p.name) setProfileName(p.name); }).catch(() => {});
   }, []);
-
-  useFocusEffect(useCallback(() => { loadStatus(); }, [loadStatus]));
 
   const handleUpgrade = async () => {
     if (!RevenueCatUI) {
@@ -87,7 +70,7 @@ export default function ProfileScreen() {
         result === PAYWALL_RESULT.RESTORED
       ) {
         showAlert(t('profile.premiumSuccess'), t('profile.premiumSuccessMsg'), 'success');
-        loadStatus();
+        refreshSubscription();
       }
     } catch (e: any) {
       if (!e.userCancelled) {
@@ -135,7 +118,7 @@ export default function ProfileScreen() {
           <Text style={[s.email, { color: theme.textSecondary }]}>{email}</Text>
         </View>
 
-        {loading ? (
+        {status === null ? (
           <ActivityIndicator color={theme.primary} style={{ marginVertical: 20 }} />
         ) : (
           <>

@@ -2,7 +2,7 @@
   "expo": {
     "name": "MirrorMe",
     "slug": "MirrorMe",
-    "version": "1.0.2",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "mirrorme",

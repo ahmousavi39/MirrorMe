@@ -1,6 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
-import LottieView from 'lottie-react-native';
-import { useFocusEffect } from 'expo-router';
+import { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Image, ActivityIndicator, Platform, Modal, Dimensions,
@@ -13,14 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
-import { analyzePhoto, cancelAnalysis, getSubscriptionStatus } from '@/services/api';
+import { analyzePhoto, cancelAnalysis } from '@/services/api';
 import SettingsModal from '@/components/SettingsModal';
 import CustomAlert from '@/components/CustomAlert';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import DataConsentModal from '@/components/DataConsentModal';
-import { Occasion, SubscriptionStatus } from '@/types/app';
+import { Occasion } from '@/types/app';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/services/i18n';
+import LottieView from 'lottie-react-native';
 
 const OCCASION_KEYS: { key: Occasion; icon: string; color: string }[] = [
   { key: 'casual',    icon: 'bag-handle-outline',     color: '#FF9F0A' },
@@ -59,27 +58,8 @@ export default function AnalyzeScreen() {
   const cancelTokenRef = useRef<string | null>(null);
   const [analysisPhase, setAnalysisPhase] = useState<'detecting' | 'analyzing'>('detecting');
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [status, setStatus] = useState<SubscriptionStatus | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState(false);
   const [consentModalVisible, setConsentModalVisible] = useState(false);
   const pendingAnalysisRef = useRef(false);
-
-  // Load usage status when screen focuses
-  const loadStatus = useCallback(async () => {
-    if (loadingStatus) return;
-    setLoadingStatus(true);
-    try {
-      const s = await getSubscriptionStatus();
-      setStatus(s);
-    } catch {
-      // Non-critical — banner just won't show until loaded
-    } finally {
-      setLoadingStatus(false);
-    }
-  }, []);
-
-  // Reload status every time this tab is focused (catches post-purchase state)
-  useFocusEffect(useCallback(() => { loadStatus(); }, [loadStatus]));
 
   // Compress any image (including HEIC) to JPEG on-device before upload
   const compressImage = async (uri: string): Promise<{ uri: string; mime: string }> => {
@@ -163,8 +143,6 @@ export default function AnalyzeScreen() {
       setResult(result);
       // Signal history + wardrobe tabs to reload on next focus
       bumpAnalysis();
-      // Refresh usage counter after a successful analysis
-      loadStatus();
       router.push('/results');
     } catch (e: any) {
       if (e.name === 'AbortError') {
@@ -345,7 +323,7 @@ export default function AnalyzeScreen() {
       <PremiumGateModal
         visible={premiumGateVisible}
         onClose={() => setPremiumGateVisible(false)}
-        onUpgraded={() => { loadStatus(); showAlert(t('analyze.premiumSuccess'), t('analyze.premiumSuccessMsg'), 'success'); }}
+        onUpgraded={() => { showAlert(t('analyze.premiumSuccess'), t('analyze.premiumSuccessMsg'), 'success'); }}
       />
 
       <CustomAlert

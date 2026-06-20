@@ -14,8 +14,9 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ClothingItem, Occasion } from '@/types/app';
-import { updateWardrobeItem, composeShareImage, getSubscriptionStatus } from '@/services/api';
+import { updateWardrobeItem, composeShareImage } from '@/services/api';
 import CustomAlert from '@/components/CustomAlert';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import { useTranslation } from 'react-i18next';
@@ -447,6 +448,7 @@ const photoModalStyles = StyleSheet.create({
 export default function ResultsScreen() {
   const { theme } = useTheme();
   const { result, imageUri, setResult, clear } = useAnalysis();
+  const { subscriptionStatus, refreshSubscription } = useAuth();
   const router = useRouter();
   const navigation = useNavigation();
   const { t } = useTranslation();
@@ -468,15 +470,18 @@ export default function ResultsScreen() {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [showPremiumGate, setShowPremiumGate] = useState(false);
-  const [isSubscribedOverride, setIsSubscribedOverride] = useState<boolean | null>(null);
+  // Override subscription state locally — starts from context so upgrades on other
+  // screens are reflected immediately, and can be set to true after an in-screen purchase.
+  const [isSubscribedOverride, setIsSubscribedOverride] = useState<boolean | null>(
+    subscriptionStatus?.isSubscribed ?? null
+  );
 
-  // Fetch live subscription status on mount so upgrades made on other screens
-  // are reflected without needing to re-analyse.
+  // Keep override in sync if context updates after a purchase on another screen
   useEffect(() => {
-    getSubscriptionStatus()
-      .then((s) => setIsSubscribedOverride(s.isSubscribed))
-      .catch(() => { /* fall back to result.isSubscribed */ });
-  }, []);
+    if (subscriptionStatus !== null) {
+      setIsSubscribedOverride((prev) => prev === true ? true : subscriptionStatus.isSubscribed);
+    }
+  }, [subscriptionStatus]);
   const [customAlert, setCustomAlert] = useState<{ visible: boolean; title: string; message: string; icon: 'info' | 'error' | 'success' | 'warning' }>({ visible: false, title: '', message: '', icon: 'info' });
   const showAlert = (title: string, message: string, icon: 'info' | 'error' | 'success' | 'warning' = 'info') =>
     setCustomAlert({ visible: true, title, message, icon });
@@ -1067,7 +1072,7 @@ export default function ResultsScreen() {
       <PremiumGateModal
         visible={showPremiumGate}
         onClose={() => setShowPremiumGate(false)}
-        onUpgraded={() => { setIsSubscribedOverride(true); setShowPremiumGate(false); }}
+        onUpgraded={() => { setIsSubscribedOverride(true); refreshSubscription(); setShowPremiumGate(false); }}
       />
 
       <CustomAlert
